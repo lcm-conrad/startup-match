@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
 import { getDevSnapshot } from './devProfile'
+import { clientIdentity } from './clientProfile'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -289,7 +290,10 @@ function devIdentity() {
   }
 }
 
-const CLIENT_IDENTITY = { author: 'Ernesto Dela Vega', avatar: 'ED', avatarBg: ['#ECFDF5', '#065F46'] as [string, string] }
+const CLIENT_IDENTITY = () => {
+  const c = clientIdentity()
+  return { author: c.name, avatar: c.initials, avatarBg: c.avatarColors }
+}
 const ADMIN_IDENTITY = { author: 'Juanita Arceo', avatar: 'JA', avatarBg: ['#F5F3FF', '#5B21B6'] as [string, string] }
 
 export function formatPeso(n: number) {
@@ -362,7 +366,7 @@ export function completeTask(number: number, taskId: string) {
 }
 
 export function addComment(number: number, text: string, role: CommentRole) {
-  const identity = role === 'developer' ? devIdentity() : role === 'client' ? CLIENT_IDENTITY : ADMIN_IDENTITY
+  const identity = role === 'developer' ? devIdentity() : role === 'client' ? CLIENT_IDENTITY() : ADMIN_IDENTITY
   const comment: PhaseComment = {
     id: `c${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     role,

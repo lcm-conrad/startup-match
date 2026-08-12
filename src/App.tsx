@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  AreaChart, Area, BarChart, Bar, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import AuthPage from './AuthPage'
 import { useDevProfile, useDevBids, placeBid, signInAs, setAvailability, MARKETPLACE_PROJECTS } from './devProfile'
+import { useClientProfile, signInAsClient } from './clientProfile'
+import type { ClientIdentity } from './clientProfile'
 import {
   useProjectStore, submitPhase, resubmitPhase, reviseSubmission,
   updateRepoLink, updatePrototypeLink, updateNotes,
@@ -12,7 +14,7 @@ import {
   approvePhase, disputePhase, markNotificationRead, markAllNotificationsRead, resetDemo,
   formatPeso,
 } from './projectStore'
-import type { SprintPhaseStatus } from './projectStore'
+import type { SprintPhaseStatus, SprintProject } from './projectStore'
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -1379,7 +1381,7 @@ function Stars({ rating }: { rating: number }) {
   )
 }
 
-function DeveloperProfile({ isMobile, isTablet }: { isMobile: boolean; isTablet: boolean }) {
+function DeveloperProfile({ isMobile }: { isMobile: boolean }) {
   const p = useDevProfile()
   const verified = p.verificationStatus === 'Verified'
   const linkIcons: Record<string, React.ReactNode> = {
@@ -3457,7 +3459,10 @@ const phaseCfg = {
   upcoming:  { border: '#E2E8F0', bg: '#F8FAFC', badgeBg: '#F8FAFC', badgeColor: '#94A3B8', badgeBorder: '#E2E8F0', label: 'Upcoming', dot: '#CBD5E1' },
 }
 
-function ClientSidebar({ active, onNav, collapsed }: { active: string; onNav: (id: string) => void; collapsed: boolean }) {
+function ClientSidebar({ active, onNav, collapsed, project, profile }: {
+  active: string; onNav: (id: string) => void; collapsed: boolean
+  project: SprintProject; profile: ClientIdentity
+}) {
   return (
     <aside style={{
       width: collapsed ? 72 : 260, minHeight: '100vh', background: '#fff',
@@ -3486,8 +3491,8 @@ function ClientSidebar({ active, onNav, collapsed }: { active: string; onNav: (i
       {!collapsed && (
         <div style={{ margin: '12px 14px 4px', padding: '10px 12px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 10 }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Active Contract</div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', lineHeight: 1.3 }}>E-Commerce Inventory Portal</div>
-          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Marco Ramirez · PSITS Dev</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', lineHeight: 1.3 }}>{project.project}</div>
+          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Client: {profile.business}</div>
         </div>
       )}
 
@@ -3518,15 +3523,267 @@ function ClientSidebar({ active, onNav, collapsed }: { active: string; onNav: (i
       {!collapsed && (
         <div style={{ padding: '14px 16px', borderTop: '1px solid #F1F5F9' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, #ECFDF5, #6EE7B7)', border: '1.5px solid #A7F3D0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#065F46' }}>ED</div>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: `linear-gradient(135deg, ${profile.avatarColors[0]}, ${profile.avatarColors[0]})`, border: '1.5px solid #A7F3D0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: profile.avatarColors[1] }}>{profile.initials}</div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>Ernesto Dela Vega</div>
-              <div style={{ fontSize: 11, color: '#64748B' }}>Apokon Hardware MSME</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>{profile.name}</div>
+              <div style={{ fontSize: 11, color: '#64748B' }}>{profile.business}</div>
             </div>
           </div>
         </div>
       )}
     </aside>
+  )
+}
+
+// ─── Client Overview ──────────────────────────────────────────────────────────
+
+function clientStatusOf(s: SprintPhaseStatus): 'review' | 'completed' | 'disputed' | 'upcoming' {
+  if (s === 'completed') return 'completed'
+  if (s === 'disputed' || s === 'revision') return 'disputed'
+  if (s === 'in_review' || s === 'active') return 'review'
+  return 'upcoming'
+}
+
+function ClientOverview({ isMobile }: { isMobile: boolean }) {
+  const project = useProjectStore()
+  const profile = useClientProfile()
+
+  const verified = project.phases.filter(p => p.status === 'completed').length
+  const total = project.totalPhases
+  const pct = Math.round((verified / total) * 100)
+  const remaining = project.totalBudget - project.paidToDate
+  const hasDispute = project.phases.some(p => p.status === 'disputed' || p.status === 'revision')
+  const activePhase = project.phases.find(p => p.status === 'active' || p.status === 'in_review')
+
+  const notifColor: Record<string, string> = { warning: '#D97706', success: '#16A34A', info: '#2563EB' }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Header */}
+      <div>
+        <h1 style={{ margin: '0 0 6px', fontSize: isMobile ? 20 : 24, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em' }}>
+          Project Overview
+        </h1>
+        <p style={{ margin: 0, fontSize: 13.5, color: '#64748B' }}>
+          At-a-glance status for your active engagement with StartupMatch developers.
+        </p>
+      </div>
+
+      {/* Escrow & budget summary */}
+      <div style={{
+        background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '18px 22px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
+          <div>
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Escrow & Budget</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', marginTop: 3 }}>{project.contractType} · {project.platform}</div>
+          </div>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 99, background: hasDispute ? '#FEF2F2' : '#F0FDF4', border: `1px solid ${hasDispute ? '#FECACA' : '#BBF7D0'}`, color: hasDispute ? '#DC2626' : '#16A34A', fontSize: 12, fontWeight: 700 }}>
+            {hasDispute ? '⚠ Dispute Active' : '● Contract Active'}
+          </span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 16 }}>
+          {[
+            { label: 'Total Contract', value: formatPeso(project.totalBudget), accent: '#2563EB' },
+            { label: 'Paid to Date', value: formatPeso(project.paidToDate), accent: '#16A34A' },
+            { label: 'Remaining Balance', value: formatPeso(remaining), accent: '#D97706' },
+            { label: 'Per Milestone Payout', value: formatPeso(project.phasePayout), accent: '#334155' },
+          ].map(m => (
+            <div key={m.label}>
+              <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, marginBottom: 4 }}>{m.label}</div>
+              <div style={{ fontSize: isMobile ? 16 : 19, fontWeight: 800, color: m.accent, letterSpacing: '-0.02em' }}>{m.value}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Progress */}
+      <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '18px 22px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Contract Progress</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: '#2563EB', letterSpacing: '-0.02em' }}>{pct}%</span>
+        </div>
+        <div style={{ height: 10, background: '#F1F5F9', borderRadius: 99, overflow: 'hidden' }}>
+          <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg, #2563EB, #3B82F6)', borderRadius: 99, transition: 'width 0.5s ease' }} />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+          {project.phases.map(p => (
+            <span key={p.number} style={{ fontSize: 10.5, fontWeight: 600, color: p.status === 'completed' ? '#2563EB' : '#CBD5E1' }}>
+              S{p.number}
+            </span>
+          ))}
+        </div>
+        {activePhase && (
+          <div style={{ marginTop: 12, padding: '10px 14px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 8, fontSize: 12.5, color: '#334155' }}>
+            <span style={{ fontWeight: 700, color: '#2563EB' }}>Current:</span> Sprint {activePhase.number} — {activePhase.client.title} · Due {activePhase.client.deadline}
+          </div>
+        )}
+      </div>
+
+      {/* Recent activity */}
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#334155', marginBottom: 10 }}>Recent Activity</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {project.notifications.slice(0, 4).map(n => (
+            <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10, padding: '11px 14px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: notifColor[n.type], flexShrink: 0, marginTop: 5 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, color: '#334155', lineHeight: 1.5 }}>{n.text}</div>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{n.time}{!n.read && ' · Unread'}</div>
+              </div>
+            </div>
+          ))}
+          {project.notifications.length === 0 && (
+            <div style={{ fontSize: 13, color: '#94A3B8', padding: '16px', textAlign: 'center', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 10 }}>No activity yet.</div>
+          )}
+        </div>
+      </div>
+
+      {/* Account summary */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+        <div style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, background: `linear-gradient(135deg, ${profile.avatarColors[0]}, ${profile.avatarColors[0]})`, border: `1.5px solid ${profile.avatarColors[1]}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: profile.avatarColors[1] }}>{profile.initials}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0F172A' }}>{profile.business}</div>
+          <div style={{ fontSize: 12, color: '#64748B' }}>{profile.name} · {profile.barangay} · Permit {profile.permit}</div>
+        </div>
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '3px 10px', borderRadius: 99, whiteSpace: 'nowrap' }}>
+          {profile.verificationStatus}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ─── Client Contracts ─────────────────────────────────────────────────────────
+
+function ClientContracts({ isMobile }: { isMobile: boolean }) {
+  const project = useProjectStore()
+
+  const paidPhases = project.phases.filter(p => p.status === 'completed')
+  const scheduleCfg: Record<string, { bg: string; color: string; border: string; label: string }> = {
+    completed: { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0', label: 'Completed' },
+    review:    { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', label: 'Ready for Review' },
+    disputed:  { bg: '#FFF7ED', color: '#D97706', border: '#FDE68A', label: 'Disputed' },
+    upcoming:  { bg: '#F8FAFC', color: '#94A3B8', border: '#E2E8F0', label: 'Upcoming' },
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <h1 style={{ margin: '0 0 6px', fontSize: isMobile ? 20 : 24, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em' }}>
+          Project Contracts
+        </h1>
+        <p style={{ margin: 0, fontSize: 13.5, color: '#64748B' }}>
+          Contract terms, milestone schedule, and payment release history.
+        </p>
+      </div>
+
+      {/* Contract summary */}
+      <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '18px 22px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+        <div style={{ fontSize: 11.5, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Contract Summary</div>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, marginBottom: 4 }}>Project</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0F172A' }}>{project.project}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, marginBottom: 4 }}>Contract Type</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0F172A' }}>{project.contractType}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, marginBottom: 4 }}>Platform</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0F172A' }}>{project.platform}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, marginBottom: 4 }}>Started</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0F172A' }}>{project.started}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, marginBottom: 4 }}>Deadline</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: project.daysLeft < 7 ? '#DC2626' : '#0F172A' }}>{project.deadline}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, marginBottom: 4 }}>Total Budget</div>
+            <div style={{ fontSize: 13.5, fontWeight: 700, color: '#2563EB' }}>{formatPeso(project.totalBudget)}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Milestone schedule */}
+      <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+        <div style={{ padding: '16px 22px', borderBottom: '1px solid #F1F5F9', fontSize: 13, fontWeight: 700, color: '#334155' }}>Milestone Schedule</div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ background: '#F8FAFC' }}>
+                {['Phase', 'Milestone', 'Deadline', 'Payout', 'Status'].map(c => (
+                  <th key={c} style={{ padding: '9px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid #E2E8F0', whiteSpace: 'nowrap' }}>{c}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {project.phases.map((p, i) => {
+                const st = clientStatusOf(p.status)
+                const cfg = scheduleCfg[st]
+                return (
+                  <tr key={p.number} style={{ borderBottom: i < project.phases.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+                    <td style={{ padding: '11px 16px', fontWeight: 800, color: '#0F172A' }}>Sprint {p.number}</td>
+                    <td style={{ padding: '11px 16px', color: '#334155', fontWeight: 500 }}>{p.client.title}</td>
+                    <td style={{ padding: '11px 16px', color: '#64748B', whiteSpace: 'nowrap' }}>{p.client.deadline}</td>
+                    <td style={{ padding: '11px 16px', color: '#334155', fontWeight: 600, whiteSpace: 'nowrap' }}>{formatPeso(project.phasePayout)}</td>
+                    <td style={{ padding: '11px 16px' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 9px', borderRadius: 99, background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color, fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: cfg.color }} />
+                        {cfg.label}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Payment history */}
+      <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+        <div style={{ padding: '16px 22px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#334155' }}>Payment Release History</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#16A34A' }}>{formatPeso(project.paidToDate)} released</span>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ background: '#F8FAFC' }}>
+                {['Milestone', 'Approved On', 'Amount', 'Status'].map(c => (
+                  <th key={c} style={{ padding: '9px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid #E2E8F0', whiteSpace: 'nowrap' }}>{c}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {paidPhases.length === 0 && (
+                <tr>
+                  <td colSpan={4} style={{ padding: '16px', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>No milestone payments released yet.</td>
+                </tr>
+              )}
+              {paidPhases.map((p, i) => (
+                <tr key={p.number} style={{ borderBottom: i < paidPhases.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+                  <td style={{ padding: '11px 16px', fontWeight: 600, color: '#0F172A' }}>Sprint {p.number} — {p.client.title}</td>
+                  <td style={{ padding: '11px 16px', color: '#64748B', whiteSpace: 'nowrap' }}>{p.approvedAt}</td>
+                  <td style={{ padding: '11px 16px', color: '#334155', fontWeight: 700, whiteSpace: 'nowrap' }}>{formatPeso(project.phasePayout)}</td>
+                  <td style={{ padding: '11px 16px' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 9px', borderRadius: 99, background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#16A34A', fontSize: 11, fontWeight: 700 }}>
+                      <IconCheck size={10} /> Released
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -3539,9 +3796,11 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
   const [disputeNote, setDisputeNote] = useState('')
   const [feedbackMsg, setFeedbackMsg] = useState('')
   const [panelOpen, setPanelOpen] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
   const feedEndRef = useRef<HTMLDivElement>(null)
 
   const project = useProjectStore()
+  const profile = useClientProfile()
 
   const clientStatus = (s: SprintPhaseStatus): 'review' | 'completed' | 'disputed' | 'upcoming' => {
     if (s === 'completed') return 'completed'
@@ -3563,7 +3822,17 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
     daysOverdue: p.client.daysLeft < 0 ? Math.abs(p.client.daysLeft) : 2,
   }))
 
-  const messages = project.phases.find(p => p.number === 2)?.comments ?? []
+  const feedPhaseNum = project.phases.find(p => p.status === 'active' || p.status === 'in_review' || p.status === 'disputed')?.number
+    ?? project.phases.find(p => p.comments.length > 0)?.number
+    ?? 1
+  const feedPhase = project.phases.find(p => p.number === feedPhaseNum)
+  const messages = feedPhase?.comments ?? []
+  const feedStatusLabel = feedPhase
+    ? clientStatusOf(feedPhase.status) === 'completed' ? 'Completed'
+      : clientStatusOf(feedPhase.status) === 'disputed' ? 'Disputed'
+        : clientStatusOf(feedPhase.status) === 'upcoming' ? 'Upcoming'
+          : 'Active Sprint'
+    : ''
 
   function handleApprove(number: number) {
     approvePhase(number)
@@ -3575,7 +3844,7 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
   }
   function sendMessage() {
     if (!feedbackMsg.trim()) return
-    addComment(2, feedbackMsg, 'client')
+    addComment(feedPhaseNum, feedbackMsg, 'client')
     setFeedbackMsg('')
     setTimeout(() => feedEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80)
   }
@@ -3584,8 +3853,17 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
   const total = clientPhases.length
   const activePhase = clientPhases.find(p => p.status === 'review')
   const hasDispute = clientPhases.some(p => p.status === 'disputed')
+  const unreadNotifs = project.notifications.filter(n => !n.read)
 
   const stacked = isMobile || isTablet
+
+  const navTitle = clientNav === 'overview' ? 'Project Overview'
+    : clientNav === 'contracts' ? 'Project Contracts'
+      : clientNav === 'messages' ? 'Messages'
+        : clientNav === 'settings' ? 'Settings'
+          : 'Milestone Tracking'
+
+  const notifColor: Record<string, string> = { warning: '#D97706', success: '#16A34A', info: '#2563EB' }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#F8FAFC' }}>
@@ -3595,7 +3873,7 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
       )}
       {(isMobile ? sidebarOpen : true) && (
         <div style={isMobile ? { position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 50 } : {}}>
-          <ClientSidebar active={clientNav} onNav={id => { setClientNav(id); setSidebarOpen(false) }} collapsed={collapsed} />
+          <ClientSidebar active={clientNav} onNav={id => { setClientNav(id); setSidebarOpen(false) }} collapsed={collapsed} project={project} profile={profile} />
         </div>
       )}
 
@@ -3617,7 +3895,7 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
             )}
             <div>
               <div style={{ fontSize: 11, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Enterprise Client Portal</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>Milestone Tracking</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>{navTitle}</div>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -3641,21 +3919,102 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
                 {messages.length}
               </span>
             </button>
-            <button style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: 8, padding: '6px 8px', cursor: 'pointer', color: '#64748B', lineHeight: 0, position: 'relative' }}>
-              <IconBell size={16} />
-              <span style={{ position: 'absolute', top: 5, right: 5, width: 7, height: 7, borderRadius: '50%', background: '#DC2626', border: '1.5px solid #fff' }} />
-            </button>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setNotifOpen(v => !v)}
+                style={{
+                  background: notifOpen ? '#EFF6FF' : 'none', border: `1px solid ${notifOpen ? '#BFDBFE' : '#E2E8F0'}`,
+                  borderRadius: 8, padding: '6px 8px', cursor: 'pointer', color: '#64748B', lineHeight: 0, position: 'relative',
+                }}
+              >
+                <IconBell size={16} />
+                {unreadNotifs.length > 0 && (
+                  <span style={{
+                    position: 'absolute', top: -4, right: -4, minWidth: 15, height: 15, borderRadius: 99,
+                    background: '#DC2626', color: '#fff', border: '1.5px solid #fff',
+                    fontSize: 9, fontWeight: 700, lineHeight: '12px', textAlign: 'center',
+                    padding: '0 3px', boxSizing: 'border-box',
+                  }}>{unreadNotifs.length}</span>
+                )}
+              </button>
+              {notifOpen && (
+                <>
+                  <div onClick={() => setNotifOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 31 }} />
+                  <div style={{
+                    position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 340, maxWidth: '85vw',
+                    background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, zIndex: 32,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.14)', overflow: 'hidden',
+                  }}>
+                    <div style={{ padding: '13px 16px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <div>
+                        <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0F172A' }}>Notifications</div>
+                        <div style={{ fontSize: 11, color: '#64748B' }}>{unreadNotifs.length} unread</div>
+                      </div>
+                      {unreadNotifs.length > 0 && (
+                        <button onClick={markAllNotificationsRead} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563EB', fontSize: 12, fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div style={{ maxHeight: 340, overflowY: 'auto', padding: '8px 0' }}>
+                      {project.notifications.map(n => (
+                        <button
+                          key={n.id}
+                          onClick={() => markNotificationRead(n.id)}
+                          style={{
+                            display: 'flex', alignItems: 'flex-start', gap: 10, width: '100%', textAlign: 'left',
+                            padding: '10px 16px', border: 'none', background: n.read ? '#fff' : '#F8FAFC', cursor: 'pointer',
+                            fontFamily: 'Inter, sans-serif', borderLeft: `3px solid ${n.read ? 'transparent' : notifColor[n.type]}`,
+                          }}
+                        >
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: notifColor[n.type], flexShrink: 0, marginTop: 5 }} />
+                          <span style={{ flex: 1, minWidth: 0 }}>
+                            <span style={{ display: 'block', fontSize: 12.5, color: '#334155', lineHeight: 1.45 }}>{n.text}</span>
+                            <span style={{ display: 'block', fontSize: 10.5, color: '#94A3B8', marginTop: 3 }}>{n.time}{!n.read && ' · Unread'}</span>
+                          </span>
+                        </button>
+                      ))}
+                      {project.notifications.length === 0 && (
+                        <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 12.5, color: '#94A3B8' }}>You're all caught up.</div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
         <main style={{ flex: 1, padding: isMobile ? '20px 14px 100px' : '28px 28px 100px', display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+          {clientNav === 'overview' && (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <ClientOverview isMobile={isMobile} />
+            </div>
+          )}
+          {clientNav === 'contracts' && (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <ClientContracts isMobile={isMobile} />
+            </div>
+          )}
+          {(clientNav === 'messages' || clientNav === 'settings') && (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <DevStub
+                title={navTitle}
+                message={clientNav === 'messages'
+                  ? 'Private conversations with developers and collaborators will appear here.'
+                  : 'Manage your account, notifications, and company profile preferences.'}
+              />
+            </div>
+          )}
+          {clientNav === 'milestones' && (
+          <>
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
             {/* Project header */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
               <div>
                 <h1 style={{ margin: '0 0 6px', fontSize: isMobile ? 20 : 24, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em' }}>
-                  E-Commerce Inventory Portal
+                  {project.project}
                 </h1>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                   {/* Developer avatars */}
@@ -3710,7 +4069,7 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
                 },
                 {
                   label: 'Next Deadline',
-                  value: activePhase?.deadline ?? 'Aug 28, 2026',
+                  value: activePhase?.deadline ?? project.deadline,
                   icon: '📅', accent: '#D97706',
                 },
                 {
@@ -3996,7 +4355,7 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
               <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>Collaboration Feed</div>
-                  <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 1 }}>Sprint 2 · Active Sprint</div>
+                  <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 1 }}>Sprint {feedPhaseNum} · {feedStatusLabel}</div>
                 </div>
                 {stacked && (
                   <button onClick={() => setPanelOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', lineHeight: 0 }}>
@@ -4007,6 +4366,12 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
 
               {/* Messages */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 200 }}>
+                {messages.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '28px 12px', color: '#94A3B8', fontSize: 12.5, lineHeight: 1.6 }}>
+                    No messages yet for this sprint.<br />
+                    <span style={{ color: '#64748B' }}>Start the conversation below.</span>
+                  </div>
+                )}
                 {messages.map(msg => {
                   const isClient = msg.role === 'client'
                   return (
@@ -4068,6 +4433,8 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
                 </button>
               </div>
             </div>
+          )}
+          </>
           )}
         </main>
       </div>
@@ -4416,7 +4783,13 @@ function EnterpriseAnalyticsPage({ isMobile, isTablet, collapsed, sidebarOpen, s
                   <Tooltip
                     cursor={{ fill: '#F8FAFC' }}
                     contentStyle={tooltipStyle}
-                    formatter={(v: number) => [`${v}%`, 'Share']}
+                    // Recharts passes `ValueType` (number | string | array) which may be
+                    // undefined at runtime; coerce non-numeric payloads to 0 so the
+                    // tooltip always renders a valid percentage.
+                    formatter={(value) => {
+                      const v = typeof value === 'number' ? value : 0
+                      return [`${v}%`, 'Share']
+                    }}
                   />
                   <Bar dataKey="pct" radius={[0, 4, 4, 0]}>
                     {techStackData.map((entry, i) => (
@@ -4460,7 +4833,12 @@ function EnterpriseAnalyticsPage({ isMobile, isTablet, collapsed, sidebarOpen, s
                   <Tooltip
                     cursor={{ fill: '#F8FAFC' }}
                     contentStyle={tooltipStyle}
-                    formatter={(v: number) => [v, 'Projects']}
+                    // Guard against non-numeric/undefined payloads so the project
+                    // count in the tooltip never renders as NaN.
+                    formatter={(value) => {
+                      const v = typeof value === 'number' ? value : 0
+                      return [v, 'Projects']
+                    }}
                   />
                   <Bar dataKey="projects" radius={[4, 4, 0, 0]}>
                     {barangayData.map((entry, i) => (
@@ -4522,7 +4900,12 @@ function EnterpriseAnalyticsPage({ isMobile, isTablet, collapsed, sidebarOpen, s
                 />
                 <Tooltip
                   contentStyle={tooltipStyle}
-                  formatter={(v: number, name: string) => [v, name === 'bids' ? 'Bids Initiated' : 'Milestones Completed']}
+                  // Recharts formatter `value` can be a string/array/undefined even
+                  // when the dataKey is numeric; fall back to 0 for non-numbers.
+                  formatter={(value, name) => {
+                    const v = typeof value === 'number' ? value : 0
+                    return [v, name === 'bids' ? 'Bids Initiated' : 'Milestones Completed']
+                  }}
                 />
                 <Area
                   type="monotone" dataKey="bids"
@@ -4648,7 +5031,21 @@ export default function App() {
       </div>
 
       {page === 'auth' ? (
-        <AuthPage onSignedIn={email => { signInAs(email); setPage('developer'); setDevNav('dashboard') }} />
+        <AuthPage onSignedIn={(email, role) => {
+          const em = email.trim().toLowerCase()
+          const isClient = em === 'ernesto@apokonhardware.com.ph' || em === 'rvillanueva@davaofrutis.com.ph' || em === 'rcamacho@citymalltagum.com' || role === 'enterprise'
+          const isAdmin = em.endsWith('@psits.org.ph') || role === 'admin'
+          if (isClient) {
+            signInAsClient(email)
+            setPage('milestone')
+          } else if (isAdmin) {
+            setPage('admin')
+          } else {
+            signInAs(email)
+            setPage('developer')
+            setDevNav('dashboard')
+          }
+        }} />
       ) : page === 'developer' ? (
         <div style={{ display: 'flex' }}>
           {/* Mobile overlay */}
@@ -4670,7 +5067,7 @@ export default function App() {
             <main style={{ padding: isMobile ? '20px 16px 80px' : '32px 32px 80px' }}>
               <div style={{ maxWidth: 900, margin: '0 auto' }}>
                 {devNav === 'dashboard' ? (
-                  <DeveloperProfile isMobile={isMobile} isTablet={isTablet} />
+                  <DeveloperProfile isMobile={isMobile} />
                 ) : devNav === 'marketplace' ? (
                   <MarketplaceFeed isMobile={isMobile} />
                 ) : devNav === 'bids' ? (

@@ -290,7 +290,7 @@ const roleConfig: Record<Role, {
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
-export default function AuthPage({ onSignedIn }: { onSignedIn?: (email: string) => void } = {}) {
+export default function AuthPage({ onSignedIn }: { onSignedIn?: (email: string, role: Role) => void } = {}) {
   const [mode, setMode] = useState<'signin' | 'register'>('signin')
   const [role, setRole] = useState<Role>('student')
   const [showPassword, setShowPassword] = useState(false)
@@ -317,7 +317,7 @@ export default function AuthPage({ onSignedIn }: { onSignedIn?: (email: string) 
     }
     setError(null)
     setNotice('Sign in successful — redirecting to your dashboard…')
-    onSignedIn?.(signIn.email)
+    onSignedIn?.(signIn.email, role)
   }
 
   function handleRegister(e: React.FormEvent) {
