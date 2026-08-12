@@ -1,0 +1,10 @@
+{
+  "description": "Connect companies with students through a streamlined job-listing platform that simplifies recruitment and enhances career opportunities.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
