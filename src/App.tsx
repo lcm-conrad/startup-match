@@ -3,6 +3,7 @@ import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
+import AuthPage from './AuthPage'
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -4086,7 +4087,7 @@ function EnterpriseAnalyticsPage({ isMobile, isTablet, collapsed, sidebarOpen, s
 // ─── Root App ─────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [page, setPage] = useState<'developer' | 'admin' | 'sprint' | 'specform' | 'milestone' | 'analytics'>('analytics')
+  const [page, setPage] = useState<'auth' | 'developer' | 'admin' | 'sprint' | 'specform' | 'milestone' | 'analytics'>('auth')
   const [devNav, setDevNav] = useState('marketplace')
   const [adminNav, setAdminNav] = useState('verification')
   const [sprintNav, setSprintNav] = useState('sprint')
@@ -4113,6 +4114,7 @@ export default function App() {
         boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
       }}>
         {([
+          { id: 'auth',      label: 'Login & Registration' },
           { id: 'developer', label: 'Developer Profile' },
           { id: 'admin',     label: 'Admin — Verification Queue' },
           { id: 'sprint',    label: 'Sprint Dashboard' },
@@ -4133,7 +4135,9 @@ export default function App() {
         ))}
       </div>
 
-      {page === 'developer' ? (
+      {page === 'auth' ? (
+        <AuthPage />
+      ) : page === 'developer' ? (
         <div style={{ display: 'flex' }}>
           {/* Mobile overlay */}
           {isMobile && sidebarOpen && (
