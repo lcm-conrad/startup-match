@@ -4,6 +4,15 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import AuthPage from './AuthPage'
+import { useDevProfile, useDevBids, placeBid, signInAs, setAvailability, MARKETPLACE_PROJECTS } from './devProfile'
+import {
+  useProjectStore, submitPhase, resubmitPhase, reviseSubmission,
+  updateRepoLink, updatePrototypeLink, updateNotes,
+  addTask, completeTask, addComment,
+  approvePhase, disputePhase, markNotificationRead, markAllNotificationsRead, resetDemo,
+  formatPeso,
+} from './projectStore'
+import type { SprintPhaseStatus } from './projectStore'
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -1260,27 +1269,8 @@ const devNavItems = [
   { icon: IconSettings,  label: 'Settings',    id: 'settings' },
 ]
 
-const devProjects = [
-  { name: 'ERP Integration Portal',       client: 'Davao Fruits Corp.',     date: 'Mar 2025', status: 'Completed' },
-  { name: 'Logistics Tracking Dashboard', client: 'TagumLog Solutions',     date: 'Jan 2025', status: 'Completed' },
-  { name: 'HR Self-Service App',          client: 'Mindanao Agri Holdings', date: 'Nov 2024', status: 'Disputed'  },
-  { name: 'Inventory Management System',  client: 'CityMall Tagum',         date: 'Sep 2024', status: 'Completed' },
-  { name: 'Customer Loyalty Platform',    client: 'Metro Tagum Coop',       date: 'Jul 2024', status: 'Completed' },
-]
-const devSkills  = ['Next.js', 'TypeScript', 'React', 'PostgreSQL', 'Tailwind CSS', 'Firebase', 'Node.js', 'REST APIs']
-const devTools   = ['Vite', 'Prisma', 'Docker', 'Figma', 'GitHub Actions', 'Vercel', 'Supabase', 'Redis']
-const devLinks   = [
-  { icon: <IconGithub size={18} />,   label: 'github.com/marcoramirez-dev', href: '#' },
-  { icon: <IconLinkedin size={18} />, label: 'linkedin.com/in/marcoramirez', href: '#' },
-  { icon: <IconGlobe size={18} />,    label: 'marcoramirez.dev',            href: '#' },
-]
-const peerReviews = [
-  { name: 'Kristine Reyes', role: 'Co-developer, TagumLog',    rating: 5, comment: 'Outstanding problem-solver. Delivered the tracking module two days early and the code was spotless.' },
-  { name: 'Rodel Santos',   role: 'Project Lead, PSITS Chapter', rating: 4, comment: 'Great communicator, always kept the team aligned. Minor delays on documentation.' },
-  { name: 'Angela Torres',  role: 'Co-developer, Agri Holdings', rating: 4, comment: 'Solid TypeScript skills. Would definitely collaborate again.' },
-]
-
 function DevSidebar({ active, onNav, collapsed }: { active: string; onNav: (id: string) => void; collapsed: boolean }) {
+  const profile = useDevProfile()
   return (
     <aside style={{
       width: collapsed ? 72 : 260, minHeight: '100vh', background: '#fff',
@@ -1333,13 +1323,15 @@ function DevSidebar({ active, onNav, collapsed }: { active: string; onNav: (id: 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-              background: 'linear-gradient(135deg, #DBEAFE, #BFDBFE)',
+              background: `linear-gradient(135deg, ${profile.avatarColors[0]}, ${profile.avatarColors[1]})`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 12, fontWeight: 700, color: '#2563EB',
-            }}>MR</div>
+              fontSize: 12, fontWeight: 700, color: '#fff',
+            }}>{profile.initials}</div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>Marco Ramirez</div>
-              <div style={{ fontSize: 11, color: '#64748B' }}>Student Developer</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>{profile.name}</div>
+              <div style={{ fontSize: 11, color: profile.availability ? '#16A34A' : '#64748B', fontWeight: 600 }}>
+                {profile.availability ? '● Open to Work' : '● Not Open to Work'}
+              </div>
             </div>
           </div>
         </div>
@@ -1351,7 +1343,9 @@ function DevSidebar({ active, onNav, collapsed }: { active: string; onNav: (id: 
 function DevStatusPill({ status }: { status: string }) {
   const cfg = status === 'Completed'
     ? { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0' }
-    : { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A' }
+    : status === 'Active'
+      ? { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE' }
+      : { bg: '#FFFBEB', color: '#D97706', border: '#FDE68A' }
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 4,
@@ -1386,10 +1380,18 @@ function Stars({ rating }: { rating: number }) {
 }
 
 function DeveloperProfile({ isMobile, isTablet }: { isMobile: boolean; isTablet: boolean }) {
+  const p = useDevProfile()
+  const verified = p.verificationStatus === 'Verified'
+  const linkIcons: Record<string, React.ReactNode> = {
+    github: <IconGithub size={18} />,
+    linkedin: <IconLinkedin size={18} />,
+    globe: <IconGlobe size={18} />,
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div style={{ fontSize: 12, color: '#94A3B8', display: 'flex', gap: 6, alignItems: 'center' }}>
-        <span style={{ color: '#2563EB', fontWeight: 500, cursor: 'pointer' }}>Marketplace</span>
+        <span style={{ color: '#2563EB', fontWeight: 500, cursor: 'pointer' }}>Dashboard</span>
         <span>›</span><span>Developer Profile</span>
       </div>
 
@@ -1399,27 +1401,49 @@ function DeveloperProfile({ isMobile, isTablet }: { isMobile: boolean; isTablet:
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <div style={{
               width: 96, height: 96, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 50%, #93C5FD 100%)',
+              background: `linear-gradient(135deg, ${p.avatarColors[0]} 0%, ${p.avatarColors[1]} 60%, ${p.avatarColors[0]} 100%)`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 28, fontWeight: 700, color: '#1D4ED8',
+              fontSize: 28, fontWeight: 700, color: '#fff',
               border: '3px solid #fff', boxShadow: '0 0 0 2px #E2E8F0',
-            }}>MR</div>
+            }}>{p.initials}</div>
             <div style={{
               position: 'absolute', bottom: 2, right: 2, width: 22, height: 22, borderRadius: '50%',
-              background: '#16A34A', border: '2.5px solid #fff',
+              background: verified ? '#16A34A' : '#D97706', border: '2.5px solid #fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}><IconCheck size={11} /></div>
           </div>
           <div style={{ flex: 1, textAlign: isMobile ? 'center' : 'left' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: isMobile ? 'center' : 'flex-start', marginBottom: 4 }}>
-              <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.03em' }}>Marco Ramirez</h1>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 99, background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#16A34A', fontSize: 11, fontWeight: 700 }}>
-                <IconCheck size={10} /> PSITS VERIFIED
-              </span>
+              <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.03em' }}>{p.name}</h1>
+              {verified ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 99, background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#16A34A', fontSize: 11, fontWeight: 700 }}>
+                  <IconCheck size={10} /> PSITS VERIFIED
+                </span>
+              ) : (
+                <StatusPill status={p.verificationStatus} />
+              )}
+              <button
+                onClick={() => setAvailability(!p.availability)}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '3px 10px', borderRadius: 99, cursor: 'pointer',
+                  background: p.availability ? '#F0FDF4' : '#F1F5F9',
+                  border: `1px solid ${p.availability ? '#BBF7D0' : '#E2E8F0'}`,
+                  color: p.availability ? '#16A34A' : '#64748B',
+                  fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 700,
+                }}
+              >
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.availability ? '#16A34A' : '#94A3B8' }} />
+                {p.availability ? 'Open to Work' : 'Not Open to Work'}
+              </button>
             </div>
-            <p style={{ margin: '0 0 12px', fontSize: 14, color: '#64748B', fontWeight: 500 }}>BS Information Technology — University of Mindanao, Tagum</p>
+            <p style={{ margin: '0 0 12px', fontSize: 14, color: '#64748B', fontWeight: 500 }}>{p.title} — {p.school}</p>
             <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: isMobile ? 'center' : 'flex-start' }}>
-              {[{ value: '12', label: 'Projects Completed' }, { value: '4.7', label: 'Peer Validation Score' }, { value: '98%', label: 'Response Rate' }].map(stat => (
+              {[
+                { value: String(p.stats.projectsCompleted), label: 'Projects Completed' },
+                { value: p.stats.peerScore, label: 'Peer Validation Score' },
+                { value: p.stats.responseRate, label: 'Response Rate' },
+              ].map(stat => (
                 <div key={stat.label} style={{ textAlign: isMobile ? 'center' : 'left' }}>
                   <div style={{ fontSize: 20, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>{stat.value}</div>
                   <div style={{ fontSize: 11, color: '#64748B', fontWeight: 500, marginTop: 2 }}>{stat.label}</div>
@@ -1438,20 +1462,20 @@ function DeveloperProfile({ isMobile, isTablet }: { isMobile: boolean; isTablet:
         <Card style={{ padding: 24 }}>
           <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: '#0F172A' }}>Technical Proficiencies</h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-            {devSkills.map(s => <DevSkillTag key={s} label={s} />)}
+            {p.skills.map(s => <DevSkillTag key={s} label={s} />)}
           </div>
           <div style={{ fontSize: 12, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Frameworks & Tools</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{devTools.map(t => <DevSkillTag key={t} label={t} muted />)}</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{p.tools.map(t => <DevSkillTag key={t} label={t} muted />)}</div>
         </Card>
         <Card style={{ padding: 24 }}>
           <h2 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 700, color: '#0F172A' }}>Links & Repositories</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {devLinks.map(link => (
-              <a key={link.label} href={link.href} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 8, color: '#334155', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}
+            {p.links.map(link => (
+              <a key={link.label} href={link.href} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 8, color: '#334155', textDecoration: 'none', fontSize: 14, fontWeight: 500 }}
                 onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
-                <span style={{ color: '#64748B', flexShrink: 0 }}>{link.icon}</span>
+                <span style={{ color: '#64748B', flexShrink: 0 }}>{linkIcons[link.icon]}</span>
                 <span style={{ flex: 1 }}>{link.label}</span>
                 <IconExternal size={13} />
               </a>
@@ -1463,7 +1487,7 @@ function DeveloperProfile({ isMobile, isTablet }: { isMobile: boolean; isTablet:
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0F172A' }}>Project Fulfillment History</h2>
-          <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>{devProjects.length} projects</span>
+          <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>{p.projects.length} projects</span>
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -1475,17 +1499,17 @@ function DeveloperProfile({ isMobile, isTablet }: { isMobile: boolean; isTablet:
               </tr>
             </thead>
             <tbody>
-              {devProjects.map((p, i) => (
-                <tr key={i} style={{ borderBottom: i < devProjects.length - 1 ? '1px solid #F1F5F9' : 'none' }}
+              {p.projects.map((proj, i) => (
+                <tr key={proj.id} style={{ borderBottom: i < p.projects.length - 1 ? '1px solid #F1F5F9' : 'none' }}
                   onMouseEnter={e => (e.currentTarget.style.background = '#FAFCFF')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <td style={{ padding: '14px 24px', fontWeight: 600, color: '#0F172A' }}>{p.name}</td>
-                  <td style={{ padding: '14px 24px', color: '#475569' }}>{p.client}</td>
-                  <td style={{ padding: '14px 24px', color: '#64748B', whiteSpace: 'nowrap' }}>{p.date}</td>
-                  <td style={{ padding: '14px 24px' }}><DevStatusPill status={p.status} /></td>
+                  <td style={{ padding: '14px 24px', fontWeight: 600, color: '#0F172A' }}>{proj.name}</td>
+                  <td style={{ padding: '14px 24px', color: '#475569' }}>{proj.client}</td>
+                  <td style={{ padding: '14px 24px', color: '#64748B', whiteSpace: 'nowrap' }}>{proj.date}</td>
+                  <td style={{ padding: '14px 24px' }}><DevStatusPill status={proj.status} /></td>
                   <td style={{ padding: '14px 24px' }}>
-                    <a href="#" style={{ color: '#2563EB', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>View Details</a>
+                    <a href="#" onClick={e => e.preventDefault()} style={{ color: '#2563EB', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>View Details</a>
                   </td>
                 </tr>
               ))}
@@ -1498,7 +1522,7 @@ function DeveloperProfile({ isMobile, isTablet }: { isMobile: boolean; isTablet:
         <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#0F172A' }}>Peer Validation</h2>
         <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', marginBottom: 24, alignItems: 'center' }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 52, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.04em', lineHeight: 1 }}>4.7</div>
+            <div style={{ fontSize: 52, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.04em', lineHeight: 1 }}>{p.stats.peerScore}</div>
             <Stars rating={5} />
             <div style={{ fontSize: 12, color: '#64748B', marginTop: 4, fontWeight: 500 }}>from 23 reviews</div>
           </div>
@@ -1515,8 +1539,8 @@ function DeveloperProfile({ isMobile, isTablet }: { isMobile: boolean; isTablet:
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {peerReviews.map((r, i) => (
-            <div key={i} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '14px 16px' }}>
+          {p.reviews.map(r => (
+            <div key={r.id} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '14px 16px' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>{r.name}</div>
@@ -1537,6 +1561,124 @@ function DeveloperProfile({ isMobile, isTablet }: { isMobile: boolean; isTablet:
   )
 }
 
+// ─── Developer Marketplace & Bids ─────────────────────────────────────────────
+
+function MarketplaceFeed({ isMobile }: { isMobile: boolean }) {
+  const [placed, setPlaced] = useState<Record<string, boolean>>({})
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 4 }}>
+        <div>
+          <h1 style={{ margin: '0 0 6px', fontSize: 24, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.03em' }}>Project Marketplace</h1>
+          <p style={{ margin: 0, fontSize: 13.5, color: '#64748B' }}>Verified projects posted by local MSMEs. Place a structured bid to get started.</p>
+        </div>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 13px', borderRadius: 99,
+          background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#2563EB', fontSize: 12.5, fontWeight: 700,
+        }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#2563EB' }} />
+          {MARKETPLACE_PROJECTS.length} Open Projects
+        </span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
+        {MARKETPLACE_PROJECTS.map(project => (
+          <Card key={project.id} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.01em' }}>{project.title}</div>
+              <div style={{ fontSize: 12.5, color: '#64748B', marginTop: 3 }}>
+                <span style={{ fontWeight: 600, color: '#334155' }}>{project.business}</span> · {project.barangay}
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+              {project.tags.map(t => <SkillTag key={t} label={t} />)}
+            </div>
+            <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
+              {[{ label: 'Budget', value: project.budget }, { label: 'Deadline', value: project.deadline }, { label: 'Phases', value: String(project.phases) }].map(stat => (
+                <div key={stat.label}>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{stat.label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A', marginTop: 3 }}>{stat.value}</div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => { placeBid(project.id); setPlaced(s => ({ ...s, [project.id]: true })) }}
+              disabled={placed[project.id]}
+              style={{
+                marginTop: 'auto', height: 40, borderRadius: 8, cursor: placed[project.id] ? 'default' : 'pointer',
+                background: placed[project.id] ? '#F0FDF4' : '#2563EB',
+                color: placed[project.id] ? '#16A34A' : '#fff',
+                border: placed[project.id] ? '1px solid #BBF7D0' : 'none',
+                fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}
+            >
+              {placed[project.id]
+                ? (<><IconCheck size={12} /> Bid Placed</>)
+                : (<>Place Bid <IconChevron size={14} dir="right" /></>)}
+            </button>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function BidsView() {
+  const bids = useDevBids()
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <h1 style={{ margin: '0 0 6px', fontSize: 24, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.03em' }}>My Bids</h1>
+        <p style={{ margin: 0, fontSize: 13.5, color: '#64748B' }}>Track the status of proposals you have placed on marketplace projects.</p>
+      </div>
+      {bids.length === 0 ? (
+        <Card><EmptyState message="You have not placed any bids yet. Browse the marketplace to get started." /></Card>
+      ) : (
+        <Card style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: '#F8FAFC' }}>
+                  {['Project', 'Client', 'Bid Amount', 'Placed', 'Status'].map(h => (
+                    <th key={h} style={{ padding: '10px 20px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid #E2E8F0', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {bids.map((bid, i) => (
+                  <tr key={bid.id} style={{ borderBottom: i < bids.length - 1 ? '1px solid #F1F5F9' : 'none' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#FAFCFF')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <td style={{ padding: '14px 20px', fontWeight: 600, color: '#0F172A' }}>{bid.project}</td>
+                    <td style={{ padding: '14px 20px', color: '#475569' }}>{bid.client}</td>
+                    <td style={{ padding: '14px 20px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap' }}>{bid.amount}</td>
+                    <td style={{ padding: '14px 20px', color: '#64748B', whiteSpace: 'nowrap' }}>{bid.placedAt}</td>
+                    <td style={{ padding: '14px 20px' }}><StatusPill status={bid.status} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+function DevStub({ title, message }: { title: string; message: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div>
+        <h1 style={{ margin: '0 0 6px', fontSize: 24, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.03em' }}>{title}</h1>
+        <p style={{ margin: 0, fontSize: 13.5, color: '#64748B' }}>{message}</p>
+      </div>
+      <Card><EmptyState message={`${title} is coming in a future iteration.`} /></Card>
+    </div>
+  )
+}
+
 // ─── Sprint Dashboard ──────────────────────────────────────────────────────────
 
 const sprintNavItems = [
@@ -1545,54 +1687,6 @@ const sprintNavItems = [
   { icon: IconBids,      label: 'Bids',             id: 'bids' },
   { icon: IconMessages,  label: 'Messages',         id: 'messages' },
   { icon: IconSettings,  label: 'Settings',         id: 'settings' },
-]
-
-const sprintData = {
-  project: 'E-Commerce Inventory Portal',
-  client: 'Apokon Hardware MSME',
-  totalPhases: 4,
-  completedPhases: 2,
-  deadline: 'Aug 28, 2025',
-  daysLeft: 26,
-  phases: [
-    {
-      id: 'sp1', number: 1, title: 'UI/UX Wireframing & Prototyping', status: 'completed',
-      deadline: 'Jun 20, 2025', daysLeft: 0,
-      description: 'Deliver high-fidelity Figma prototype covering all primary user flows: product catalog, inventory management, and POS checkout.',
-      repoLink: 'https://github.com/marcoramirez-dev/apokon-ecommerce/releases/tag/v1.0-wireframes',
-      updates: 'All 18 screens delivered via Figma. Client approved with minor color palette revisions on Jun 18.',
-      approvedDate: 'Jun 21, 2025',
-    },
-    {
-      id: 'sp2', number: 2, title: 'Backend Auth & Database Schema', status: 'active',
-      deadline: 'Aug 5, 2025', daysLeft: 3,
-      description: 'Implement JWT-based authentication (login, role management for admin/cashier/inventory), PostgreSQL schema for products, stock levels, and transactions. Deploy to staging environment on Railway.',
-      repoLink: '',
-      updates: '',
-    },
-    {
-      id: 'sp3', number: 3, title: 'Inventory CRUD & POS Module', status: 'upcoming',
-      deadline: 'Aug 18, 2025', daysLeft: 16,
-      description: 'Build the full inventory CRUD interface, barcode scanner integration, and POS transaction flow with receipt generation.',
-      repoLink: '',
-      updates: '',
-    },
-    {
-      id: 'sp4', number: 4, title: 'Reports, Testing & Deployment', status: 'upcoming',
-      deadline: 'Aug 28, 2025', daysLeft: 26,
-      description: 'Generate sales and inventory reports (PDF export), conduct UAT with client, deploy to production on Vercel + Supabase.',
-      repoLink: '',
-      updates: '',
-    },
-  ],
-}
-
-const notifications = [
-  { id: 'n1', type: 'warning', time: '2 hours ago', text: 'Deadline Reminder: Sprint 2 deliverable is due in 48 hours. Submit your GitHub repository link before Aug 5.' },
-  { id: 'n2', type: 'success', time: 'Jul 29',       text: 'Milestone Approved: Client verified Phase 1 — UI/UX Wireframing submission. Phase score: 5/5.' },
-  { id: 'n3', type: 'info',    time: 'Jul 27',       text: 'Message from Client: "Looking forward to the backend demo. Please confirm staging URL by Aug 3."' },
-  { id: 'n4', type: 'warning', time: 'Jul 26',       text: 'Sprint 2 progress is at 60%. Automated check suggests 2 remaining tasks before submission.' },
-  { id: 'n5', type: 'success', time: 'Jun 21',       text: 'Contract Milestone Payment released for Sprint 1: ₱4,500 credited to your wallet.' },
 ]
 
 const stakeholders = [
@@ -1609,6 +1703,8 @@ const notifBorder = { warning: '#FDE68A', success: '#BBF7D0', info: '#BFDBFE' }
 const notifIcon  = { warning: '⚠️', success: '✅', info: '💬' }
 
 function SprintSidebar({ active, onNav, collapsed }: { active: string; onNav: (id: string) => void; collapsed: boolean }) {
+  const project = useProjectStore()
+  const profile = useDevProfile()
   return (
     <aside style={{
       width: collapsed ? 72 : 260, minHeight: '100vh', background: '#fff',
@@ -1638,8 +1734,8 @@ function SprintSidebar({ active, onNav, collapsed }: { active: string; onNav: (i
       {!collapsed && (
         <div style={{ margin: '12px 16px 4px', padding: '10px 12px', background: '#F0F7FF', border: '1px solid #BFDBFE', borderRadius: 10 }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: '#2563EB', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Active Project</div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: '#0F172A', lineHeight: 1.3 }}>E-Commerce Inventory Portal</div>
-          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>Apokon Hardware MSME</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: '#0F172A', lineHeight: 1.3 }}>{project.project}</div>
+          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{project.client}</div>
         </div>
       )}
 
@@ -1670,9 +1766,9 @@ function SprintSidebar({ active, onNav, collapsed }: { active: string; onNav: (i
       {!collapsed && (
         <div style={{ padding: '14px 18px', borderTop: '1px solid #F1F5F9' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, #DBEAFE, #BFDBFE)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#2563EB' }}>MR</div>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: `linear-gradient(135deg, ${profile.avatarColors[0]}, ${profile.avatarColors[0]})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: profile.avatarColors[1] }}>{profile.initials}</div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>Marco Ramirez</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#0F172A' }}>{profile.name}</div>
               <div style={{ fontSize: 11, color: '#16A34A', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#16A34A', display: 'inline-block' }} />
                 Active Sprint
@@ -1686,19 +1782,61 @@ function SprintSidebar({ active, onNav, collapsed }: { active: string; onNav: (i
 }
 
 function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: boolean }) {
-  const [expandedPhase, setExpandedPhase] = useState<string>('sp2')
-  const [repoLinks, setRepoLinks] = useState<Record<string, string>>({ sp2: '' })
-  const [progressNotes, setProgressNotes] = useState<Record<string, string>>({ sp2: '' })
-  const [submitted, setSubmitted] = useState<Record<string, boolean>>({})
+  const project = useProjectStore()
+  const profile = useDevProfile()
+  const [expandedPhase, setExpandedPhase] = useState<number | null>(2)
+  const [taskInput, setTaskInput] = useState<Record<number, string>>({})
+  const [commentInput, setCommentInput] = useState<Record<number, string>>({})
   const stacked = isMobile || isTablet
 
-  const pct = Math.round((sprintData.completedPhases / sprintData.totalPhases) * 100)
+  const phases = project.phases
+  const completedPhases = phases.filter(p => p.status === 'completed').length
+  const pct = Math.round((completedPhases / project.totalPhases) * 100)
 
-  const phaseStatusCfg = {
+  const phaseStatusCfg: Record<SprintPhaseStatus, { bg: string; color: string; border: string; label: string }> = {
     completed: { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0', label: 'Completed' },
     active:    { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', label: 'Active Sprint' },
+    in_review: { bg: '#EFF6FF', color: '#2563EB', border: '#93C5FD', label: 'Under Review' },
+    disputed:  { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Needs Revision' },
+    revision:  { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Needs Revision' },
     upcoming:  { bg: '#F8FAFC', color: '#94A3B8', border: '#E2E8F0', label: 'Upcoming' },
   }
+
+  const velocity = {
+    completed: phases.filter(p => p.status === 'completed').length,
+    inReview:  phases.filter(p => p.status === 'in_review' || p.status === 'revision').length,
+    onTrack:   phases.filter(p => p.status === 'active').length,
+    atRisk:    phases.filter(p => p.status === 'disputed').length,
+  }
+
+  const dueLabel = (daysLeft: number, status: SprintPhaseStatus) => {
+    if (status === 'completed') return '✅ Delivered'
+    if (daysLeft < 0) return `Overdue by ${Math.abs(daysLeft)}d`
+    return `Due in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`
+  }
+
+  const postComment = (number: number) => {
+    const text = (commentInput[number] ?? '').trim()
+    if (!text) return
+    addComment(number, text, 'developer')
+    setCommentInput(s => ({ ...s, [number]: '' }))
+  }
+
+  const addPhaseTask = (number: number) => {
+    const label = (taskInput[number] ?? '').trim()
+    if (!label) return
+    addTask(number, label)
+    setTaskInput(s => ({ ...s, [number]: '' }))
+  }
+
+  const burndownData = phases.map(p => {
+    const done = p.tasks.filter(t => t.done).length
+    return { name: `S${p.number}`, done, remaining: p.tasks.length - done }
+  })
+
+  const paidPhases = phases.filter(p => p.status === 'completed')
+  const paidPct = Math.round((project.paidToDate / project.totalBudget) * 100)
+  const unreadNotifs = project.notifications.filter(n => !n.read)
 
   return (
     <div style={{ display: 'flex', flexDirection: stacked ? 'column' : 'row', gap: 20, alignItems: 'flex-start' }}>
@@ -1713,7 +1851,7 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 5 }}>
                 <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>
-                  {sprintData.project}
+                  {project.project}
                 </h2>
                 {/* In Progress pill */}
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 11px', borderRadius: 99, background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#2563EB', fontSize: 11.5, fontWeight: 700 }}>
@@ -1726,19 +1864,19 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
                   <path d="M7 1.5C4 1.5 1.5 4 1.5 7S4 12.5 7 12.5 12.5 10 12.5 7 10 1.5 7 1.5z" stroke="#94A3B8" strokeWidth="1.2" />
                   <path d="M7 4v3l2 2" stroke="#94A3B8" strokeWidth="1.2" strokeLinecap="round" />
                 </svg>
-                Client: <span style={{ fontWeight: 600, color: '#334155' }}>{sprintData.client}</span>
+                Client: <span style={{ fontWeight: 600, color: '#334155' }}>{project.client}</span>
                 <span style={{ color: '#CBD5E1' }}>·</span>
-                <span>Due <span style={{ fontWeight: 600, color: sprintData.daysLeft < 7 ? '#DC2626' : '#334155' }}>{sprintData.deadline}</span></span>
+                <span>Due <span style={{ fontWeight: 600, color: project.daysLeft < 7 ? '#DC2626' : '#334155' }}>{project.deadline}</span></span>
               </div>
             </div>
             {/* Stat chips */}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <div style={{ textAlign: 'center', padding: '8px 16px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10 }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em' }}>{sprintData.completedPhases}/{sprintData.totalPhases}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.03em' }}>{completedPhases}/{project.totalPhases}</div>
                 <div style={{ fontSize: 11, color: '#64748B', fontWeight: 500 }}>Phases Done</div>
               </div>
-              <div style={{ textAlign: 'center', padding: '8px 16px', background: sprintData.daysLeft < 7 ? '#FEF2F2' : '#F8FAFC', border: `1px solid ${sprintData.daysLeft < 7 ? '#FECACA' : '#E2E8F0'}`, borderRadius: 10 }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: sprintData.daysLeft < 7 ? '#DC2626' : '#0F172A', letterSpacing: '-0.03em' }}>{sprintData.daysLeft}d</div>
+              <div style={{ textAlign: 'center', padding: '8px 16px', background: project.daysLeft < 7 ? '#FEF2F2' : '#F8FAFC', border: `1px solid ${project.daysLeft < 7 ? '#FECACA' : '#E2E8F0'}`, borderRadius: 10 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: project.daysLeft < 7 ? '#DC2626' : '#0F172A', letterSpacing: '-0.03em' }}>{project.daysLeft}d</div>
                 <div style={{ fontSize: 11, color: '#64748B', fontWeight: 500 }}>Days Left</div>
               </div>
             </div>
@@ -1748,7 +1886,7 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>
-                Phase {sprintData.completedPhases} of {sprintData.totalPhases} Completed
+                Phase {completedPhases} of {project.totalPhases} Completed
               </span>
               <span style={{ fontSize: 14, fontWeight: 800, color: '#2563EB', letterSpacing: '-0.02em' }}>{pct}%</span>
             </div>
@@ -1761,8 +1899,8 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
             </div>
             {/* Phase tick marks */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-              {sprintData.phases.map((p, i) => (
-                <span key={p.id} style={{ fontSize: 10.5, fontWeight: 600, color: i < sprintData.completedPhases ? '#2563EB' : '#CBD5E1' }}>
+              {phases.map(p => (
+                <span key={p.number} style={{ fontSize: 10.5, fontWeight: 600, color: p.status === 'completed' ? '#2563EB' : '#CBD5E1' }}>
                   S{p.number}
                 </span>
               ))}
@@ -1774,26 +1912,30 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
         <Card style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '18px 24px 14px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>Sprint Milestones</h2>
-            <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>4 phases · Agile</span>
+            <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>{phases.length} phases · Agile</span>
           </div>
 
           <div>
-            {sprintData.phases.map((phase, idx) => {
+            {phases.map((phase, idx) => {
               const cfg = phaseStatusCfg[phase.status]
-              const isExpanded = expandedPhase === phase.id
+              const isExpanded = expandedPhase === phase.number
               const isActive = phase.status === 'active'
               const isCompleted = phase.status === 'completed'
-              const isLast = idx === sprintData.phases.length - 1
+              const isRevision = phase.status === 'disputed' || phase.status === 'revision'
+              const isInReview = phase.status === 'in_review'
+              const isLast = idx === phases.length - 1
+              const doneCount = phase.tasks.filter(t => t.done).length
+              const hasRepo = phase.dev.repoLink.trim().length > 0
 
               return (
-                <div key={phase.id} style={{ borderBottom: isLast ? 'none' : '1px solid #F1F5F9' }}>
+                <div key={phase.number} style={{ borderBottom: isLast ? 'none' : '1px solid #F1F5F9' }}>
                   {/* Accordion header */}
                   <button
-                    onClick={() => setExpandedPhase(isExpanded ? '' : phase.id)}
+                    onClick={() => setExpandedPhase(isExpanded ? null : phase.number)}
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: 14,
                       padding: '16px 24px', background: isExpanded ? '#FAFCFF' : 'transparent',
-                      border: 'none', cursor: isCompleted || isActive ? 'pointer' : 'default',
+                      border: 'none', cursor: 'pointer',
                       textAlign: 'left', transition: 'background 0.12s', fontFamily: 'Inter, sans-serif',
                     }}
                     onMouseEnter={e => { if (!isExpanded) (e.currentTarget as HTMLButtonElement).style.background = '#FAFCFF' }}
@@ -1802,33 +1944,45 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
                     {/* Phase number circle */}
                     <div style={{
                       width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                      background: isCompleted ? '#F0FDF4' : isActive ? '#EFF6FF' : '#F8FAFC',
-                      border: `1.5px solid ${isCompleted ? '#BBF7D0' : isActive ? '#BFDBFE' : '#E2E8F0'}`,
+                      background: isCompleted ? '#F0FDF4' : isActive || isInReview ? '#EFF6FF' : isRevision ? '#FEF2F2' : '#F8FAFC',
+                      border: `1.5px solid ${isCompleted ? '#BBF7D0' : isActive || isInReview ? '#BFDBFE' : isRevision ? '#FECACA' : '#E2E8F0'}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: isCompleted ? '#16A34A' : isActive ? '#2563EB' : '#CBD5E1',
+                      color: isCompleted ? '#16A34A' : isActive || isInReview ? '#2563EB' : isRevision ? '#DC2626' : '#CBD5E1',
                     }}>
                       {isCompleted
                         ? <IconCheck size={14} />
-                        : <span style={{ fontSize: 13, fontWeight: 700 }}>{phase.number}</span>
+                        : isRevision
+                          ? <span style={{ fontSize: 12 }}>⚠️</span>
+                          : <span style={{ fontSize: 13, fontWeight: 700 }}>{phase.number}</span>
                       }
                     </div>
 
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         <span style={{ fontSize: 14, fontWeight: 600, color: phase.status === 'upcoming' ? '#94A3B8' : '#0F172A' }}>
-                          Sprint {phase.number}: {phase.title}
+                          Sprint {phase.number}: {phase.dev.title}
                         </span>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 99, background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color, fontSize: 11, fontWeight: 700 }}>
                           {cfg.label}
                         </span>
-                        {isActive && phase.daysLeft <= 5 && (
+                        {isActive && phase.dev.daysLeft <= 5 && (
                           <span style={{ fontSize: 11, fontWeight: 700, color: '#DC2626', background: '#FEF2F2', border: '1px solid #FECACA', padding: '2px 8px', borderRadius: 99 }}>
-                            Due in {phase.daysLeft}d
+                            Due in {phase.dev.daysLeft}d
+                          </span>
+                        )}
+                        {isRevision && (
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#D97706', background: '#FFFBEB', border: '1px solid #FDE68A', padding: '2px 8px', borderRadius: 99 }}>
+                            Revisions needed
+                          </span>
+                        )}
+                        {phase.tasks.length > 0 && (
+                          <span style={{ fontSize: 11, fontWeight: 600, color: '#64748B', background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '2px 8px', borderRadius: 99 }}>
+                            {doneCount}/{phase.tasks.length} tasks
                           </span>
                         )}
                       </div>
                       <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>
-                        {isCompleted ? `Approved ${phase.approvedDate}` : `Deadline: ${phase.deadline}`}
+                        {isCompleted ? `Approved ${phase.approvedAt}` : `Deadline: ${phase.dev.deadline}`}
                       </div>
                     </div>
 
@@ -1846,7 +2000,7 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
                         <div>
                           <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Milestone Target</div>
                           <p style={{ margin: 0, fontSize: 13.5, color: '#334155', lineHeight: 1.6, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 8, padding: '12px 14px' }}>
-                            {phase.description}
+                            {phase.dev.description}
                           </p>
                         </div>
 
@@ -1854,19 +2008,32 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
                         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                           <div style={{ flex: 1, minWidth: 160, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 8, padding: '12px 14px' }}>
                             <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Deadline</div>
-                            <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>{phase.deadline}</div>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A' }}>{phase.dev.deadline}</div>
                           </div>
                           <div style={{
                             flex: 1, minWidth: 160, borderRadius: 8, padding: '12px 14px',
-                            background: isActive && phase.daysLeft <= 3 ? '#FEF2F2' : '#fff',
-                            border: `1px solid ${isActive && phase.daysLeft <= 3 ? '#FECACA' : '#E2E8F0'}`,
+                            background: (isActive || isInReview || isRevision) && phase.dev.daysLeft <= 3 ? '#FEF2F2' : '#fff',
+                            border: `1px solid ${(isActive || isInReview || isRevision) && phase.dev.daysLeft <= 3 ? '#FECACA' : '#E2E8F0'}`,
                           }}>
                             <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Countdown</div>
-                            <div style={{ fontSize: 14, fontWeight: 700, color: isActive && phase.daysLeft <= 3 ? '#DC2626' : '#0F172A' }}>
-                              {isCompleted ? '✅ Delivered' : `Due in ${phase.daysLeft} day${phase.daysLeft !== 1 ? 's' : ''}`}
+                            <div style={{ fontSize: 14, fontWeight: 700, color: (isActive || isInReview || isRevision) && phase.dev.daysLeft <= 3 ? '#DC2626' : '#0F172A' }}>
+                              {dueLabel(phase.dev.daysLeft, phase.status)}
                             </div>
                           </div>
                         </div>
+
+                        {/* Needs revision banner */}
+                        {isRevision && (
+                          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 14px', background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 10 }}>
+                            <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: '#B45309', marginBottom: 3 }}>Client requested revisions</div>
+                              <p style={{ margin: 0, fontSize: 12.5, color: '#92400E', lineHeight: 1.55 }}>
+                                {phase.revisionReason || 'The client flagged this milestone and requested changes before approval. Review the feedback, update the deliverable, then resubmit.'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
 
                         {/* Repo link */}
                         <div>
@@ -1881,9 +2048,9 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
                               <input
                                 type="url"
                                 placeholder="https://github.com/your-repo/branch-or-tag"
-                                value={isCompleted ? phase.repoLink : (repoLinks[phase.id] ?? '')}
-                                readOnly={isCompleted}
-                                onChange={e => setRepoLinks(s => ({ ...s, [phase.id]: e.target.value }))}
+                                value={phase.dev.repoLink}
+                                readOnly={isCompleted || isInReview}
+                                onChange={e => updateRepoLink(phase.number, e.target.value)}
                                 style={{
                                   width: '100%', padding: '9px 12px 9px 34px',
                                   border: '1px solid #E2E8F0', borderRadius: 8,
@@ -1891,12 +2058,12 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
                                   outline: 'none', background: isCompleted ? '#F8FAFC' : '#fff',
                                   boxSizing: 'border-box',
                                 }}
-                                onFocus={e => { if (!isCompleted) e.currentTarget.style.borderColor = '#2563EB' }}
+                                onFocus={e => { if (!isCompleted && !isInReview) e.currentTarget.style.borderColor = '#2563EB' }}
                                 onBlur={e => { e.currentTarget.style.borderColor = '#E2E8F0' }}
                               />
                             </div>
-                            {isCompleted && (
-                              <a href={phase.repoLink} target="_blank" rel="noreferrer" style={{
+                            {(isCompleted || isInReview) && phase.dev.repoLink && (
+                              <a href={phase.dev.repoLink} target="_blank" rel="noreferrer" style={{
                                 display: 'flex', alignItems: 'center', gap: 4, padding: '9px 12px',
                                 background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8,
                                 color: '#2563EB', fontSize: 12, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap',
@@ -1907,6 +2074,28 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
                           </div>
                         </div>
 
+                        {/* Prototype / demo URL */}
+                        {isActive && (
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
+                              Live Preview / Demo URL (optional)
+                            </div>
+                            <input
+                              type="url"
+                              placeholder="https://staging.example.com"
+                              value={phase.dev.prototypeLink ?? ''}
+                              onChange={e => updatePrototypeLink(phase.number, e.target.value)}
+                              style={{
+                                width: '100%', padding: '9px 12px', boxSizing: 'border-box',
+                                border: '1px solid #E2E8F0', borderRadius: 8,
+                                fontFamily: 'monospace', fontSize: 12.5, color: '#334155', outline: 'none',
+                              }}
+                              onFocus={e => (e.currentTarget.style.borderColor = '#2563EB')}
+                              onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
+                            />
+                          </div>
+                        )}
+
                         {/* Progress notes */}
                         {!isCompleted && (
                           <div>
@@ -1915,17 +2104,18 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
                             </div>
                             <textarea
                               placeholder="Describe what has been completed so far, blockers, and what's remaining before submission…"
-                              value={progressNotes[phase.id] ?? ''}
-                              onChange={e => setProgressNotes(s => ({ ...s, [phase.id]: e.target.value }))}
+                              value={phase.dev.updates}
+                              readOnly={isInReview}
+                              onChange={e => updateNotes(phase.number, e.target.value)}
                               style={{
                                 width: '100%', minHeight: 96, padding: '10px 12px',
                                 border: '1px solid #E2E8F0', borderRadius: 8,
                                 fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#334155',
-                                resize: 'vertical', outline: 'none', background: '#fff',
+                                resize: 'vertical', outline: 'none', background: isInReview ? '#F8FAFC' : '#fff',
                                 boxSizing: 'border-box', lineHeight: 1.55,
                               }}
-                              onFocus={e => (e.currentTarget.style.borderColor = '#2563EB')}
-                              onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
+                              onFocus={e => { if (!isInReview) e.currentTarget.style.borderColor = '#2563EB' }}
+                              onBlur={e => { e.currentTarget.style.borderColor = '#E2E8F0' }}
                             />
                           </div>
                         )}
@@ -1935,42 +2125,202 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
                           <div>
                             <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Completion Notes</div>
                             <p style={{ margin: 0, fontSize: 13, color: '#475569', lineHeight: 1.6, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 8, padding: '12px 14px' }}>
-                              {phase.updates}
+                              {phase.dev.updates}
                             </p>
+                            {phase.score != null && (
+                              <div style={{ marginTop: 8, fontSize: 12, color: '#16A34A', fontWeight: 700 }}>
+                                Client phase score: {phase.score}/5
+                              </div>
+                            )}
                           </div>
                         )}
 
-                        {/* Submit button */}
-                        {isActive && (
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 4 }}>
-                            {submitted[phase.id] ? (
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 8, background: '#F0FDF4', border: '1px solid #BBF7D0', color: '#16A34A', fontSize: 13.5, fontWeight: 700 }}>
-                                <IconCheck size={13} /> Submitted for Verification
+                        {/* Task checklist */}
+                        {(isActive || isRevision || isInReview || isCompleted) && (
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                                Milestone Task Checklist
                               </span>
-                            ) : (
+                              <span style={{ fontSize: 11.5, fontWeight: 700, color: '#2563EB' }}>
+                                {doneCount}/{phase.tasks.length} done
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {phase.tasks.map(t => (
+                                <button
+                                  key={t.id}
+                                  onClick={() => completeTask(phase.number, t.id)}
+                                  disabled={isCompleted}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', gap: 10,
+                                    padding: '8px 12px', border: '1px solid #E2E8F0', borderRadius: 8,
+                                    background: t.done ? '#F0FDF4' : '#fff',
+                                    cursor: isCompleted ? 'default' : 'pointer', textAlign: 'left',
+                                    fontFamily: 'Inter, sans-serif', transition: 'background 0.1s',
+                                  }}
+                                  onMouseEnter={e => { if (!isCompleted) (e.currentTarget as HTMLButtonElement).style.background = t.done ? '#F0FDF4' : '#F8FAFC' }}
+                                  onMouseLeave={e => { if (!isCompleted) (e.currentTarget as HTMLButtonElement).style.background = t.done ? '#F0FDF4' : '#fff' }}
+                                >
+                                  <span style={{
+                                    width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                                    background: t.done ? '#16A34A' : '#fff',
+                                    border: `1.5px solid ${t.done ? '#16A34A' : '#CBD5E1'}`,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+                                  }}>
+                                    {t.done && <IconCheck size={9} />}
+                                  </span>
+                                  <span style={{ fontSize: 13, color: t.done ? '#16A34A' : '#334155', fontWeight: t.done ? 600 : 500, textDecoration: t.done ? 'line-through' : 'none' }}>
+                                    {t.label}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                            {!isCompleted && (
+                              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                                <input
+                                  value={taskInput[phase.number] ?? ''}
+                                  onChange={e => setTaskInput(s => ({ ...s, [phase.number]: e.target.value }))}
+                                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addPhaseTask(phase.number) } }}
+                                  placeholder="Add a task…"
+                                  style={{
+                                    flex: 1, padding: '8px 12px', border: '1px solid #E2E8F0', borderRadius: 8,
+                                    fontFamily: 'Inter, sans-serif', fontSize: 12.5, outline: 'none',
+                                  }}
+                                  onFocus={e => (e.currentTarget.style.borderColor = '#2563EB')}
+                                  onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
+                                />
+                                <button onClick={() => addPhaseTask(phase.number)} style={{
+                                  padding: '8px 14px', borderRadius: 8, border: 'none',
+                                  background: '#EFF6FF', color: '#2563EB', fontSize: 12.5, fontWeight: 700,
+                                  cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                                }}>Add</button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Comment thread */}
+                        {phase.status !== 'upcoming' && (
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
+                              Discussion
+                            </div>
+                            {phase.comments.length === 0 && (
+                              <p style={{ margin: '0 0 8px', fontSize: 12.5, color: '#94A3B8' }}>No comments yet. Start the conversation.</p>
+                            )}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                              {phase.comments.map(c => (
+                                <div key={c.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                                  <div style={{
+                                    width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                                    background: `linear-gradient(135deg, ${c.avatarBg[0]}, ${c.avatarBg[0]})`,
+                                    border: `1.5px solid ${c.avatarBg[1]}30`,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: 9, fontWeight: 700, color: c.avatarBg[1],
+                                  }}>{c.avatar}</div>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                                      <span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>{c.author}</span>
+                                      <span style={{ fontSize: 10.5, color: '#94A3B8' }}>{c.role} · {c.time}</span>
+                                    </div>
+                                    <div style={{
+                                      marginTop: 2, padding: '8px 11px', borderRadius: '4px 12px 12px 12px',
+                                      background: '#F8FAFC', border: '1px solid #E2E8F0',
+                                      fontSize: 12.5, color: '#334155', lineHeight: 1.5,
+                                    }}>{c.text}</div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            {!isCompleted && (
+                              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                                <input
+                                  value={commentInput[phase.number] ?? ''}
+                                  onChange={e => setCommentInput(s => ({ ...s, [phase.number]: e.target.value }))}
+                                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); postComment(phase.number) } }}
+                                  placeholder={`Comment as ${profile.name}…`}
+                                  style={{
+                                    flex: 1, padding: '9px 12px', border: '1.5px solid #E2E8F0', borderRadius: 8,
+                                    fontFamily: 'Inter, sans-serif', fontSize: 12.5, outline: 'none',
+                                  }}
+                                  onFocus={e => (e.currentTarget.style.borderColor = '#2563EB')}
+                                  onBlur={e => (e.currentTarget.style.borderColor = '#E2E8F0')}
+                                />
+                                <button onClick={() => postComment(phase.number)} style={{
+                                  padding: '9px 16px', borderRadius: 8, border: 'none',
+                                  background: (commentInput[phase.number] ?? '').trim() ? '#2563EB' : '#F1F5F9',
+                                  color: (commentInput[phase.number] ?? '').trim() ? '#fff' : '#94A3B8',
+                                  fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                                }}>Post</button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Submit / status area */}
+                        {isActive && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4 }}>
+                            {phase.tasks.length > 0 && doneCount === 0 && (
+                              <p style={{ margin: 0, fontSize: 12, color: '#D97706' }}>
+                                Tip: complete at least one task in the checklist before submitting.
+                              </p>
+                            )}
+                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                               <button
-                                onClick={() => {
-                                  if (!repoLinks[phase.id]) return
-                                  setSubmitted(s => ({ ...s, [phase.id]: true }))
-                                }}
+                                onClick={() => { if (hasRepo) submitPhase(phase.number, phase.dev.repoLink, phase.dev.updates) }}
                                 style={{
                                   display: 'inline-flex', alignItems: 'center', gap: 8,
                                   padding: '10px 22px', borderRadius: 8,
-                                  background: repoLinks[phase.id] ? '#2563EB' : '#94A3B8',
+                                  background: hasRepo ? '#2563EB' : '#94A3B8',
                                   color: '#fff', border: 'none', fontSize: 13.5, fontWeight: 700,
-                                  cursor: repoLinks[phase.id] ? 'pointer' : 'not-allowed',
+                                  cursor: hasRepo ? 'pointer' : 'not-allowed',
                                   fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',
-                                  boxShadow: repoLinks[phase.id] ? '0 2px 8px rgba(37,99,235,0.3)' : 'none',
+                                  boxShadow: hasRepo ? '0 2px 8px rgba(37,99,235,0.3)' : 'none',
                                 }}
-                                onMouseEnter={e => { if (repoLinks[phase.id]) (e.currentTarget as HTMLButtonElement).style.background = '#1D4ED8' }}
-                                onMouseLeave={e => { if (repoLinks[phase.id]) (e.currentTarget as HTMLButtonElement).style.background = '#2563EB' }}
+                                onMouseEnter={e => { if (hasRepo) (e.currentTarget as HTMLButtonElement).style.background = '#1D4ED8' }}
+                                onMouseLeave={e => { if (hasRepo) (e.currentTarget as HTMLButtonElement).style.background = '#2563EB' }}
                               >
                                 <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                                   <path d="M7.5 1L9.5 5.5H14L10.5 8.5l1.5 4.5-4.5-3-4.5 3 1.5-4.5L1 5.5h4.5L7.5 1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" fill="none" />
                                 </svg>
                                 Submit Milestone for Verification
                               </button>
-                            )}
+                            </div>
+                          </div>
+                        )}
+
+                        {isInReview && (
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10, paddingTop: 4 }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 8, background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#2563EB', fontSize: 13, fontWeight: 700 }}>
+                              <IconCheck size={13} /> Submitted for Verification{phase.submittedAt ? ` · ${phase.submittedAt}` : ''}
+                            </span>
+                            <button onClick={() => reviseSubmission(phase.number)} style={{
+                              padding: '9px 14px', borderRadius: 8, border: '1.5px solid #CBD5E1',
+                              background: '#fff', color: '#475569', fontSize: 12.5, fontWeight: 700,
+                              cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+                            }}>Revise Submission</button>
+                          </div>
+                        )}
+
+                        {isRevision && (
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 4 }}>
+                            <button
+                              onClick={() => { if (hasRepo) resubmitPhase(phase.number, phase.dev.repoLink, phase.dev.updates) }}
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 8,
+                                padding: '10px 22px', borderRadius: 8,
+                                background: hasRepo ? '#D97706' : '#94A3B8',
+                                color: '#fff', border: 'none', fontSize: 13.5, fontWeight: 700,
+                                cursor: hasRepo ? 'pointer' : 'not-allowed',
+                                fontFamily: 'Inter, sans-serif', transition: 'background 0.15s',
+                                boxShadow: hasRepo ? '0 2px 8px rgba(217,119,6,0.3)' : 'none',
+                              }}
+                              onMouseEnter={e => { if (hasRepo) (e.currentTarget as HTMLButtonElement).style.background = '#B45309' }}
+                              onMouseLeave={e => { if (hasRepo) (e.currentTarget as HTMLButtonElement).style.background = '#D97706' }}
+                            >
+                              Resubmit Milestone
+                            </button>
                           </div>
                         )}
                       </div>
@@ -1991,10 +2341,10 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
           <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Sprint Velocity</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {[
-              { label: 'Completed', value: '2', color: '#16A34A', bg: '#F0FDF4', border: '#BBF7D0' },
-              { label: 'Remaining', value: '2', color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE' },
-              { label: 'On Track',  value: '1', color: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
-              { label: 'At Risk',   value: '1', color: '#DC2626', bg: '#FEF2F2', border: '#FECACA' },
+              { label: 'Completed', value: velocity.completed, color: '#16A34A', bg: '#F0FDF4', border: '#BBF7D0' },
+              { label: 'In Review',  value: velocity.inReview, color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE' },
+              { label: 'On Track',   value: velocity.onTrack,  color: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
+              { label: 'At Risk',    value: velocity.atRisk,   color: '#DC2626', bg: '#FEF2F2', border: '#FECACA' },
             ].map(s => (
               <div key={s.label} style={{ background: s.bg, border: `1px solid ${s.border}`, borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}>
                 <div style={{ fontSize: 22, fontWeight: 800, color: s.color, letterSpacing: '-0.03em' }}>{s.value}</div>
@@ -2004,6 +2354,22 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
           </div>
         </Card>
 
+        {/* Task burndown */}
+        <Card style={{ padding: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Milestone Burndown</div>
+          <ResponsiveContainer width="100%" height={140}>
+            <BarChart data={burndownData} barSize={16}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+              <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94A3B8' }} />
+              <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#94A3B8' }} width={26} />
+              <Tooltip />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="done" name="Done" fill="#2563EB" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="remaining" name="Remaining" fill="#CBD5E1" radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+
         {/* Firebase Alerts */}
         <Card style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -2011,32 +2377,78 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
               <path d="M3 10.5C2 8 3.5 4.5 6 3L5 7l3-1.5L6.5 12c1.5-1 3-3.5 2-6 1 1.5 2 4 1 6.5" stroke="#F59E0B" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <h3 style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: '#0F172A' }}>Firebase Reminder Alerts</h3>
-            <span style={{ marginLeft: 'auto', background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontSize: 10.5, fontWeight: 700, padding: '2px 7px', borderRadius: 99 }}>
-              {notifications.filter(n => n.type === 'warning').length} new
+            <span style={{ marginLeft: 'auto', background: unreadNotifs.length ? '#FEF2F2' : '#F8FAFC', border: `1px solid ${unreadNotifs.length ? '#FECACA' : '#E2E8F0'}`, color: unreadNotifs.length ? '#DC2626' : '#94A3B8', fontSize: 10.5, fontWeight: 700, padding: '2px 7px', borderRadius: 99 }}>
+              {unreadNotifs.length} new
             </span>
+            <button onClick={markAllNotificationsRead} style={{
+              background: 'none', border: 'none', color: '#2563EB', fontSize: 11, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'Inter, sans-serif', padding: 0, flexShrink: 0,
+            }}>Mark all read</button>
           </div>
           <div style={{ maxHeight: 340, overflowY: 'auto' }}>
-            {notifications.map((n, i) => {
-              const color  = notifColor[n.type as keyof typeof notifColor]
-              const bg     = notifBg[n.type as keyof typeof notifBg]
-              const border = notifBorder[n.type as keyof typeof notifBorder]
-              const icon   = notifIcon[n.type as keyof typeof notifIcon]
+            {project.notifications.map((n, i) => {
+              const color  = notifColor[n.type]
+              const bg     = notifBg[n.type]
+              const border = notifBorder[n.type]
+              const icon   = notifIcon[n.type]
               return (
-                <div key={n.id} style={{
-                  padding: '12px 16px',
-                  borderBottom: i < notifications.length - 1 ? '1px solid #F8FAFC' : 'none',
-                  display: 'flex', gap: 10,
-                }}>
+                <button
+                  key={n.id}
+                  onClick={() => markNotificationRead(n.id)}
+                  style={{
+                    width: '100%', display: 'flex', gap: 10, textAlign: 'left',
+                    padding: '12px 16px', border: 'none', background: '#fff', cursor: 'pointer',
+                    borderBottom: i < project.notifications.length - 1 ? '1px solid #F8FAFC' : 'none',
+                    opacity: n.read ? 0.55 : 1, transition: 'opacity 0.15s', fontFamily: 'Inter, sans-serif',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#FAFCFF')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '#fff')}
+                >
                   <div style={{ width: 28, height: 28, borderRadius: 8, flexShrink: 0, background: bg, border: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>
                     {icon}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: '0 0 3px', fontSize: 12.5, color: '#334155', lineHeight: 1.5 }}>{n.text}</p>
+                    <p style={{ margin: '0 0 3px', fontSize: 12.5, color: color, lineHeight: 1.5, fontWeight: n.read ? 500 : 600 }}>{n.text}</p>
                     <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500 }}>{n.time}</span>
                   </div>
-                </div>
+                  {!n.read && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#2563EB', flexShrink: 0, marginTop: 6 }} />}
+                </button>
               )
             })}
+          </div>
+        </Card>
+
+        {/* Payment history */}
+        <Card style={{ padding: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Payment History</span>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: '#16A34A' }}>
+              {formatPeso(project.paidToDate)} <span style={{ color: '#94A3B8', fontWeight: 500 }}>({paidPct}%)</span>
+            </span>
+          </div>
+          {paidPhases.length === 0 ? (
+            <p style={{ margin: 0, fontSize: 12.5, color: '#94A3B8' }}>No completed milestones yet.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {paidPhases.map(p => (
+                <div key={p.number} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <div style={{
+                    width: 30, height: 30, borderRadius: 8, flexShrink: 0,
+                    background: '#F0FDF4', border: '1px solid #BBF7D0',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#16A34A',
+                  }}><IconCheck size={13} /></div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: '#334155' }}>Phase {p.number} · {p.dev.title}</div>
+                    <div style={{ fontSize: 11.5, color: '#94A3B8', marginTop: 1 }}>Released {p.approvedAt}</div>
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#16A34A', flexShrink: 0 }}>{formatPeso(project.phasePayout)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+            <span style={{ color: '#64748B', fontWeight: 500 }}>Remaining on contract</span>
+            <span style={{ color: '#0F172A', fontWeight: 700 }}>{formatPeso(project.totalBudget - project.paidToDate)}</span>
           </div>
         </Card>
 
@@ -2092,12 +2504,12 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
           <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Project Metadata</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {[
-              { label: 'Contract Type',  value: 'Fixed Price' },
-              { label: 'Total Budget',   value: '₱28,000' },
-              { label: 'Paid to Date',   value: '₱14,000 (50%)' },
-              { label: 'Platform',       value: 'StartupMatch v2' },
-              { label: 'Started',        value: 'Jun 2, 2025' },
-              { label: 'Est. Completion', value: sprintData.deadline },
+              { label: 'Contract Type',   value: project.contractType },
+              { label: 'Total Budget',    value: formatPeso(project.totalBudget) },
+              { label: 'Paid to Date',    value: `${formatPeso(project.paidToDate)} (${paidPct}%)` },
+              { label: 'Platform',        value: project.platform },
+              { label: 'Started',         value: project.started },
+              { label: 'Est. Completion', value: project.deadline },
             ].map(m => (
               <div key={m.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12.5 }}>
                 <span style={{ color: '#64748B', fontWeight: 500 }}>{m.label}</span>
@@ -2107,6 +2519,140 @@ function SprintDashboard({ isMobile, isTablet }: { isMobile: boolean; isTablet: 
           </div>
         </Card>
 
+      </div>
+    </div>
+  )
+}
+
+// ─── Sprint Overview (Dashboard nav item) ──────────────────────────────────────
+
+function SprintOverview({ isMobile, isTablet, onNavigate }: { isMobile: boolean; isTablet: boolean; onNavigate: () => void }) {
+  const project = useProjectStore()
+  const stacked = isMobile || isTablet
+  const completed = project.phases.filter(p => p.status === 'completed').length
+  const pct = Math.round((completed / project.totalPhases) * 100)
+  const inReview = project.phases.filter(p => p.status === 'in_review' || p.status === 'revision').length
+  const atRisk = project.phases.filter(p => p.status === 'disputed').length
+  const nextPhase = project.phases.find(p => p.status === 'active' || p.status === 'in_review' || p.status === 'disputed')
+  const unread = project.notifications.filter(n => !n.read).length
+  const paidPct = Math.round((project.paidToDate / project.totalBudget) * 100)
+
+  const tiles = [
+    { label: 'Phases Completed', value: `${completed}/${project.totalPhases}`, color: '#16A34A', bg: '#F0FDF4', border: '#BBF7D0' },
+    { label: 'In Review',        value: String(inReview),                       color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE' },
+    { label: 'Next Deadline',    value: nextPhase ? `${nextPhase.dev.daysLeft}d` : '—', color: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
+    { label: 'Paid to Date',     value: formatPeso(project.paidToDate),         color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' },
+  ]
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+      {/* Header */}
+      <Card style={{ padding: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 5 }}>
+              <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>{project.project}</h2>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 11px', borderRadius: 99, background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#2563EB', fontSize: 11.5, fontWeight: 700 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#2563EB' }} />
+                In Progress
+              </span>
+            </div>
+            <div style={{ fontSize: 13.5, color: '#64748B' }}>
+              Client: <span style={{ fontWeight: 600, color: '#334155' }}>{project.client}</span>
+              <span style={{ color: '#CBD5E1' }}> · </span>
+              Due <span style={{ fontWeight: 600, color: project.daysLeft < 7 ? '#DC2626' : '#334155' }}>{project.deadline}</span>
+            </div>
+          </div>
+          <button onClick={onNavigate} style={{
+            padding: '9px 18px', borderRadius: 8, border: 'none', background: '#2563EB', color: '#fff',
+            fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+            boxShadow: '0 2px 8px rgba(37,99,235,0.3)',
+          }}>
+            Open Sprint Milestones →
+          </button>
+        </div>
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>Overall progress</span>
+            <span style={{ fontSize: 14, fontWeight: 800, color: '#2563EB', letterSpacing: '-0.02em' }}>{pct}%</span>
+          </div>
+          <div style={{ height: 10, background: '#F1F5F9', borderRadius: 99, overflow: 'hidden' }}>
+            <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg, #2563EB 0%, #3B82F6 100%)', borderRadius: 99, transition: 'width 0.6s ease' }} />
+          </div>
+        </div>
+      </Card>
+
+      {/* KPI tiles */}
+      <div style={{ display: 'grid', gridTemplateColumns: stacked ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 12 }}>
+        {tiles.map(t => (
+          <div key={t.label} style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '18px 20px', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: t.color, letterSpacing: '-0.03em' }}>{t.value}</div>
+            <div style={{ fontSize: 11.5, color: '#94A3B8', fontWeight: 600, marginTop: 4 }}>{t.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Recent activity + quick actions */}
+      <div style={{ display: 'flex', flexDirection: stacked ? 'column' : 'row', gap: 20, alignItems: 'flex-start' }}>
+        <Card style={{ flex: 1, width: stacked ? '100%' : undefined, padding: 0, overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h3 style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: '#0F172A' }}>Recent Activity</h3>
+            {unread > 0 && (
+              <span style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontSize: 10.5, fontWeight: 700, padding: '2px 7px', borderRadius: 99 }}>{unread} unread</span>
+            )}
+          </div>
+          <div>
+            {project.notifications.slice(0, 4).map(n => (
+              <div key={n.id} style={{
+                display: 'flex', gap: 10, padding: '12px 16px',
+                borderBottom: '1px solid #F8FAFC', background: n.read ? '#fff' : '#FAFCFF',
+              }}>
+                <div style={{ width: 26, height: 26, borderRadius: 8, flexShrink: 0, background: notifBg[n.type], border: `1px solid ${notifBorder[n.type]}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>
+                  {notifIcon[n.type]}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: '0 0 2px', fontSize: 12.5, color: notifColor[n.type], lineHeight: 1.5 }}>{n.text}</p>
+                  <span style={{ fontSize: 11, color: '#94A3B8', fontWeight: 500 }}>{n.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card style={{ width: stacked ? '100%' : 260, padding: 20, flexShrink: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>Quick Actions</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button onClick={onNavigate} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px',
+              border: '1px solid #E2E8F0', borderRadius: 10, background: '#fff', color: '#334155',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', textAlign: 'left',
+            }}>
+              Sprint Milestones <IconChevron size={13} dir="right" />
+            </button>
+            <button onClick={resetDemo} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px',
+              border: '1px solid #E2E8F0', borderRadius: 10, background: '#fff', color: '#334155',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', textAlign: 'left',
+            }}>
+              Reset demo data <IconChevron size={13} dir="right" />
+            </button>
+          </div>
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #F1F5F9', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}>
+              <span style={{ color: '#64748B', fontWeight: 500 }}>Total budget</span>
+              <span style={{ color: '#0F172A', fontWeight: 700 }}>{formatPeso(project.totalBudget)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}>
+              <span style={{ color: '#64748B', fontWeight: 500 }}>Paid to date</span>
+              <span style={{ color: '#16A34A', fontWeight: 700 }}>{formatPeso(project.paidToDate)} ({paidPct}%)</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}>
+              <span style={{ color: '#64748B', fontWeight: 500 }}>Milestones at risk</span>
+              <span style={{ color: atRisk ? '#DC2626' : '#16A34A', fontWeight: 700 }}>{atRisk}</span>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   )
@@ -2904,58 +3450,6 @@ const clientNavItems = [
   { icon: IconSettings,  label: 'Settings',            id: 'settings'   },
 ]
 
-const milestonePhases = [
-  {
-    id: 'ph1', num: 1,
-    title: 'Database Schema & Authentication',
-    status: 'completed' as const,
-    deadline: 'Jun 20, 2026',
-    submittedAt: 'Jun 18, 2026 · 11:42 AM',
-    repoLink: 'https://github.com/marcoramirez-dev/apokon-ecommerce/tree/sprint-1-auth',
-    devNotes: 'Completed all authentication flows (JWT + refresh tokens), PostgreSQL schema for Users, Products, Inventory, and Transactions. Deployed to Railway staging. All endpoints documented in Postman collection linked in README.',
-    approvedAt: 'Jun 21, 2026 · 9:15 AM',
-  },
-  {
-    id: 'ph2', num: 2,
-    title: 'Core Frontend UI Implementation',
-    status: 'review' as const,
-    deadline: 'Aug 5, 2026',
-    submittedAt: 'Aug 3, 2026 · 3:20 PM',
-    repoLink: 'https://github.com/marcoramirez-dev/apokon-ecommerce/tree/sprint-2-frontend',
-    devNotes: 'All 12 frontend screens implemented using Next.js + Tailwind CSS. Includes product catalog, inventory table with search/filter, POS checkout flow, and admin role management. Staging preview deployed at apokon-ecommerce.vercel.app — credentials in README. Awaiting client review for color palette and typography sign-off before proceeding to API integration.',
-    prototypeLink: 'https://apokon-ecommerce.vercel.app',
-    approvedAt: null,
-  },
-  {
-    id: 'ph3', num: 3,
-    title: 'API Integration & Backend Services',
-    status: 'disputed' as const,
-    deadline: 'Aug 18, 2026',
-    submittedAt: null,
-    repoLink: '',
-    devNotes: '',
-    daysOverdue: 2,
-    approvedAt: null,
-  },
-  {
-    id: 'ph4', num: 4,
-    title: 'Testing, Reports & Production Deployment',
-    status: 'upcoming' as const,
-    deadline: 'Aug 28, 2026',
-    submittedAt: null,
-    repoLink: '',
-    devNotes: '',
-    approvedAt: null,
-  },
-]
-
-const feedbackThread = [
-  { id: 'f1', author: 'Ernesto Dela Vega', role: 'Client', avatar: 'ED', avatarBg: ['#ECFDF5', '#065F46'], time: 'Aug 3 · 4:05 PM', text: 'The POS flow looks great! One concern — the receipt layout cuts off product names longer than 18 characters. Can we adjust the font size or truncation logic?' },
-  { id: 'f2', author: 'Marco Ramirez', role: 'Lead Developer', avatar: 'MR', avatarBg: ['#DBEAFE', '#1D4ED8'], time: 'Aug 3 · 5:12 PM', text: 'Noted! I\'ll update the receipt template to use dynamic truncation with a tooltip on hover. Will push the fix tonight.' },
-  { id: 'f3', author: 'Ernesto Dela Vega', role: 'Client', avatar: 'ED', avatarBg: ['#ECFDF5', '#065F46'], time: 'Aug 4 · 9:30 AM', text: 'Also, the inventory table doesn\'t load on Safari iOS. Can you check compatibility?' },
-  { id: 'f4', author: 'Juanita Arceo', role: 'Platform Admin', avatar: 'JA', avatarBg: ['#F5F3FF', '#5B21B6'], time: 'Aug 4 · 10:00 AM', text: 'Flagging this for the audit log. Developer please confirm browser compatibility in the next update.' },
-]
-
 const phaseCfg = {
   completed: { border: '#16A34A', bg: '#F0FDF4', badgeBg: '#F0FDF4', badgeColor: '#16A34A', badgeBorder: '#BBF7D0', label: 'Completed', dot: '#16A34A' },
   review:    { border: '#2563EB', bg: '#EFF6FF', badgeBg: '#EFF6FF', badgeColor: '#2563EB', badgeBorder: '#BFDBFE', label: 'Ready for Review', dot: '#2563EB' },
@@ -3041,39 +3535,55 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
   sidebarOpen: boolean; setSidebarOpen: (v: boolean) => void
 }) {
   const [clientNav, setClientNav] = useState('milestones')
-  const [phaseStates, setPhaseStates] = useState<Record<string, 'review' | 'completed' | 'disputed' | 'upcoming'>>(
-    Object.fromEntries(milestonePhases.map(p => [p.id, p.status]))
-  )
-  const [disputeOpen, setDisputeOpen] = useState<string | null>(null)
+  const [disputeOpen, setDisputeOpen] = useState<number | null>(null)
   const [disputeNote, setDisputeNote] = useState('')
   const [feedbackMsg, setFeedbackMsg] = useState('')
-  const [messages, setMessages] = useState(feedbackThread)
   const [panelOpen, setPanelOpen] = useState(false)
   const feedEndRef = useRef<HTMLDivElement>(null)
 
-  function approvePhase(id: string) {
-    setPhaseStates(s => ({ ...s, [id]: 'completed' }))
+  const project = useProjectStore()
+
+  const clientStatus = (s: SprintPhaseStatus): 'review' | 'completed' | 'disputed' | 'upcoming' => {
+    if (s === 'completed') return 'completed'
+    if (s === 'disputed' || s === 'revision') return 'disputed'
+    if (s === 'in_review' || s === 'active') return 'review'
+    return 'upcoming'
   }
-  function disputePhase(id: string) {
-    setPhaseStates(s => ({ ...s, [id]: 'disputed' }))
+
+  const clientPhases = project.phases.map(p => ({
+    num: p.number,
+    title: p.client.title,
+    deadline: p.client.deadline,
+    status: clientStatus(p.status),
+    repoLink: p.client.repoLink,
+    prototypeLink: p.client.prototypeLink,
+    devNotes: p.client.updates,
+    submittedAt: p.submittedAt,
+    approvedAt: p.approvedAt,
+    daysOverdue: p.client.daysLeft < 0 ? Math.abs(p.client.daysLeft) : 2,
+  }))
+
+  const messages = project.phases.find(p => p.number === 2)?.comments ?? []
+
+  function handleApprove(number: number) {
+    approvePhase(number)
+  }
+  function handleDispute(number: number) {
+    disputePhase(number, disputeNote)
     setDisputeOpen(null)
     setDisputeNote('')
   }
   function sendMessage() {
     if (!feedbackMsg.trim()) return
-    setMessages(prev => [...prev, {
-      id: `f${Date.now()}`, author: 'Ernesto Dela Vega', role: 'Client',
-      avatar: 'ED', avatarBg: ['#ECFDF5', '#065F46'],
-      time: 'Just now', text: feedbackMsg,
-    }])
+    addComment(2, feedbackMsg, 'client')
     setFeedbackMsg('')
     setTimeout(() => feedEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 80)
   }
 
-  const verified = Object.values(phaseStates).filter(s => s === 'completed').length
-  const total = milestonePhases.length
-  const activePhase = milestonePhases.find(p => phaseStates[p.id] === 'review')
-  const hasDispute = Object.values(phaseStates).some(s => s === 'disputed')
+  const verified = clientPhases.filter(p => p.status === 'completed').length
+  const total = clientPhases.length
+  const activePhase = clientPhases.find(p => p.status === 'review')
+  const hasDispute = clientPhases.some(p => p.status === 'disputed')
 
   const stacked = isMobile || isTablet
 
@@ -3238,10 +3748,10 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
                 <div style={{ width: `${(verified / total) * 100}%`, height: '100%', background: 'linear-gradient(90deg, #2563EB, #3B82F6)', borderRadius: 99, transition: 'width 0.5s ease' }} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-                {milestonePhases.map(p => {
-                  const s = phaseStates[p.id]
+                {clientPhases.map(p => {
+                  const s = p.status
                   return (
-                    <div key={p.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <div key={p.num} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                       <div style={{
                         width: 22, height: 22, borderRadius: '50%',
                         background: s === 'completed' ? '#16A34A' : s === 'review' ? '#2563EB' : s === 'disputed' ? '#DC2626' : '#F1F5F9',
@@ -3260,8 +3770,8 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
 
             {/* ── Phase cards ──────────────────────────────────── */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {milestonePhases.map(phase => {
-                const status = phaseStates[phase.id]
+              {clientPhases.map(phase => {
+                const status = phase.status
                 const cfg = phaseCfg[status]
                 const isReview = status === 'review'
                 const isCompleted = status === 'completed'
@@ -3269,7 +3779,7 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
                 const isUpcoming = status === 'upcoming'
 
                 return (
-                  <div key={phase.id} style={{
+                  <div key={phase.num} style={{
                     background: '#fff', border: '1px solid #E2E8F0',
                     borderLeft: `4px solid ${cfg.border}`,
                     borderRadius: 12, overflow: 'hidden',
@@ -3372,7 +3882,7 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
                             </div>
 
                             {/* Dispute modal inline */}
-                            {disputeOpen === phase.id && (
+                            {disputeOpen === phase.num && (
                               <div style={{ background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 10, padding: '16px' }}>
                                 <div style={{ fontSize: 13, fontWeight: 700, color: '#D97706', marginBottom: 10 }}>📋 Describe the revision request</div>
                                 <textarea
@@ -3386,16 +3896,16 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
                                 />
                                 <div style={{ display: 'flex', gap: 8, marginTop: 10, justifyContent: 'flex-end' }}>
                                   <button onClick={() => setDisputeOpen(null)} style={{ padding: '7px 14px', borderRadius: 7, border: '1px solid #E2E8F0', background: '#fff', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Cancel</button>
-                                  <button onClick={() => disputePhase(phase.id)} style={{ padding: '7px 14px', borderRadius: 7, border: 'none', background: '#D97706', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Submit Flag</button>
+                                  <button onClick={() => handleDispute(phase.num)} style={{ padding: '7px 14px', borderRadius: 7, border: 'none', background: '#D97706', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Submit Flag</button>
                                 </div>
                               </div>
                             )}
 
                             {/* Client action buttons */}
-                            {disputeOpen !== phase.id && (
+                            {disputeOpen !== phase.num && (
                               <div style={{ display: 'flex', gap: 10, flexWrap: stacked ? 'wrap' : 'nowrap', paddingTop: 4 }}>
                                 <button
-                                  onClick={() => approvePhase(phase.id)}
+                                  onClick={() => handleApprove(phase.num)}
                                   style={{
                                     flex: stacked ? '1 1 100%' : 'unset',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -3411,7 +3921,7 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
                                   <IconCheck size={15} /> Verify & Approve Milestone
                                 </button>
                                 <button
-                                  onClick={() => setDisputeOpen(phase.id)}
+                                  onClick={() => setDisputeOpen(phase.num)}
                                   style={{
                                     flex: stacked ? '1 1 100%' : 'unset',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -3498,7 +4008,7 @@ function MilestoneTrackingPage({ isMobile, isTablet, collapsed, sidebarOpen, set
               {/* Messages */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12, minHeight: 200 }}>
                 {messages.map(msg => {
-                  const isClient = msg.role === 'Client'
+                  const isClient = msg.role === 'client'
                   return (
                     <div key={msg.id} style={{ display: 'flex', flexDirection: isClient ? 'row-reverse' : 'row', gap: 8, alignItems: 'flex-start' }}>
                       <div style={{
@@ -4088,7 +4598,9 @@ function EnterpriseAnalyticsPage({ isMobile, isTablet, collapsed, sidebarOpen, s
 
 export default function App() {
   const [page, setPage] = useState<'auth' | 'developer' | 'admin' | 'sprint' | 'specform' | 'milestone' | 'analytics'>('auth')
-  const [devNav, setDevNav] = useState('marketplace')
+  const project = useProjectStore()
+  const profile = useDevProfile()
+  const [devNav, setDevNav] = useState('dashboard')
   const [adminNav, setAdminNav] = useState('verification')
   const [sprintNav, setSprintNav] = useState('sprint')
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -4136,7 +4648,7 @@ export default function App() {
       </div>
 
       {page === 'auth' ? (
-        <AuthPage />
+        <AuthPage onSignedIn={email => { signInAs(email); setPage('developer'); setDevNav('dashboard') }} />
       ) : page === 'developer' ? (
         <div style={{ display: 'flex' }}>
           {/* Mobile overlay */}
@@ -4155,9 +4667,19 @@ export default function App() {
                 <div style={{ fontWeight: 700, fontSize: 15, color: '#0F172A' }}>StartupMatch</div>
               </div>
             )}
-            <main style={{ padding: isMobile ? '20px 16px' : '32px 32px' }}>
+            <main style={{ padding: isMobile ? '20px 16px 80px' : '32px 32px 80px' }}>
               <div style={{ maxWidth: 900, margin: '0 auto' }}>
-                <DeveloperProfile isMobile={isMobile} isTablet={isTablet} />
+                {devNav === 'dashboard' ? (
+                  <DeveloperProfile isMobile={isMobile} isTablet={isTablet} />
+                ) : devNav === 'marketplace' ? (
+                  <MarketplaceFeed isMobile={isMobile} />
+                ) : devNav === 'bids' ? (
+                  <BidsView />
+                ) : devNav === 'messages' ? (
+                  <DevStub title="Messages" message="Private conversations with clients and collaborators will appear here." />
+                ) : (
+                  <DevStub title="Settings" message="Manage your account, notifications, and public profile preferences." />
+                )}
               </div>
             </main>
           </div>
@@ -4246,20 +4768,23 @@ export default function App() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 {/* Deadline chip */}
-                {!isMobile && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 99, background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontSize: 12, fontWeight: 700 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#DC2626' }} />
-                    Sprint 2 due Aug 5
-                  </span>
-                )}
+                {!isMobile && (() => {
+                  const due = project.phases.find(p => p.status === 'active' || p.status === 'in_review')
+                  return (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 99, background: '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', fontSize: 12, fontWeight: 700 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#DC2626' }} />
+                      {due ? `Sprint ${due.number} due ${due.dev.deadline.split(',')[0]}` : `Due ${project.deadline}`}
+                    </span>
+                  )
+                })()}
                 <button style={{ background: 'none', border: '1px solid #E2E8F0', borderRadius: 8, padding: '6px 8px', cursor: 'pointer', color: '#64748B', position: 'relative', lineHeight: 0 }}>
                   <IconBell size={16} />
                   <span style={{ position: 'absolute', top: 5, right: 5, width: 7, height: 7, borderRadius: '50%', background: '#DC2626', border: '1.5px solid #fff' }} />
                 </button>
                 {!isMobile && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px 5px 5px', border: '1px solid #E2E8F0', borderRadius: 8 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #DBEAFE, #BFDBFE)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#2563EB' }}>MR</div>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>Marco Ramirez</span>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: `linear-gradient(135deg, ${profile.avatarColors[0]}, ${profile.avatarColors[0]})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: profile.avatarColors[1] }}>{profile.initials}</div>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#334155' }}>{profile.name}</span>
                     <IconChevron size={12} />
                   </div>
                 )}
@@ -4267,7 +4792,17 @@ export default function App() {
             </div>
 
             <main style={{ flex: 1, padding: isMobile ? '20px 16px 80px' : '28px 32px 80px', overflowY: 'auto' }}>
-              <SprintDashboard isMobile={isMobile} isTablet={isTablet} />
+              {sprintNav === 'dashboard' ? (
+                <SprintOverview isMobile={isMobile} isTablet={isTablet} onNavigate={() => setSprintNav('sprint')} />
+              ) : sprintNav === 'sprint' ? (
+                <SprintDashboard isMobile={isMobile} isTablet={isTablet} />
+              ) : sprintNav === 'bids' ? (
+                <DevStub title="Bids" message="Track and manage your project bids from one place." />
+              ) : sprintNav === 'messages' ? (
+                <DevStub title="Messages" message="Private conversations with clients and collaborators will appear here." />
+              ) : (
+                <DevStub title="Settings" message="Manage your account, notifications, and public profile preferences." />
+              )}
             </main>
           </div>
         </div>
