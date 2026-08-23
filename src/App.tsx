@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef, useMemo } from "react";
 
 import {
   AreaChart,
@@ -12,9 +12,9 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from "recharts"
+} from "recharts";
 
-import AuthPage from "./AuthPage"
+import AuthPage from "./AuthPage";
 
 import {
   useDevProfile,
@@ -23,7 +23,7 @@ import {
   signInAs,
   setAvailability,
   MARKETPLACE_PROJECTS,
-} from "./devProfile"
+} from "./devProfile";
 
 import {
   useProjectStore,
@@ -42,9 +42,9 @@ import {
   markAllNotificationsRead,
   resetDemo,
   formatPeso,
-} from "./projectStore"
+} from "./projectStore";
 
-import type { SprintPhaseStatus } from "./projectStore"
+import type { SprintPhaseStatus } from "./projectStore";
 
 // ─── Role-based access (Option B: Strict Separation) ─────────────────────────
 
@@ -60,11 +60,11 @@ import {
   resolveRole,
   isPendingVerification,
   getAllowedPages,
-} from "./roleAccess"
+} from "./roleAccess";
 
-import type { AppPage, AppRole } from "./roleAccess"
+import type { AppPage, AppRole } from "./roleAccess";
 
-import { useClientProfile, signInAsClient } from "./clientProfile"
+import { useClientProfile, signInAsClient } from "./clientProfile";
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -108,7 +108,7 @@ function IconDashboard({ size = 20 }: { size?: number }) {
         opacity=".4"
       />
     </svg>
-  )
+  );
 }
 
 function IconShield({ size = 20 }: { size?: number }) {
@@ -128,7 +128,7 @@ function IconShield({ size = 20 }: { size?: number }) {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconChart({ size = 20 }: { size?: number }) {
@@ -151,7 +151,7 @@ function IconChart({ size = 20 }: { size?: number }) {
         strokeWidth="1.5"
       />
     </svg>
-  )
+  );
 }
 
 function IconLogs({ size = 20 }: { size?: number }) {
@@ -173,7 +173,7 @@ function IconLogs({ size = 20 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconSettings({ size = 20 }: { size?: number }) {
@@ -187,7 +187,7 @@ function IconSettings({ size = 20 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconSearch({ size = 16 }: { size?: number }) {
@@ -201,7 +201,7 @@ function IconSearch({ size = 16 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconCheck({ size = 12 }: { size?: number }) {
@@ -215,7 +215,7 @@ function IconCheck({ size = 12 }: { size?: number }) {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconX({ size = 12 }: { size?: number }) {
@@ -228,7 +228,7 @@ function IconX({ size = 12 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconEye({ size = 14 }: { size?: number }) {
@@ -241,7 +241,7 @@ function IconEye({ size = 14 }: { size?: number }) {
       />
       <circle cx="7" cy="7" r="1.8" stroke="currentColor" strokeWidth="1.3" />
     </svg>
-  )
+  );
 }
 
 function IconChevron({
@@ -249,11 +249,11 @@ function IconChevron({
 
   dir = "down",
 }: {
-  size?: number
+  size?: number;
 
-  dir?: "down" | "up" | "right"
+  dir?: "down" | "up" | "right";
 }) {
-  const rot = dir === "up" ? 180 : dir === "right" ? -90 : 0
+  const rot = dir === "up" ? 180 : dir === "right" ? -90 : 0;
 
   return (
     <svg
@@ -271,7 +271,7 @@ function IconChevron({
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconClose({ size = 18 }: { size?: number }) {
@@ -284,7 +284,7 @@ function IconClose({ size = 18 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconMenu({ size = 20 }: { size?: number }) {
@@ -297,7 +297,7 @@ function IconMenu({ size = 20 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconFilter({ size = 14 }: { size?: number }) {
@@ -310,7 +310,7 @@ function IconFilter({ size = 14 }: { size?: number }) {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconBell({ size = 18 }: { size?: number }) {
@@ -329,7 +329,7 @@ function IconBell({ size = 18 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconMarket({ size = 20 }: { size?: number }) {
@@ -343,7 +343,7 @@ function IconMarket({ size = 20 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconMessages({ size = 20 }: { size?: number }) {
@@ -356,7 +356,7 @@ function IconMessages({ size = 20 }: { size?: number }) {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconBids({ size = 20 }: { size?: number }) {
@@ -379,7 +379,7 @@ function IconBids({ size = 20 }: { size?: number }) {
         strokeWidth="1.5"
       />
     </svg>
-  )
+  );
 }
 
 function IconStar({
@@ -387,9 +387,9 @@ function IconStar({
 
   filled = false,
 }: {
-  size?: number
+  size?: number;
 
-  filled?: boolean
+  filled?: boolean;
 }) {
   return (
     <svg
@@ -405,7 +405,7 @@ function IconStar({
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconExternal({ size = 13 }: { size?: number }) {
@@ -419,7 +419,7 @@ function IconExternal({ size = 13 }: { size?: number }) {
         strokeLinejoin="round"
       />
     </svg>
-  )
+  );
 }
 
 function IconGlobe({ size = 18 }: { size?: number }) {
@@ -432,7 +432,7 @@ function IconGlobe({ size = 18 }: { size?: number }) {
         strokeWidth="1.5"
       />
     </svg>
-  )
+  );
 }
 
 function IconLinkedin({ size = 18 }: { size?: number }) {
@@ -441,7 +441,7 @@ function IconLinkedin({ size = 18 }: { size?: number }) {
       <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" />
       <circle cx="4" cy="4" r="2" />
     </svg>
-  )
+  );
 }
 
 function IconGithub({ size = 18 }: { size?: number }) {
@@ -449,7 +449,7 @@ function IconGithub({ size = 18 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
     </svg>
-  )
+  );
 }
 
 // ─── Shared primitives ──────────────────────────────────────────────────────────
@@ -459,9 +459,9 @@ function Card({
 
   style = {},
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 
-  style?: React.CSSProperties
+  style?: React.CSSProperties;
 }) {
   return (
     <div
@@ -479,16 +479,19 @@ function Card({
     >
       {children}
     </div>
-  )
+  );
 }
 
 function StatusPill({ status }: { status: string }) {
-  const cfg: Record<string, {
-    bg: string
-    color: string
-    border: string
-    dot: string
-  }> = {
+  const cfg: Record<
+    string,
+    {
+      bg: string;
+      color: string;
+      border: string;
+      dot: string;
+    }
+  > = {
     "Pending Review": {
       bg: "#FFFBEB",
 
@@ -548,9 +551,9 @@ function StatusPill({ status }: { status: string }) {
 
       dot: "#DC2626",
     },
-  }
+  };
 
-  const c = cfg[status] ?? cfg["Pending Review"]
+  const c = cfg[status] ?? cfg["Pending Review"];
 
   return (
     <span
@@ -593,7 +596,7 @@ function StatusPill({ status }: { status: string }) {
       />
       {status}
     </span>
-  )
+  );
 }
 
 function SkillTag({ label }: { label: string }) {
@@ -621,7 +624,7 @@ function SkillTag({ label }: { label: string }) {
     >
       {label}
     </span>
-  )
+  );
 }
 
 // ─── Data ───────────────────────────────────────────────────────────────────────
@@ -804,7 +807,7 @@ const studentApplicants = [
       "No PSITS certificate submitted",
     ],
   },
-]
+];
 
 const enterpriseApplicants = [
   {
@@ -960,7 +963,7 @@ const enterpriseApplicants = [
 
     documents: ["SEC Certificate", "Suspended — pending re-verification"],
   },
-]
+];
 
 const adminNavItems = [
   { icon: IconDashboard, label: "Overview", id: "overview" },
@@ -972,7 +975,7 @@ const adminNavItems = [
   { icon: IconLogs, label: "Audit Logs", id: "auditlogs" },
 
   { icon: IconSettings, label: "Settings", id: "settings" },
-]
+];
 
 // ─── Admin Sidebar ───────────────────────────────────────────────────────────
 
@@ -983,11 +986,11 @@ function AdminSidebar({
 
   collapsed,
 }: {
-  active: string
+  active: string;
 
-  onNav: (id: string) => void
+  onNav: (id: string) => void;
 
-  collapsed: boolean
+  collapsed: boolean;
 }) {
   return (
     <aside
@@ -1085,7 +1088,7 @@ function AdminSidebar({
       {/* Nav */}
       <nav style={{ padding: "10px 0", flex: 1 }}>
         {adminNavItems.map(({ icon: Icon, label, id }) => {
-          const isActive = active === id
+          const isActive = active === id;
 
           return (
             <button
@@ -1127,18 +1130,18 @@ function AdminSidebar({
               onMouseEnter={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "rgba(255,255,255,0.05)"
+                    "rgba(255,255,255,0.05)";
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "transparent"
+                    "transparent";
               }}
             >
               <Icon size={18} />
               {!collapsed && label}
             </button>
-          )
+          );
         })}
       </nav>
 
@@ -1191,14 +1194,14 @@ function AdminSidebar({
         </div>
       )}
     </aside>
-  )
+  );
 }
 
 // ─── Credentials Modal ──────────────────────────────────────────────────────────
 
-type StudentRecord = typeof studentApplicants[number]
+type StudentRecord = (typeof studentApplicants)[number];
 
-type EnterpriseRecord = typeof enterpriseApplicants[number]
+type EnterpriseRecord = (typeof enterpriseApplicants)[number];
 
 function CredentialsModal({
   record,
@@ -1211,39 +1214,39 @@ function CredentialsModal({
 
   onReject,
 }: {
-  record: StudentRecord | EnterpriseRecord
+  record: StudentRecord | EnterpriseRecord;
 
-  type: "student" | "enterprise"
+  type: "student" | "enterprise";
 
-  onClose: () => void
+  onClose: () => void;
 
-  onApprove: () => void
+  onApprove: () => void;
 
-  onReject: () => void
+  onReject: () => void;
 }) {
-  const overlayRef = useRef<HTMLDivElement>(null)
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose()
-    }
+      if (e.key === "Escape") onClose();
+    };
 
-    document.addEventListener("keydown", handler)
+    document.addEventListener("keydown", handler);
 
-    return () => document.removeEventListener("keydown", handler)
-  }, [onClose])
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
 
-  const isStudent = type === "student"
+  const isStudent = type === "student";
 
-  const student = isStudent ? record as StudentRecord : null
+  const student = isStudent ? (record as StudentRecord) : null;
 
-  const enterprise = !isStudent ? record as EnterpriseRecord : null
+  const enterprise = !isStudent ? (record as EnterpriseRecord) : null;
 
   return (
     <div
       ref={overlayRef}
       onClick={(e) => {
-        if (e.target === overlayRef.current) onClose()
+        if (e.target === overlayRef.current) onClose();
       }}
       style={{
         position: "fixed",
@@ -1720,7 +1723,7 @@ function CredentialsModal({
           )}
       </div>
     </div>
-  )
+  );
 }
 
 function VettingLink({
@@ -1730,11 +1733,11 @@ function VettingLink({
 
   display,
 }: {
-  icon: React.ReactNode
+  icon: React.ReactNode;
 
-  label: string
+  label: string;
 
-  display?: string
+  display?: string;
 }) {
   return (
     <div
@@ -1779,7 +1782,7 @@ function VettingLink({
         <IconExternal size={12} />
       </a>
     </div>
-  )
+  );
 }
 
 // ─── Verification Queue Page ────────────────────────────────────────────────────
@@ -1789,89 +1792,89 @@ function VerificationQueue({
 
   isTablet,
 }: {
-  isMobile: boolean
+  isMobile: boolean;
 
-  isTablet: boolean
+  isTablet: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<"students" | "enterprises">(
     "students",
-  )
+  );
 
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState("");
 
-  const [statusFilter, setStatusFilter] = useState("All")
+  const [statusFilter, setStatusFilter] = useState("All");
 
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>(
     {},
-  )
+  );
 
   const [modal, setModal] = useState<{
-    record: StudentRecord | EnterpriseRecord
+    record: StudentRecord | EnterpriseRecord;
 
-    type: "student" | "enterprise"
-  } | null>(null)
+    type: "student" | "enterprise";
+  } | null>(null);
 
   const [statuses, setStatuses] = useState<Record<string, string>>(() => {
-    const s: Record<string, string> = {}
+    const s: Record<string, string> = {};
 
     studentApplicants.forEach((a) => {
-      s[a.id] = a.status
-    })
+      s[a.id] = a.status;
+    });
 
     enterpriseApplicants.forEach((a) => {
-      s[a.id] = a.status
-    })
+      s[a.id] = a.status;
+    });
 
-    return s
-  })
+    return s;
+  });
 
   const pendingStudents = studentApplicants.filter(
     (a) =>
       statuses[a.id] === "Pending Review" || statuses[a.id] === "Under Review",
-  ).length
+  ).length;
 
   const pendingEnterprises = enterpriseApplicants.filter(
     (a) =>
       statuses[a.id] === "Pending Review" || statuses[a.id] === "Under Review",
-  ).length
+  ).length;
 
   const filterStudents = studentApplicants.filter((a) => {
     const matchSearch =
       a.name.toLowerCase().includes(search.toLowerCase()) ||
       a.academicId.includes(search) ||
-      a.chapter.toLowerCase().includes(search.toLowerCase())
+      a.chapter.toLowerCase().includes(search.toLowerCase());
 
     const matchStatus =
-      statusFilter === "All" || statuses[a.id] === statusFilter
+      statusFilter === "All" || statuses[a.id] === statusFilter;
 
-    return matchSearch && matchStatus
-  })
+    return matchSearch && matchStatus;
+  });
 
   const filterEnterprises = enterpriseApplicants.filter((a) => {
     const matchSearch =
       a.name.toLowerCase().includes(search.toLowerCase()) ||
-      a.barangay.toLowerCase().includes(search.toLowerCase())
+      a.barangay.toLowerCase().includes(search.toLowerCase());
 
     const matchStatus =
-      statusFilter === "All" || statuses[a.id] === statusFilter
+      statusFilter === "All" || statuses[a.id] === statusFilter;
 
-    return matchSearch && matchStatus
-  })
+    return matchSearch && matchStatus;
+  });
 
   function approve(id: string) {
     setStatuses((s) => ({
       ...s,
 
       [id]: activeTab === "students" ? "Verified" : "Active",
-    }))
+    }));
 
-    setModal(null)
+    setModal(null);
   }
 
   function reject(id: string) {
-    setStatuses((s) => ({ ...s, [id]: "Rejected" }))
+    setStatuses((s) => ({ ...s, [id]: "Rejected" }));
 
-    setModal(null)
+    setModal(null);
   }
 
   const statusOptions = [
@@ -1888,7 +1891,7 @@ function VerificationQueue({
     "Rejected",
 
     "Suspended",
-  ]
+  ];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -2154,83 +2157,83 @@ function VerificationQueue({
           gap: 0,
         }}
       >
-        {([
-          {
-            id: "students",
+        {(
+          [
+            {
+              id: "students",
 
-            label: "Student Developers (PSITS Members)",
+              label: "Student Developers (PSITS Members)",
 
-            count: filterStudents.length,
-          },
+              count: filterStudents.length,
+            },
 
-          {
-            id: "enterprises",
+            {
+              id: "enterprises",
 
-            label: "Local Enterprises (MSMEs)",
+              label: "Local Enterprises (MSMEs)",
 
-            count: filterEnterprises.length,
-          },
-        ] as const)
+              count: filterEnterprises.length,
+            },
+          ] as const
+        ).map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              background: "none",
 
-          .map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              border: "none",
+
+              cursor: "pointer",
+
+              padding: "10px 18px 11px",
+
+              fontFamily: "Inter, sans-serif",
+
+              fontSize: 13.5,
+
+              fontWeight: activeTab === tab.id ? 600 : 500,
+
+              color: activeTab === tab.id ? "#2563EB" : "#64748B",
+
+              borderBottom:
+                activeTab === tab.id
+                  ? "2.5px solid #2563EB"
+                  : "2.5px solid transparent",
+
+              marginBottom: -1,
+
+              transition: "all 0.12s",
+
+              display: "flex",
+
+              alignItems: "center",
+
+              gap: 8,
+
+              whiteSpace: "nowrap",
+            }}
+          >
+            {tab.label}
+            <span
               style={{
-                background: "none",
+                background: activeTab === tab.id ? "#EFF6FF" : "#F1F5F9",
 
-                border: "none",
+                color: activeTab === tab.id ? "#2563EB" : "#94A3B8",
 
-                cursor: "pointer",
+                borderRadius: 99,
 
-                padding: "10px 18px 11px",
+                fontSize: 11,
 
-                fontFamily: "Inter, sans-serif",
+                fontWeight: 700,
 
-                fontSize: 13.5,
-
-                fontWeight: activeTab === tab.id ? 600 : 500,
-
-                color: activeTab === tab.id ? "#2563EB" : "#64748B",
-
-                borderBottom:
-                  activeTab === tab.id
-                    ? "2.5px solid #2563EB"
-                    : "2.5px solid transparent",
-
-                marginBottom: -1,
-
-                transition: "all 0.12s",
-
-                display: "flex",
-
-                alignItems: "center",
-
-                gap: 8,
-
-                whiteSpace: "nowrap",
+                padding: "1px 7px",
               }}
             >
-              {tab.label}
-              <span
-                style={{
-                  background: activeTab === tab.id ? "#EFF6FF" : "#F1F5F9",
-
-                  color: activeTab === tab.id ? "#2563EB" : "#94A3B8",
-
-                  borderRadius: 99,
-
-                  fontSize: 11,
-
-                  fontWeight: 700,
-
-                  padding: "1px 7px",
-                }}
-              >
-                {tab.count}
-              </span>
-            </button>
-          ))}
+              {tab.count}
+            </span>
+          </button>
+        ))}
       </div>
 
       {/* Table or Cards */}
@@ -2290,7 +2293,7 @@ function VerificationQueue({
         />
       )}
     </div>
-  )
+  );
 }
 
 // ─── Student Table (Desktop) ──────────────────────────────────────────────────
@@ -2306,15 +2309,15 @@ function StudentTable({
 
   onReject,
 }: {
-  records: StudentRecord[]
+  records: StudentRecord[];
 
-  statuses: Record<string, string>
+  statuses: Record<string, string>;
 
-  onView: (r: StudentRecord) => void
+  onView: (r: StudentRecord) => void;
 
-  onApprove: (id: string) => void
+  onApprove: (id: string) => void;
 
-  onReject: (id: string) => void
+  onReject: (id: string) => void;
 }) {
   const cols = [
     "Applicant",
@@ -2330,7 +2333,7 @@ function StudentTable({
     "Status",
 
     "Actions",
-  ]
+  ];
 
   return (
     <Card style={{ overflow: "hidden", padding: 0 }}>
@@ -2370,10 +2373,10 @@ function StudentTable({
           </thead>
           <tbody>
             {records.map((r, i) => {
-              const status = statuses[r.id]
+              const status = statuses[r.id];
 
               const canAct =
-                status === "Pending Review" || status === "Under Review"
+                status === "Pending Review" || status === "Under Review";
 
               return (
                 <tr
@@ -2546,7 +2549,7 @@ function StudentTable({
                     </div>
                   </td>
                 </tr>
-              )
+              );
             })}
           </tbody>
         </table>
@@ -2555,7 +2558,7 @@ function StudentTable({
         )}
       </div>
     </Card>
-  )
+  );
 }
 
 // ─── Student Tablet Cards ──────────────────────────────────────────────────────
@@ -2575,28 +2578,28 @@ function StudentTabletCards({
 
   onReject,
 }: {
-  records: StudentRecord[]
+  records: StudentRecord[];
 
-  statuses: Record<string, string>
+  statuses: Record<string, string>;
 
-  expanded: Record<string, boolean>
+  expanded: Record<string, boolean>;
 
-  setExpanded: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+  setExpanded: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 
-  onView: (r: StudentRecord) => void
+  onView: (r: StudentRecord) => void;
 
-  onApprove: (id: string) => void
+  onApprove: (id: string) => void;
 
-  onReject: (id: string) => void
+  onReject: (id: string) => void;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {records.map((r) => {
-        const status = statuses[r.id]
+        const status = statuses[r.id];
 
-        const canAct = status === "Pending Review" || status === "Under Review"
+        const canAct = status === "Pending Review" || status === "Under Review";
 
-        const isExpanded = expanded[r.id]
+        const isExpanded = expanded[r.id];
 
         return (
           <Card key={r.id} style={{ padding: "14px 16px" }}>
@@ -2768,13 +2771,13 @@ function StudentTabletCards({
               </div>
             )}
           </Card>
-        )
+        );
       })}
       {records.length === 0 && (
         <EmptyState message="No applicants match your current filters." />
       )}
     </div>
-  )
+  );
 }
 
 // ─── Student Mobile Cards ────────────────────────────────────────────────────
@@ -2790,22 +2793,22 @@ function StudentCards({
 
   onReject,
 }: {
-  records: StudentRecord[]
+  records: StudentRecord[];
 
-  statuses: Record<string, string>
+  statuses: Record<string, string>;
 
-  onView: (r: StudentRecord) => void
+  onView: (r: StudentRecord) => void;
 
-  onApprove: (id: string) => void
+  onApprove: (id: string) => void;
 
-  onReject: (id: string) => void
+  onReject: (id: string) => void;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {records.map((r) => {
-        const status = statuses[r.id]
+        const status = statuses[r.id];
 
-        const canAct = status === "Pending Review" || status === "Under Review"
+        const canAct = status === "Pending Review" || status === "Under Review";
 
         return (
           <Card key={r.id} style={{ padding: 16 }}>
@@ -2904,13 +2907,13 @@ function StudentCards({
               )}
             </div>
           </Card>
-        )
+        );
       })}
       {records.length === 0 && (
         <EmptyState message="No applicants match your current filters." />
       )}
     </div>
-  )
+  );
 }
 
 // ─── Enterprise Table (Desktop) ───────────────────────────────────────────────
@@ -2926,15 +2929,15 @@ function EnterpriseTable({
 
   onReject,
 }: {
-  records: EnterpriseRecord[]
+  records: EnterpriseRecord[];
 
-  statuses: Record<string, string>
+  statuses: Record<string, string>;
 
-  onView: (r: EnterpriseRecord) => void
+  onView: (r: EnterpriseRecord) => void;
 
-  onApprove: (id: string) => void
+  onApprove: (id: string) => void;
 
-  onReject: (id: string) => void
+  onReject: (id: string) => void;
 }) {
   const cols = [
     "Business Name",
@@ -2948,7 +2951,7 @@ function EnterpriseTable({
     "Status",
 
     "Actions",
-  ]
+  ];
 
   return (
     <Card style={{ overflow: "hidden", padding: 0 }}>
@@ -2988,10 +2991,10 @@ function EnterpriseTable({
           </thead>
           <tbody>
             {records.map((r, i) => {
-              const status = statuses[r.id]
+              const status = statuses[r.id];
 
               const canAct =
-                status === "Pending Review" || status === "Under Review"
+                status === "Pending Review" || status === "Under Review";
 
               return (
                 <tr
@@ -3134,7 +3137,7 @@ function EnterpriseTable({
                     </div>
                   </td>
                 </tr>
-              )
+              );
             })}
           </tbody>
         </table>
@@ -3143,7 +3146,7 @@ function EnterpriseTable({
         )}
       </div>
     </Card>
-  )
+  );
 }
 
 // ─── Enterprise Tablet Cards ──────────────────────────────────────────────────
@@ -3163,28 +3166,28 @@ function EnterpriseTabletCards({
 
   onReject,
 }: {
-  records: EnterpriseRecord[]
+  records: EnterpriseRecord[];
 
-  statuses: Record<string, string>
+  statuses: Record<string, string>;
 
-  expanded: Record<string, boolean>
+  expanded: Record<string, boolean>;
 
-  setExpanded: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+  setExpanded: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 
-  onView: (r: EnterpriseRecord) => void
+  onView: (r: EnterpriseRecord) => void;
 
-  onApprove: (id: string) => void
+  onApprove: (id: string) => void;
 
-  onReject: (id: string) => void
+  onReject: (id: string) => void;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {records.map((r) => {
-        const status = statuses[r.id]
+        const status = statuses[r.id];
 
-        const canAct = status === "Pending Review" || status === "Under Review"
+        const canAct = status === "Pending Review" || status === "Under Review";
 
-        const isExpanded = expanded[r.id]
+        const isExpanded = expanded[r.id];
 
         return (
           <Card key={r.id} style={{ padding: "14px 16px" }}>
@@ -3360,13 +3363,13 @@ function EnterpriseTabletCards({
               </div>
             )}
           </Card>
-        )
+        );
       })}
       {records.length === 0 && (
         <EmptyState message="No enterprises match your current filters." />
       )}
     </div>
-  )
+  );
 }
 
 // ─── Enterprise Mobile Cards ──────────────────────────────────────────────────
@@ -3382,22 +3385,22 @@ function EnterpriseCards({
 
   onReject,
 }: {
-  records: EnterpriseRecord[]
+  records: EnterpriseRecord[];
 
-  statuses: Record<string, string>
+  statuses: Record<string, string>;
 
-  onView: (r: EnterpriseRecord) => void
+  onView: (r: EnterpriseRecord) => void;
 
-  onApprove: (id: string) => void
+  onApprove: (id: string) => void;
 
-  onReject: (id: string) => void
+  onReject: (id: string) => void;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {records.map((r) => {
-        const status = statuses[r.id]
+        const status = statuses[r.id];
 
-        const canAct = status === "Pending Review" || status === "Under Review"
+        const canAct = status === "Pending Review" || status === "Under Review";
 
         return (
           <Card key={r.id} style={{ padding: 16 }}>
@@ -3524,13 +3527,13 @@ function EnterpriseCards({
               )}
             </div>
           </Card>
-        )
+        );
       })}
       {records.length === 0 && (
         <EmptyState message="No enterprises match your current filters." />
       )}
     </div>
-  )
+  );
 }
 
 // ─── Shared small components ──────────────────────────────────────────────────
@@ -3542,11 +3545,11 @@ function ActionBtn({
 
   children,
 }: {
-  variant: "outline" | "success" | "danger"
+  variant: "outline" | "success" | "danger";
 
-  onClick: () => void
+  onClick: () => void;
 
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   const cfg = {
     outline: {
@@ -3578,7 +3581,7 @@ function ActionBtn({
 
       hoverBg: "#B91C1C",
     },
-  }[variant]
+  }[variant];
 
   return (
     <button
@@ -3619,7 +3622,7 @@ function ActionBtn({
     >
       {children}
     </button>
-  )
+  );
 }
 
 function mobileActionStyle(
@@ -3659,7 +3662,7 @@ function mobileActionStyle(
     fontFamily: "Inter, sans-serif",
 
     transition: "opacity 0.12s",
-  }
+  };
 }
 
 function EmptyState({ message }: { message: string }) {
@@ -3692,7 +3695,7 @@ function EmptyState({ message }: { message: string }) {
         {message}
       </p>
     </div>
-  )
+  );
 }
 
 // ─── Developer Profile Page (Screen 1) ────────────────────────────────────────
@@ -3707,7 +3710,7 @@ const devNavItems = [
   { icon: IconMessages, label: "Messages", id: "messages" },
 
   { icon: IconSettings, label: "Settings", id: "settings" },
-]
+];
 
 function DevSidebar({
   active,
@@ -3716,13 +3719,13 @@ function DevSidebar({
 
   collapsed,
 }: {
-  active: string
+  active: string;
 
-  onNav: (id: string) => void
+  onNav: (id: string) => void;
 
-  collapsed: boolean
+  collapsed: boolean;
 }) {
-  const profile = useDevProfile()
+  const profile = useDevProfile();
 
   return (
     <aside
@@ -3821,7 +3824,7 @@ function DevSidebar({
       </div>
       <nav style={{ padding: "12px 0", flex: 1 }}>
         {devNavItems.map(({ icon: Icon, label, id }) => {
-          const isActive = active === id
+          const isActive = active === id;
 
           return (
             <button
@@ -3867,18 +3870,18 @@ function DevSidebar({
               onMouseEnter={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "#F8FAFC"
+                    "#F8FAFC";
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "transparent"
+                    "transparent";
               }}
             >
               <Icon size={20} />
               {!collapsed && label}
             </button>
-          )
+          );
         })}
       </nav>
       {!collapsed && (
@@ -3931,7 +3934,7 @@ function DevSidebar({
         </div>
       )}
     </aside>
-  )
+  );
 }
 
 function DevStatusPill({ status }: { status: string }) {
@@ -3940,7 +3943,7 @@ function DevStatusPill({ status }: { status: string }) {
       ? { bg: "#F0FDF4", color: "#16A34A", border: "#BBF7D0" }
       : status === "Active"
         ? { bg: "#EFF6FF", color: "#2563EB", border: "#BFDBFE" }
-        : { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A" }
+        : { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A" };
 
   return (
     <span
@@ -3981,7 +3984,7 @@ function DevStatusPill({ status }: { status: string }) {
       />
       {status}
     </span>
-  )
+  );
 }
 
 function DevSkillTag({
@@ -3989,9 +3992,9 @@ function DevSkillTag({
 
   muted = false,
 }: {
-  label: string
+  label: string;
 
-  muted?: boolean
+  muted?: boolean;
 }) {
   return (
     <span
@@ -4017,7 +4020,7 @@ function DevSkillTag({
     >
       {label}
     </span>
-  )
+  );
 }
 
 function Stars({ rating }: { rating: number }) {
@@ -4027,7 +4030,7 @@ function Stars({ rating }: { rating: number }) {
         <IconStar key={i} filled={i <= rating} />
       ))}
     </span>
-  )
+  );
 }
 
 function DeveloperProfile({
@@ -4037,15 +4040,15 @@ function DeveloperProfile({
 
   isTablet: _isTablet,
 }: {
-  isMobile: boolean
+  isMobile: boolean;
 
-  isTablet?: boolean
+  isTablet?: boolean;
 }) {
-  void _isTablet
+  void _isTablet;
 
-  const p = useDevProfile()
+  const p = useDevProfile();
 
-  const verified = p.verificationStatus === "Verified"
+  const verified = p.verificationStatus === "Verified";
 
   const linkIcons: Record<string, React.ReactNode> = {
     github: <IconGithub size={18} />,
@@ -4053,7 +4056,7 @@ function DeveloperProfile({
     linkedin: <IconLinkedin size={18} />,
 
     globe: <IconGlobe size={18} />,
-  }
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -4847,13 +4850,13 @@ function DeveloperProfile({
         StartupMatch · Tagum City Developer Platform · © 2025
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Developer Marketplace & Bids ─────────────────────────────────────────────
 
 function MarketplaceFeed({ isMobile }: { isMobile: boolean }) {
-  const [placed, setPlaced] = useState<Record<string, boolean>>({})
+  const [placed, setPlaced] = useState<Record<string, boolean>>({});
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -5033,9 +5036,9 @@ function MarketplaceFeed({ isMobile }: { isMobile: boolean }) {
             </div>
             <button
               onClick={() => {
-                placeBid(project.id)
+                placeBid(project.id);
 
-                setPlaced((s) => ({ ...s, [project.id]: true }))
+                setPlaced((s) => ({ ...s, [project.id]: true }));
               }}
               disabled={placed[project.id]}
               style={{
@@ -5082,11 +5085,11 @@ function MarketplaceFeed({ isMobile }: { isMobile: boolean }) {
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 function BidsView() {
-  const bids = useDevBids()
+  const bids = useDevBids();
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -5222,7 +5225,7 @@ function BidsView() {
         </Card>
       )}
     </div>
-  )
+  );
 }
 
 function DevStub({ title, message }: { title: string; message: string }) {
@@ -5250,7 +5253,7 @@ function DevStub({ title, message }: { title: string; message: string }) {
         <EmptyState message={`${title} is coming in a future iteration.`} />
       </Card>
     </div>
-  )
+  );
 }
 
 // ─── Sprint Dashboard ──────────────────────────────────────────────────────────
@@ -5265,7 +5268,7 @@ const sprintNavItems = [
   { icon: IconMessages, label: "Messages", id: "messages" },
 
   { icon: IconSettings, label: "Settings", id: "settings" },
-]
+];
 
 const stakeholders = [
   {
@@ -5327,15 +5330,15 @@ const stakeholders = [
 
     lastSeen: "Last seen Jul 30",
   },
-]
+];
 
-const notifColor = { warning: "#D97706", success: "#16A34A", info: "#2563EB" }
+const notifColor = { warning: "#D97706", success: "#16A34A", info: "#2563EB" };
 
-const notifBg = { warning: "#FFFBEB", success: "#F0FDF4", info: "#EFF6FF" }
+const notifBg = { warning: "#FFFBEB", success: "#F0FDF4", info: "#EFF6FF" };
 
-const notifBorder = { warning: "#FDE68A", success: "#BBF7D0", info: "#BFDBFE" }
+const notifBorder = { warning: "#FDE68A", success: "#BBF7D0", info: "#BFDBFE" };
 
-const notifIcon = { warning: "⚠️", success: "✅", info: "💬" }
+const notifIcon = { warning: "⚠️", success: "✅", info: "💬" };
 
 function SprintSidebar({
   active,
@@ -5344,15 +5347,15 @@ function SprintSidebar({
 
   collapsed,
 }: {
-  active: string
+  active: string;
 
-  onNav: (id: string) => void
+  onNav: (id: string) => void;
 
-  collapsed: boolean
+  collapsed: boolean;
 }) {
-  const project = useProjectStore()
+  const project = useProjectStore();
 
-  const profile = useDevProfile()
+  const profile = useDevProfile();
 
   return (
     <aside
@@ -5503,7 +5506,7 @@ function SprintSidebar({
 
       <nav style={{ padding: "8px 0", flex: 1 }}>
         {sprintNavItems.map(({ icon: Icon, label, id }) => {
-          const isActive = active === id
+          const isActive = active === id;
 
           return (
             <button
@@ -5549,18 +5552,18 @@ function SprintSidebar({
               onMouseEnter={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "#F8FAFC"
+                    "#F8FAFC";
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "transparent"
+                    "transparent";
               }}
             >
               <Icon size={19} />
               {!collapsed && label}
             </button>
-          )
+          );
         })}
       </nav>
 
@@ -5633,7 +5636,7 @@ function SprintSidebar({
         </div>
       )}
     </aside>
-  )
+  );
 }
 
 function SprintDashboard({
@@ -5641,34 +5644,37 @@ function SprintDashboard({
 
   isTablet,
 }: {
-  isMobile: boolean
+  isMobile: boolean;
 
-  isTablet: boolean
+  isTablet: boolean;
 }) {
-  const project = useProjectStore()
+  const project = useProjectStore();
 
-  const profile = useDevProfile()
+  const profile = useDevProfile();
 
-  const [expandedPhase, setExpandedPhase] = useState<number | null>(2)
+  const [expandedPhase, setExpandedPhase] = useState<number | null>(2);
 
-  const [taskInput, setTaskInput] = useState<Record<number, string>>({})
+  const [taskInput, setTaskInput] = useState<Record<number, string>>({});
 
-  const [commentInput, setCommentInput] = useState<Record<number, string>>({})
+  const [commentInput, setCommentInput] = useState<Record<number, string>>({});
 
-  const stacked = isMobile || isTablet
+  const stacked = isMobile || isTablet;
 
-  const phases = project.phases
+  const phases = project.phases;
 
-  const completedPhases = phases.filter((p) => p.status === "completed").length
+  const completedPhases = phases.filter((p) => p.status === "completed").length;
 
-  const pct = Math.round((completedPhases / project.totalPhases) * 100)
+  const pct = Math.round((completedPhases / project.totalPhases) * 100);
 
-  const phaseStatusCfg: Record<SprintPhaseStatus, {
-    bg: string
-    color: string
-    border: string
-    label: string
-  }> = {
+  const phaseStatusCfg: Record<
+    SprintPhaseStatus,
+    {
+      bg: string;
+      color: string;
+      border: string;
+      label: string;
+    }
+  > = {
     completed: {
       bg: "#F0FDF4",
 
@@ -5728,7 +5734,7 @@ function SprintDashboard({
 
       label: "Upcoming",
     },
-  }
+  };
 
   const velocity = {
     completed: phases.filter((p) => p.status === "completed").length,
@@ -5740,47 +5746,47 @@ function SprintDashboard({
     onTrack: phases.filter((p) => p.status === "active").length,
 
     atRisk: phases.filter((p) => p.status === "disputed").length,
-  }
+  };
 
   const dueLabel = (daysLeft: number, status: SprintPhaseStatus) => {
-    if (status === "completed") return "✅ Delivered"
+    if (status === "completed") return "✅ Delivered";
 
-    if (daysLeft < 0) return `Overdue by ${Math.abs(daysLeft)}d`
+    if (daysLeft < 0) return `Overdue by ${Math.abs(daysLeft)}d`;
 
-    return `Due in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`
-  }
+    return `Due in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`;
+  };
 
   const postComment = (number: number) => {
-    const text = (commentInput[number] ?? "").trim()
+    const text = (commentInput[number] ?? "").trim();
 
-    if (!text) return
+    if (!text) return;
 
-    addComment(number, text, "developer")
+    addComment(number, text, "developer");
 
-    setCommentInput((s) => ({ ...s, [number]: "" }))
-  }
+    setCommentInput((s) => ({ ...s, [number]: "" }));
+  };
 
   const addPhaseTask = (number: number) => {
-    const label = (taskInput[number] ?? "").trim()
+    const label = (taskInput[number] ?? "").trim();
 
-    if (!label) return
+    if (!label) return;
 
-    addTask(number, label)
+    addTask(number, label);
 
-    setTaskInput((s) => ({ ...s, [number]: "" }))
-  }
+    setTaskInput((s) => ({ ...s, [number]: "" }));
+  };
 
   const burndownData = phases.map((p) => {
-    const done = p.tasks.filter((t) => t.done).length
+    const done = p.tasks.filter((t) => t.done).length;
 
-    return { name: `S${p.number}`, done, remaining: p.tasks.length - done }
-  })
+    return { name: `S${p.number}`, done, remaining: p.tasks.length - done };
+  });
 
-  const paidPhases = phases.filter((p) => p.status === "completed")
+  const paidPhases = phases.filter((p) => p.status === "completed");
 
-  const paidPct = Math.round((project.paidToDate / project.totalBudget) * 100)
+  const paidPct = Math.round((project.paidToDate / project.totalBudget) * 100);
 
-  const unreadNotifs = project.notifications.filter((n) => !n.read)
+  const unreadNotifs = project.notifications.filter((n) => !n.read);
 
   return (
     <div
@@ -6134,24 +6140,24 @@ function SprintDashboard({
 
           <div>
             {phases.map((phase, idx) => {
-              const cfg = phaseStatusCfg[phase.status]
+              const cfg = phaseStatusCfg[phase.status];
 
-              const isExpanded = expandedPhase === phase.number
+              const isExpanded = expandedPhase === phase.number;
 
-              const isActive = phase.status === "active"
+              const isActive = phase.status === "active";
 
-              const isCompleted = phase.status === "completed"
+              const isCompleted = phase.status === "completed";
 
               const isRevision =
-                phase.status === "disputed" || phase.status === "revision"
+                phase.status === "disputed" || phase.status === "revision";
 
-              const isInReview = phase.status === "in_review"
+              const isInReview = phase.status === "in_review";
 
-              const isLast = idx === phases.length - 1
+              const isLast = idx === phases.length - 1;
 
-              const doneCount = phase.tasks.filter((t) => t.done).length
+              const doneCount = phase.tasks.filter((t) => t.done).length;
 
-              const hasRepo = phase.dev.repoLink.trim().length > 0
+              const hasRepo = phase.dev.repoLink.trim().length > 0;
 
               return (
                 <div
@@ -6190,13 +6196,15 @@ function SprintDashboard({
                     }}
                     onMouseEnter={(e) => {
                       if (!isExpanded)
-                        (e.currentTarget as HTMLButtonElement).style.background =
-                          "#FAFCFF"
+                        (
+                          e.currentTarget as HTMLButtonElement
+                        ).style.background = "#FAFCFF";
                     }}
                     onMouseLeave={(e) => {
                       if (!isExpanded)
-                        (e.currentTarget as HTMLButtonElement).style.background =
-                          "transparent"
+                        (
+                          e.currentTarget as HTMLButtonElement
+                        ).style.background = "transparent";
                     }}
                   >
                     {/* Phase number circle */}
@@ -6686,10 +6694,10 @@ function SprintDashboard({
                                 onFocus={(e) => {
                                   if (!isCompleted && !isInReview)
                                     e.currentTarget.style.borderColor =
-                                      "#2563EB"
+                                      "#2563EB";
                                 }}
                                 onBlur={(e) => {
-                                  e.currentTarget.style.borderColor = "#E2E8F0"
+                                  e.currentTarget.style.borderColor = "#E2E8F0";
                                 }}
                               />
                             </div>
@@ -6847,10 +6855,10 @@ function SprintDashboard({
                               }}
                               onFocus={(e) => {
                                 if (!isInReview)
-                                  e.currentTarget.style.borderColor = "#2563EB"
+                                  e.currentTarget.style.borderColor = "#2563EB";
                               }}
                               onBlur={(e) => {
-                                e.currentTarget.style.borderColor = "#E2E8F0"
+                                e.currentTarget.style.borderColor = "#E2E8F0";
                               }}
                             />
                           </div>
@@ -7000,13 +7008,19 @@ function SprintDashboard({
                                   }}
                                   onMouseEnter={(e) => {
                                     if (!isCompleted)
-                                      (e.currentTarget as HTMLButtonElement).style.background =
-                                        t.done ? "#F0FDF4" : "#F8FAFC"
+                                      (
+                                        e.currentTarget as HTMLButtonElement
+                                      ).style.background = t.done
+                                        ? "#F0FDF4"
+                                        : "#F8FAFC";
                                   }}
                                   onMouseLeave={(e) => {
                                     if (!isCompleted)
-                                      (e.currentTarget as HTMLButtonElement).style.background =
-                                        t.done ? "#F0FDF4" : "#fff"
+                                      (
+                                        e.currentTarget as HTMLButtonElement
+                                      ).style.background = t.done
+                                        ? "#F0FDF4"
+                                        : "#fff";
                                   }}
                                 >
                                   <span
@@ -7075,9 +7089,9 @@ function SprintDashboard({
                                   }
                                   onKeyDown={(e) => {
                                     if (e.key === "Enter") {
-                                      e.preventDefault()
+                                      e.preventDefault();
 
-                                      addPhaseTask(phase.number)
+                                      addPhaseTask(phase.number);
                                     }
                                   }}
                                   placeholder="Add a task…"
@@ -7293,9 +7307,9 @@ function SprintDashboard({
                                   }
                                   onKeyDown={(e) => {
                                     if (e.key === "Enter") {
-                                      e.preventDefault()
+                                      e.preventDefault();
 
-                                      postComment(phase.number)
+                                      postComment(phase.number);
                                     }
                                   }}
                                   placeholder={`Comment as ${profile.name}…`}
@@ -7334,15 +7348,13 @@ function SprintDashboard({
 
                                     background: (
                                       commentInput[phase.number] ?? ""
-                                    )
-
-                                      .trim()
+                                    ).trim()
                                       ? "#2563EB"
                                       : "#F1F5F9",
 
-                                    color: (commentInput[phase.number] ?? "")
-
-                                      .trim()
+                                    color: (
+                                      commentInput[phase.number] ?? ""
+                                    ).trim()
                                       ? "#fff"
                                       : "#94A3B8",
 
@@ -7405,7 +7417,7 @@ function SprintDashboard({
                                       phase.dev.repoLink,
 
                                       phase.dev.updates,
-                                    )
+                                    );
                                 }}
                                 style={{
                                   display: "inline-flex",
@@ -7440,13 +7452,15 @@ function SprintDashboard({
                                 }}
                                 onMouseEnter={(e) => {
                                   if (hasRepo)
-                                    (e.currentTarget as HTMLButtonElement).style.background =
-                                      "#1D4ED8"
+                                    (
+                                      e.currentTarget as HTMLButtonElement
+                                    ).style.background = "#1D4ED8";
                                 }}
                                 onMouseLeave={(e) => {
                                   if (hasRepo)
-                                    (e.currentTarget as HTMLButtonElement).style.background =
-                                      "#2563EB"
+                                    (
+                                      e.currentTarget as HTMLButtonElement
+                                    ).style.background = "#2563EB";
                                 }}
                               >
                                 <svg
@@ -7557,7 +7571,7 @@ function SprintDashboard({
                                     phase.dev.repoLink,
 
                                     phase.dev.updates,
-                                  )
+                                  );
                               }}
                               style={{
                                 display: "inline-flex",
@@ -7592,13 +7606,15 @@ function SprintDashboard({
                               }}
                               onMouseEnter={(e) => {
                                 if (hasRepo)
-                                  (e.currentTarget as HTMLButtonElement).style.background =
-                                    "#B45309"
+                                  (
+                                    e.currentTarget as HTMLButtonElement
+                                  ).style.background = "#B45309";
                               }}
                               onMouseLeave={(e) => {
                                 if (hasRepo)
-                                  (e.currentTarget as HTMLButtonElement).style.background =
-                                    "#D97706"
+                                  (
+                                    e.currentTarget as HTMLButtonElement
+                                  ).style.background = "#D97706";
                               }}
                             >
                               Resubmit Milestone
@@ -7609,7 +7625,7 @@ function SprintDashboard({
                     </div>
                   )}
                 </div>
-              )
+              );
             })}
           </div>
         </Card>
@@ -7889,13 +7905,13 @@ function SprintDashboard({
           </div>
           <div style={{ maxHeight: 340, overflowY: "auto" }}>
             {project.notifications.map((n, i) => {
-              const color = notifColor[n.type]
+              const color = notifColor[n.type];
 
-              const bg = notifBg[n.type]
+              const bg = notifBg[n.type];
 
-              const border = notifBorder[n.type]
+              const border = notifBorder[n.type];
 
-              const icon = notifIcon[n.type]
+              const icon = notifIcon[n.type];
 
               return (
                 <button
@@ -8007,7 +8023,7 @@ function SprintDashboard({
                     />
                   )}
                 </button>
-              )
+              );
             })}
           </div>
         </Card>
@@ -8373,7 +8389,7 @@ function SprintDashboard({
         </Card>
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Sprint Overview (Dashboard nav item) ──────────────────────────────────────
@@ -8385,38 +8401,38 @@ function SprintOverview({
 
   onNavigate,
 }: {
-  isMobile: boolean
+  isMobile: boolean;
 
-  isTablet: boolean
+  isTablet: boolean;
 
-  onNavigate: () => void
+  onNavigate: () => void;
 }) {
-  const project = useProjectStore()
+  const project = useProjectStore();
 
-  const stacked = isMobile || isTablet
+  const stacked = isMobile || isTablet;
 
   const completed = project.phases.filter(
     (p) => p.status === "completed",
-  ).length
+  ).length;
 
-  const pct = Math.round((completed / project.totalPhases) * 100)
+  const pct = Math.round((completed / project.totalPhases) * 100);
 
   const inReview = project.phases.filter(
     (p) => p.status === "in_review" || p.status === "revision",
-  ).length
+  ).length;
 
-  const atRisk = project.phases.filter((p) => p.status === "disputed").length
+  const atRisk = project.phases.filter((p) => p.status === "disputed").length;
 
   const nextPhase = project.phases.find(
     (p) =>
       p.status === "active" ||
       p.status === "in_review" ||
       p.status === "disputed",
-  )
+  );
 
-  const unread = project.notifications.filter((n) => !n.read).length
+  const unread = project.notifications.filter((n) => !n.read).length;
 
-  const paidPct = Math.round((project.paidToDate / project.totalBudget) * 100)
+  const paidPct = Math.round((project.paidToDate / project.totalBudget) * 100);
 
   const tiles = [
     {
@@ -8466,7 +8482,7 @@ function SprintOverview({
 
       border: "#DDD6FE",
     },
-  ]
+  ];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -9006,7 +9022,7 @@ function SprintOverview({
         </Card>
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Project Spec Form ────────────────────────────────────────────────────────
@@ -9065,7 +9081,7 @@ const TECH_TAGS = [
   "AWS",
 
   "Google Cloud",
-]
+];
 
 const BARANGAYS = [
   "Barangay Apokon",
@@ -9083,16 +9099,16 @@ const BARANGAYS = [
   "Barangay Visayan Village",
 
   "Other Tagum City Zone",
-]
+];
 
 interface Milestone {
-  id: string
+  id: string;
 
-  phase: number
+  phase: number;
 
-  title: string
+  title: string;
 
-  dueDate: string
+  dueDate: string;
 }
 
 function FormLabel({
@@ -9100,9 +9116,9 @@ function FormLabel({
 
   required,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 
-  required?: boolean
+  required?: boolean;
 }) {
   return (
     <label
@@ -9121,7 +9137,7 @@ function FormLabel({
       {children}
       {required && <span style={{ color: "#DC2626", marginLeft: 3 }}>*</span>}
     </label>
-  )
+  );
 }
 
 function FormHint({ children }: { children: React.ReactNode }) {
@@ -9139,7 +9155,7 @@ function FormHint({ children }: { children: React.ReactNode }) {
     >
       {children}
     </p>
-  )
+  );
 }
 
 function TextInput({
@@ -9155,19 +9171,19 @@ function TextInput({
 
   type = "text",
 }: {
-  value: string
+  value: string;
 
-  onChange?: (v: string) => void
+  onChange?: (v: string) => void;
 
-  placeholder?: string
+  placeholder?: string;
 
-  readOnly?: boolean
+  readOnly?: boolean;
 
-  prefix?: string
+  prefix?: string;
 
-  type?: string
+  type?: string;
 }) {
-  const [focused, setFocused] = useState(false)
+  const [focused, setFocused] = useState(false);
 
   return (
     <div
@@ -9244,7 +9260,7 @@ function TextInput({
         </span>
       )}
     </div>
-  )
+  );
 }
 
 function SelectInput({
@@ -9256,15 +9272,15 @@ function SelectInput({
 
   placeholder,
 }: {
-  value: string
+  value: string;
 
-  onChange: (v: string) => void
+  onChange: (v: string) => void;
 
-  options: string[]
+  options: string[];
 
-  placeholder?: string
+  placeholder?: string;
 }) {
-  const [focused, setFocused] = useState(false)
+  const [focused, setFocused] = useState(false);
 
   return (
     <div style={{ position: "relative" }}>
@@ -9332,7 +9348,7 @@ function SelectInput({
         <IconChevron size={14} />
       </span>
     </div>
-  )
+  );
 }
 
 function SectionDivider({
@@ -9342,11 +9358,11 @@ function SectionDivider({
 
   description,
 }: {
-  number: number
+  number: number;
 
-  title: string
+  title: string;
 
-  description: string
+  description: string;
 }) {
   return (
     <div
@@ -9414,7 +9430,7 @@ function SectionDivider({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function FieldGroup({ children }: { children: React.ReactNode }) {
@@ -9422,7 +9438,7 @@ function FieldGroup({ children }: { children: React.ReactNode }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       {children}
     </div>
-  )
+  );
 }
 
 function ProjectSpecForm({
@@ -9430,23 +9446,23 @@ function ProjectSpecForm({
 
   onBack,
 }: {
-  isMobile: boolean
+  isMobile: boolean;
 
-  onBack: () => void
+  onBack: () => void;
 }) {
   // Form state
 
-  const [bizName] = useState("Apokon Hardware MSME")
+  const [bizName] = useState("Apokon Hardware MSME");
 
-  const [barangay, setBarangay] = useState("")
+  const [barangay, setBarangay] = useState("");
 
-  const [repName, setRepName] = useState("Ernesto Dela Vega")
+  const [repName, setRepName] = useState("Ernesto Dela Vega");
 
-  const [repEmail, setRepEmail] = useState("ernesto@apokonhardware.com")
+  const [repEmail, setRepEmail] = useState("ernesto@apokonhardware.com");
 
-  const [projTitle, setProjTitle] = useState("")
+  const [projTitle, setProjTitle] = useState("");
 
-  const [scope, setScope] = useState("")
+  const [scope, setScope] = useState("");
 
   const [selectedTags, setSelectedTags] = useState<string[]>([
     "React",
@@ -9454,13 +9470,13 @@ function ProjectSpecForm({
     "Firebase",
 
     "Tailwind CSS",
-  ])
+  ]);
 
-  const [tagSearch, setTagSearch] = useState("")
+  const [tagSearch, setTagSearch] = useState("");
 
-  const [numPhases, setNumPhases] = useState("3")
+  const [numPhases, setNumPhases] = useState("3");
 
-  const [deadline, setDeadline] = useState("")
+  const [deadline, setDeadline] = useState("");
 
   const [milestones, setMilestones] = useState<Milestone[]>([
     { id: "m1", phase: 1, title: "", dueDate: "" },
@@ -9468,31 +9484,31 @@ function ProjectSpecForm({
     { id: "m2", phase: 2, title: "", dueDate: "" },
 
     { id: "m3", phase: 3, title: "", dueDate: "" },
-  ])
+  ]);
 
-  const [budget, setBudget] = useState("")
+  const [budget, setBudget] = useState("");
 
-  const [agreed, setAgreed] = useState(false)
+  const [agreed, setAgreed] = useState(false);
 
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useState(false);
 
-  const [published, setPublished] = useState(false)
+  const [published, setPublished] = useState(false);
 
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [scopeFocused, setScopeFocused] = useState(false)
+  const [scopeFocused, setScopeFocused] = useState(false);
 
-  const [tagInputFocused, setTagInputFocused] = useState(false)
+  const [tagInputFocused, setTagInputFocused] = useState(false);
 
-  const tagDropdownRef = useRef<HTMLDivElement>(null)
+  const tagDropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync milestone count to numPhases
 
   useEffect(() => {
-    const n = Math.max(1, Math.min(8, parseInt(numPhases) || 1))
+    const n = Math.max(1, Math.min(8, parseInt(numPhases) || 1));
 
     setMilestones((prev) => {
-      if (prev.length === n) return prev
+      if (prev.length === n) return prev;
 
       if (prev.length < n) {
         const added = Array.from({ length: n - prev.length }, (_, i) => ({
@@ -9503,19 +9519,19 @@ function ProjectSpecForm({
           title: "",
 
           dueDate: "",
-        }))
+        }));
 
-        return [...prev, ...added]
+        return [...prev, ...added];
       }
 
-      return prev.slice(0, n)
-    })
-  }, [numPhases])
+      return prev.slice(0, n);
+    });
+  }, [numPhases]);
 
   function toggleTag(tag: string) {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
-    )
+    );
   }
 
   function updateMilestone(
@@ -9527,7 +9543,7 @@ function ProjectSpecForm({
   ) {
     setMilestones((prev) =>
       prev.map((m) => (m.id === id ? { ...m, [field]: value } : m)),
-    )
+    );
   }
 
   function addMilestone() {
@@ -9535,52 +9551,52 @@ function ProjectSpecForm({
       ...prev,
 
       { id: `m${Date.now()}`, phase: prev.length + 1, title: "", dueDate: "" },
-    ])
+    ]);
 
-    setNumPhases(String(milestones.length + 1))
+    setNumPhases(String(milestones.length + 1));
   }
 
   function removeMilestone(id: string) {
-    if (milestones.length <= 1) return
+    if (milestones.length <= 1) return;
 
     setMilestones((prev) => {
-      const next = prev.filter((m) => m.id !== id)
+      const next = prev.filter((m) => m.id !== id);
 
-      return next.map((m, i) => ({ ...m, phase: i + 1 }))
-    })
+      return next.map((m, i) => ({ ...m, phase: i + 1 }));
+    });
 
-    setNumPhases(String(milestones.length - 1))
+    setNumPhases(String(milestones.length - 1));
   }
 
   function validate() {
-    const e: Record<string, string> = {}
+    const e: Record<string, string> = {};
 
-    if (!projTitle.trim()) e.projTitle = "Project title is required."
+    if (!projTitle.trim()) e.projTitle = "Project title is required.";
 
-    if (!scope.trim()) e.scope = "Project scope description is required."
+    if (!scope.trim()) e.scope = "Project scope description is required.";
 
-    if (!barangay) e.barangay = "Please select a barangay."
+    if (!barangay) e.barangay = "Please select a barangay.";
 
-    if (!deadline) e.deadline = "Final deadline is required."
+    if (!deadline) e.deadline = "Final deadline is required.";
 
-    if (!budget.trim()) e.budget = "Proposed budget is required."
+    if (!budget.trim()) e.budget = "Proposed budget is required.";
 
-    if (!agreed) e.agreed = "You must agree to the terms before publishing."
+    if (!agreed) e.agreed = "You must agree to the terms before publishing.";
 
-    setErrors(e)
+    setErrors(e);
 
-    return Object.keys(e).length === 0
+    return Object.keys(e).length === 0;
   }
 
   function handlePublish() {
-    if (validate()) setPublished(true)
+    if (validate()) setPublished(true);
   }
 
   const filteredTags = TECH_TAGS.filter(
     (t) =>
       !selectedTags.includes(t) &&
       t.toLowerCase().includes(tagSearch.toLowerCase()),
-  )
+  );
 
   if (published) {
     return (
@@ -9681,7 +9697,7 @@ function ProjectSpecForm({
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -10379,9 +10395,9 @@ function ProjectSpecForm({
                               <button
                                 key={tag}
                                 onMouseDown={() => {
-                                  toggleTag(tag)
+                                  toggleTag(tag);
 
-                                  setTagSearch("")
+                                  setTagSearch("");
                                 }}
                                 style={{
                                   width: "100%",
@@ -10504,18 +10520,20 @@ function ProjectSpecForm({
                               transition: "all 0.1s",
                             }}
                             onMouseEnter={(e) => {
-                              ;(e.currentTarget as HTMLButtonElement).style.borderColor =
-                                "#2563EB"
-
-                              ;(e.currentTarget as HTMLButtonElement).style.color =
-                                "#2563EB"
+                              (
+                                e.currentTarget as HTMLButtonElement
+                              ).style.borderColor = "#2563EB";
+                              (
+                                e.currentTarget as HTMLButtonElement
+                              ).style.color = "#2563EB";
                             }}
                             onMouseLeave={(e) => {
-                              ;(e.currentTarget as HTMLButtonElement).style.borderColor =
-                                "#E2E8F0"
-
-                              ;(e.currentTarget as HTMLButtonElement).style.color =
-                                "#475569"
+                              (
+                                e.currentTarget as HTMLButtonElement
+                              ).style.borderColor = "#E2E8F0";
+                              (
+                                e.currentTarget as HTMLButtonElement
+                              ).style.color = "#475569";
                             }}
                           >
                             + {tag}
@@ -10999,24 +11017,24 @@ function ProjectSpecForm({
                           justifyContent: "center",
                         }}
                         onMouseEnter={(e) => {
-                          ;(e.currentTarget as HTMLButtonElement).style.borderColor =
-                            "#2563EB"
-
-                          ;(e.currentTarget as HTMLButtonElement).style.color =
-                            "#2563EB"
-
-                          ;(e.currentTarget as HTMLButtonElement).style.background =
-                            "#F0F7FF"
+                          (
+                            e.currentTarget as HTMLButtonElement
+                          ).style.borderColor = "#2563EB";
+                          (e.currentTarget as HTMLButtonElement).style.color =
+                            "#2563EB";
+                          (
+                            e.currentTarget as HTMLButtonElement
+                          ).style.background = "#F0F7FF";
                         }}
                         onMouseLeave={(e) => {
-                          ;(e.currentTarget as HTMLButtonElement).style.borderColor =
-                            "#CBD5E1"
-
-                          ;(e.currentTarget as HTMLButtonElement).style.color =
-                            "#64748B"
-
-                          ;(e.currentTarget as HTMLButtonElement).style.background =
-                            "transparent"
+                          (
+                            e.currentTarget as HTMLButtonElement
+                          ).style.borderColor = "#CBD5E1";
+                          (e.currentTarget as HTMLButtonElement).style.color =
+                            "#64748B";
+                          (
+                            e.currentTarget as HTMLButtonElement
+                          ).style.background = "transparent";
                         }}
                       >
                         <svg
@@ -11310,12 +11328,12 @@ function ProjectSpecForm({
                 onMouseEnter={(e) => {
                   if (!saved)
                     (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      "#CBD5E1"
+                      "#CBD5E1";
                 }}
                 onMouseLeave={(e) => {
                   if (!saved)
                     (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      "#E2E8F0"
+                      "#E2E8F0";
                 }}
               >
                 {saved ? (
@@ -11384,7 +11402,7 @@ function ProjectSpecForm({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Milestone Tracking Dashboard ────────────────────────────────────────────
@@ -11399,7 +11417,7 @@ const clientNavItems = [
   { icon: IconMessages, label: "Messages", id: "messages" },
 
   { icon: IconSettings, label: "Settings", id: "settings" },
-]
+];
 
 const phaseCfg = {
   completed: {
@@ -11465,7 +11483,7 @@ const phaseCfg = {
 
     dot: "#CBD5E1",
   },
-}
+};
 
 function ClientSidebar({
   active,
@@ -11474,11 +11492,11 @@ function ClientSidebar({
 
   collapsed,
 }: {
-  active: string
+  active: string;
 
-  onNav: (id: string) => void
+  onNav: (id: string) => void;
 
-  collapsed: boolean
+  collapsed: boolean;
 }) {
   return (
     <aside
@@ -11628,7 +11646,7 @@ function ClientSidebar({
 
       <nav style={{ padding: "8px 0", flex: 1 }}>
         {clientNavItems.map(({ icon: Icon, label, id }) => {
-          const isActive = active === id
+          const isActive = active === id;
 
           return (
             <button
@@ -11674,18 +11692,18 @@ function ClientSidebar({
               onMouseEnter={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "#F8FAFC"
+                    "#F8FAFC";
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "transparent"
+                    "transparent";
               }}
             >
               <Icon size={18} />
               {!collapsed && label}
             </button>
-          )
+          );
         })}
       </nav>
 
@@ -11733,7 +11751,7 @@ function ClientSidebar({
         </div>
       )}
     </aside>
-  )
+  );
 }
 
 function MilestoneTrackingPage({
@@ -11747,41 +11765,41 @@ function MilestoneTrackingPage({
 
   setSidebarOpen,
 }: {
-  isMobile: boolean
+  isMobile: boolean;
 
-  isTablet: boolean
+  isTablet: boolean;
 
-  collapsed: boolean
+  collapsed: boolean;
 
-  sidebarOpen: boolean
+  sidebarOpen: boolean;
 
-  setSidebarOpen: (v: boolean) => void
+  setSidebarOpen: (v: boolean) => void;
 }) {
-  const [clientNav, setClientNav] = useState("milestones")
+  const [clientNav, setClientNav] = useState("milestones");
 
-  const [disputeOpen, setDisputeOpen] = useState<number | null>(null)
+  const [disputeOpen, setDisputeOpen] = useState<number | null>(null);
 
-  const [disputeNote, setDisputeNote] = useState("")
+  const [disputeNote, setDisputeNote] = useState("");
 
-  const [feedbackMsg, setFeedbackMsg] = useState("")
+  const [feedbackMsg, setFeedbackMsg] = useState("");
 
-  const [panelOpen, setPanelOpen] = useState(false)
+  const [panelOpen, setPanelOpen] = useState(false);
 
-  const feedEndRef = useRef<HTMLDivElement>(null)
+  const feedEndRef = useRef<HTMLDivElement>(null);
 
-  const project = useProjectStore()
+  const project = useProjectStore();
 
   const clientStatus = (
     s: SprintPhaseStatus,
   ): "review" | "completed" | "disputed" | "upcoming" => {
-    if (s === "completed") return "completed"
+    if (s === "completed") return "completed";
 
-    if (s === "disputed" || s === "revision") return "disputed"
+    if (s === "disputed" || s === "revision") return "disputed";
 
-    if (s === "in_review" || s === "active") return "review"
+    if (s === "in_review" || s === "active") return "review";
 
-    return "upcoming"
-  }
+    return "upcoming";
+  };
 
   const clientPhases = project.phases.map((p) => ({
     num: p.number,
@@ -11803,45 +11821,45 @@ function MilestoneTrackingPage({
     approvedAt: p.approvedAt,
 
     daysOverdue: p.client.daysLeft < 0 ? Math.abs(p.client.daysLeft) : 2,
-  }))
+  }));
 
-  const messages = project.phases.find((p) => p.number === 2)?.comments ?? []
+  const messages = project.phases.find((p) => p.number === 2)?.comments ?? [];
 
   function handleApprove(number: number) {
-    approvePhase(number)
+    approvePhase(number);
   }
 
   function handleDispute(number: number) {
-    disputePhase(number, disputeNote)
+    disputePhase(number, disputeNote);
 
-    setDisputeOpen(null)
+    setDisputeOpen(null);
 
-    setDisputeNote("")
+    setDisputeNote("");
   }
 
   function sendMessage() {
-    if (!feedbackMsg.trim()) return
+    if (!feedbackMsg.trim()) return;
 
-    addComment(2, feedbackMsg, "client")
+    addComment(2, feedbackMsg, "client");
 
-    setFeedbackMsg("")
+    setFeedbackMsg("");
 
     setTimeout(
       () => feedEndRef.current?.scrollIntoView({ behavior: "smooth" }),
 
       80,
-    )
+    );
   }
 
-  const verified = clientPhases.filter((p) => p.status === "completed").length
+  const verified = clientPhases.filter((p) => p.status === "completed").length;
 
-  const total = clientPhases.length
+  const total = clientPhases.length;
 
-  const activePhase = clientPhases.find((p) => p.status === "review")
+  const activePhase = clientPhases.find((p) => p.status === "review");
 
-  const hasDispute = clientPhases.some((p) => p.status === "disputed")
+  const hasDispute = clientPhases.some((p) => p.status === "disputed");
 
-  const stacked = isMobile || isTablet
+  const stacked = isMobile || isTablet;
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F8FAFC" }}>
@@ -11871,9 +11889,9 @@ function MilestoneTrackingPage({
           <ClientSidebar
             active={clientNav}
             onNav={(id) => {
-              setClientNav(id)
+              setClientNav(id);
 
-              setSidebarOpen(false)
+              setSidebarOpen(false);
             }}
             collapsed={collapsed}
           />
@@ -12526,7 +12544,7 @@ function MilestoneTrackingPage({
                 }}
               >
                 {clientPhases.map((p) => {
-                  const s = p.status
+                  const s = p.status;
 
                   return (
                     <div
@@ -12608,7 +12626,7 @@ function MilestoneTrackingPage({
                         </span>
                       )}
                     </div>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -12616,17 +12634,17 @@ function MilestoneTrackingPage({
             {/* ── Phase cards ──────────────────────────────────── */}
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {clientPhases.map((phase) => {
-                const status = phase.status
+                const status = phase.status;
 
-                const cfg = phaseCfg[status]
+                const cfg = phaseCfg[status];
 
-                const isReview = status === "review"
+                const isReview = status === "review";
 
-                const isCompleted = status === "completed"
+                const isCompleted = status === "completed";
 
-                const isDisputed = status === "disputed"
+                const isDisputed = status === "disputed";
 
-                const isUpcoming = status === "upcoming"
+                const isUpcoming = status === "upcoming";
 
                 return (
                   <div
@@ -13359,12 +13377,14 @@ function MilestoneTrackingPage({
                                     transition: "all 0.15s",
                                   }}
                                   onMouseEnter={(e) => {
-                                    ;(e.currentTarget as HTMLButtonElement).style.background =
-                                      "#FFFBEB"
+                                    (
+                                      e.currentTarget as HTMLButtonElement
+                                    ).style.background = "#FFFBEB";
                                   }}
                                   onMouseLeave={(e) => {
-                                    ;(e.currentTarget as HTMLButtonElement).style.background =
-                                      "transparent"
+                                    (
+                                      e.currentTarget as HTMLButtonElement
+                                    ).style.background = "transparent";
                                   }}
                                 >
                                   <svg
@@ -13540,7 +13560,7 @@ function MilestoneTrackingPage({
                       </div>
                     )}
                   </div>
-                )
+                );
               })}
             </div>
           </div>
@@ -13638,7 +13658,7 @@ function MilestoneTrackingPage({
                 }}
               >
                 {messages.map((msg) => {
-                  const isClient = msg.role === "client"
+                  const isClient = msg.role === "client";
 
                   return (
                     <div
@@ -13736,7 +13756,7 @@ function MilestoneTrackingPage({
                         </div>
                       </div>
                     </div>
-                  )
+                  );
                 })}
                 <div ref={feedEndRef} />
               </div>
@@ -13759,9 +13779,9 @@ function MilestoneTrackingPage({
                   onChange={(e) => setFeedbackMsg(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault()
+                      e.preventDefault();
 
-                      sendMessage()
+                      sendMessage();
                     }
                   }}
                   placeholder="Leave structured feedback…"
@@ -13829,14 +13849,14 @@ function MilestoneTrackingPage({
         </main>
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Enterprise Analytics ─────────────────────────────────────────────────────
 
 // Categorical palette — 5 hues, fixed order, validated for CVD separation
 
-const CAT5 = ["#2563EB", "#16A34A", "#D97706", "#7C3AED", "#0891B2"]
+const CAT5 = ["#2563EB", "#16A34A", "#D97706", "#7C3AED", "#0891B2"];
 
 const techStackData = [
   { name: "Next.js", pct: 35, fill: CAT5[0] },
@@ -13848,7 +13868,7 @@ const techStackData = [
   { name: "Android/Kotlin", pct: 15, fill: CAT5[3] },
 
   { name: "PostgreSQL", pct: 5, fill: CAT5[4] },
-]
+];
 
 const barangayData = [
   { name: "Apokon", projects: 45, fill: CAT5[0] },
@@ -13860,7 +13880,7 @@ const barangayData = [
   { name: "Canocotan", projects: 18, fill: CAT5[3] },
 
   { name: "Visayan Vill.", projects: 12, fill: CAT5[4] },
-]
+];
 
 const trajectoryData = [
   { month: "Mar", bids: 8, completions: 3 },
@@ -13874,7 +13894,7 @@ const trajectoryData = [
   { month: "Jul", bids: 31, completions: 24 },
 
   { month: "Aug", bids: 38, completions: 29 },
-]
+];
 
 const auditRows = [
   {
@@ -13936,7 +13956,7 @@ const auditRows = [
 
     status: "info",
   },
-]
+];
 
 const auditStatusCfg = {
   success: {
@@ -13978,7 +13998,7 @@ const auditStatusCfg = {
 
     label: "Published",
   },
-}
+};
 
 // Shared recharts tooltip style
 
@@ -13996,7 +14016,7 @@ const tooltipStyle: React.CSSProperties = {
   fontFamily: "Inter, sans-serif",
 
   boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-}
+};
 
 function ChartCard({
   title,
@@ -14007,13 +14027,13 @@ function ChartCard({
 
   action,
 }: {
-  title: string
+  title: string;
 
-  subtitle?: string
+  subtitle?: string;
 
-  children: React.ReactNode
+  children: React.ReactNode;
 
-  action?: React.ReactNode
+  action?: React.ReactNode;
 }) {
   return (
     <div
@@ -14068,7 +14088,7 @@ function ChartCard({
       </div>
       <div style={{ padding: "16px 22px 20px" }}>{children}</div>
     </div>
-  )
+  );
 }
 
 function AnalyticsAdminSidebar({
@@ -14078,11 +14098,11 @@ function AnalyticsAdminSidebar({
 
   collapsed,
 }: {
-  active: string
+  active: string;
 
-  onNav: (id: string) => void
+  onNav: (id: string) => void;
 
-  collapsed: boolean
+  collapsed: boolean;
 }) {
   return (
     <aside
@@ -14177,7 +14197,7 @@ function AnalyticsAdminSidebar({
       </div>
       <nav style={{ padding: "10px 0", flex: 1 }}>
         {adminNavItems.map(({ icon: Icon, label, id }) => {
-          const isActive = active === id
+          const isActive = active === id;
 
           return (
             <button
@@ -14219,18 +14239,18 @@ function AnalyticsAdminSidebar({
               onMouseEnter={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "rgba(255,255,255,0.05)"
+                    "rgba(255,255,255,0.05)";
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "transparent"
+                    "transparent";
               }}
             >
               <Icon size={18} />
               {!collapsed && label}
             </button>
-          )
+          );
         })}
       </nav>
       {!collapsed && (
@@ -14281,7 +14301,7 @@ function AnalyticsAdminSidebar({
         </div>
       )}
     </aside>
-  )
+  );
 }
 
 function EnterpriseAnalyticsPage({
@@ -14295,21 +14315,21 @@ function EnterpriseAnalyticsPage({
 
   setSidebarOpen,
 }: {
-  isMobile: boolean
+  isMobile: boolean;
 
-  isTablet: boolean
+  isTablet: boolean;
 
-  collapsed: boolean
+  collapsed: boolean;
 
-  sidebarOpen: boolean
+  sidebarOpen: boolean;
 
-  setSidebarOpen: (v: boolean) => void
+  setSidebarOpen: (v: boolean) => void;
 }) {
-  const [analyticsNav, setAnalyticsNav] = useState("analytics")
+  const [analyticsNav, setAnalyticsNav] = useState("analytics");
 
-  const [dateRange, setDateRange] = useState("Academic Year 2026")
+  const [dateRange, setDateRange] = useState("Academic Year 2026");
 
-  const isNarrow = isMobile || isTablet
+  const isNarrow = isMobile || isTablet;
 
   const kpis = [
     {
@@ -14367,7 +14387,7 @@ function EnterpriseAnalyticsPage({
 
       trend: "warning",
     },
-  ]
+  ];
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F8FAFC" }}>
@@ -14396,9 +14416,9 @@ function EnterpriseAnalyticsPage({
           <AnalyticsAdminSidebar
             active={analyticsNav}
             onNav={(id) => {
-              setAnalyticsNav(id)
+              setAnalyticsNav(id);
 
-              setSidebarOpen(false)
+              setSidebarOpen(false);
             }}
             collapsed={collapsed}
           />
@@ -14930,9 +14950,9 @@ function EnterpriseAnalyticsPage({
                     cursor={{ fill: "#F8FAFC" }}
                     contentStyle={tooltipStyle}
                     formatter={(value: unknown) => {
-                      const v = typeof value === "number" ? value : 0
+                      const v = typeof value === "number" ? value : 0;
 
-                      return [`${v}%`, "Share"] as const
+                      return [`${v}%`, "Share"] as const;
                     }}
                   />
                   <Bar dataKey="pct" radius={[0, 4, 4, 0]}>
@@ -15033,9 +15053,9 @@ function EnterpriseAnalyticsPage({
                     cursor={{ fill: "#F8FAFC" }}
                     contentStyle={tooltipStyle}
                     formatter={(value: unknown) => {
-                      const v = typeof value === "number" ? value : 0
+                      const v = typeof value === "number" ? value : 0;
 
-                      return [v, "Projects"] as const
+                      return [v, "Projects"] as const;
                     }}
                   />
                   <Bar dataKey="projects" radius={[4, 4, 0, 0]}>
@@ -15192,15 +15212,15 @@ function EnterpriseAnalyticsPage({
                 <Tooltip
                   contentStyle={tooltipStyle}
                   formatter={(value: unknown, name: unknown) => {
-                    const v = typeof value === "number" ? value : 0
+                    const v = typeof value === "number" ? value : 0;
 
-                    const n = typeof name === "string" ? name : String(name)
+                    const n = typeof name === "string" ? name : String(name);
 
                     return [
                       v,
 
                       n === "bids" ? "Bids Initiated" : "Milestones Completed",
-                    ] as const
+                    ] as const;
                   }}
                 />
                 <Area
@@ -15356,9 +15376,7 @@ function EnterpriseAnalyticsPage({
                 <tbody>
                   {auditRows.map((row, i) => {
                     const s =
-                      auditStatusCfg[
-                        (row.status as keyof typeof auditStatusCfg)
-                      ]
+                      auditStatusCfg[row.status as keyof typeof auditStatusCfg];
 
                     return (
                       <tr
@@ -15467,7 +15485,7 @@ function EnterpriseAnalyticsPage({
                           </span>
                         </td>
                       </tr>
-                    )
+                    );
                   })}
                 </tbody>
               </table>
@@ -15476,7 +15494,7 @@ function EnterpriseAnalyticsPage({
         </main>
       </div>
     </div>
-  )
+  );
 }
 
 // ─── PendingVerification placeholder (for unverified roles) ──────────────────
@@ -15492,11 +15510,11 @@ function PendingVerification({
 
   onLogout,
 }: {
-  role: AppRole
+  role: AppRole;
 
-  verification: string
+  verification: string;
 
-  onLogout: () => void
+  onLogout: () => void;
 }) {
   // Determine human-readable role label
 
@@ -15505,9 +15523,9 @@ function PendingVerification({
       ? "Student Developer"
       : role === "enterprise"
         ? "Enterprise Client"
-        : role
+        : role;
 
-  const isRejected = verification === "Rejected"
+  const isRejected = verification === "Rejected";
 
   return (
     <div
@@ -15658,29 +15676,29 @@ function PendingVerification({
         </div>
       </Card>
     </div>
-  )
+  );
 }
 
 // ─── Root App ─────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [page, setPage] = useState<AppPage>("auth")
+  const [page, setPage] = useState<AppPage>("auth");
 
-  const project = useProjectStore()
+  const project = useProjectStore();
 
-  const profile = useDevProfile()
+  const profile = useDevProfile();
 
-  const clientProfile = useClientProfile()
+  const clientProfile = useClientProfile();
 
-  const [devNav, setDevNav] = useState("dashboard")
+  const [devNav, setDevNav] = useState("dashboard");
 
-  const [adminNav, setAdminNav] = useState("verification")
+  const [adminNav, setAdminNav] = useState("verification");
 
-  const [sprintNav, setSprintNav] = useState("sprint")
+  const [sprintNav, setSprintNav] = useState("sprint");
 
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   // ─── Role-based access (Option B: Strict Separation) ────────────────────
 
@@ -15688,37 +15706,37 @@ export default function App() {
 
   // Best practice: single source of truth (roleAccess.ts) + memoization to avoid re-renders.
 
-  const [appRole, setAppRole] = useState<AppRole>("guest")
+  const [appRole, setAppRole] = useState<AppRole>("guest");
 
   useEffect(() => {
-    const handler = () => setWindowWidth(window.innerWidth)
+    const handler = () => setWindowWidth(window.innerWidth);
 
-    window.addEventListener("resize", handler)
+    window.addEventListener("resize", handler);
 
-    return () => window.removeEventListener("resize", handler)
-  }, [])
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
-  const isMobile = windowWidth < 768
+  const isMobile = windowWidth < 768;
 
-  const isTablet = windowWidth >= 768 && windowWidth < 1024
+  const isTablet = windowWidth >= 768 && windowWidth < 1024;
 
-  const collapsed = isTablet
+  const collapsed = isTablet;
 
   // ─── Derived auth & gating ─────────────────────────────────────────────
 
   // isAuthenticated: only true after successful sign-in (page !== 'auth' + role !== guest)
 
-  const isAuthenticated = page !== "auth" && appRole !== "guest"
+  const isAuthenticated = page !== "auth" && appRole !== "guest";
 
   // isPending: non-admin unverified users see placeholder instead of feature pages
 
   const activeVerification =
     appRole === "enterprise"
       ? clientProfile.verificationStatus
-      : profile.verificationStatus
+      : profile.verificationStatus;
 
   const showPending =
-    isAuthenticated && isPendingVerification(appRole, activeVerification)
+    isAuthenticated && isPendingVerification(appRole, activeVerification);
 
   // Memoized visible pages for switcher — filters out 'auth' always (per spec: Hide Login & Registration)
 
@@ -15726,19 +15744,19 @@ export default function App() {
 
   const visiblePages = useMemo<AppPage[]>(() => {
     try {
-      if (!isAuthenticated) return [] as AppPage[]
+      if (!isAuthenticated) return [] as AppPage[];
 
-      const allowed = getAllowedPages(appRole)
+      const allowed = getAllowedPages(appRole);
 
       // Filter out 'auth' (hidden per spec) and keep order from ALL_SWITCHER_PAGES
 
       return (ALL_SWITCHER_PAGES as readonly AppPage[]).filter(
         (p) => p !== "auth" && allowed.includes(p),
-      )
+      );
     } catch {
-      return [] as AppPage[]
+      return [] as AppPage[];
     }
-  }, [isAuthenticated, appRole])
+  }, [isAuthenticated, appRole]);
 
   // ─── Route guard: prevent deep navigation to unauthorized page ──────────
 
@@ -15747,23 +15765,23 @@ export default function App() {
   // Also handles corrupted page state on hot-reload. Uses timeout with cleanup to avoid setState after unmount.
 
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
 
-    let timer: ReturnType<typeof setTimeout> | null = null
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
     try {
-      if (!isAuthenticated) return
+      if (!isAuthenticated) return;
 
-      if (showPending) return // pending users stay on current page but see placeholder
+      if (showPending) return; // pending users stay on current page but see placeholder
 
       if (!isPageAllowed(page, appRole)) {
         const fallback =
-          ROLE_PAGE_MAP[(appRole as Exclude<AppRole, "guest">)]?.[0]
+          ROLE_PAGE_MAP[appRole as Exclude<AppRole, "guest">]?.[0];
 
         if (fallback && fallback !== page) {
           timer = setTimeout(() => {
-            if (!cancelled) setPage(fallback)
-          }, 0)
+            if (!cancelled) setPage(fallback);
+          }, 0);
         }
       }
     } catch {
@@ -15771,19 +15789,19 @@ export default function App() {
 
       timer = setTimeout(() => {
         if (!cancelled) {
-          setAppRole("guest")
+          setAppRole("guest");
 
-          setPage("auth")
+          setPage("auth");
         }
-      }, 0)
+      }, 0);
     }
 
     return () => {
-      cancelled = true
+      cancelled = true;
 
-      if (timer) clearTimeout(timer)
-    }
-  }, [page, appRole, isAuthenticated, showPending])
+      if (timer) clearTimeout(timer);
+    };
+  }, [page, appRole, isAuthenticated, showPending]);
 
   // ─── Logout handler ─────────────────────────────────────────────────────
 
@@ -15793,27 +15811,27 @@ export default function App() {
     try {
       // Reset to default profiles (clears verification override if any)
 
-      signInAs(undefined)
+      signInAs(undefined);
 
-      signInAsClient(undefined)
+      signInAsClient(undefined);
     } catch {
       /* ignore store reset errors */
     }
 
-    setAppRole("guest")
+    setAppRole("guest");
 
-    setPage("auth")
+    setPage("auth");
 
     // Reset nav state to avoid stale tab on next login (best practice)
 
-    setDevNav("dashboard")
+    setDevNav("dashboard");
 
-    setSprintNav("sprint")
+    setSprintNav("sprint");
 
-    setAdminNav("verification")
+    setAdminNav("verification");
 
-    setSidebarOpen(false)
-  }
+    setSidebarOpen(false);
+  };
 
   return (
     <div
@@ -15858,9 +15876,9 @@ export default function App() {
           }}
         >
           {visiblePages.map((pid) => {
-            const meta = PAGE_META[pid]
+            const meta = PAGE_META[pid];
 
-            const isActive = page === pid
+            const isActive = page === pid;
 
             return (
               <button
@@ -15895,7 +15913,7 @@ export default function App() {
               >
                 {meta.label}
               </button>
-            )
+            );
           })}
         </div>
       )}
@@ -15907,15 +15925,15 @@ export default function App() {
 
             // Best practice: single source of truth in roleAccess.ts; never duplicate heuristics.
 
-            let resolved: AppRole
+            let resolved: AppRole;
 
             try {
-              resolved = resolveRole(email, role)
+              resolved = resolveRole(email, role);
             } catch {
-              resolved = "student" // fail closed to least privilege
+              resolved = "student"; // fail closed to least privilege
             }
 
-            setAppRole(resolved)
+            setAppRole(resolved);
 
             try {
               // Update stores first so profile.verificationStatus reflects signed-in identity
@@ -15923,26 +15941,26 @@ export default function App() {
               // Note: activeVerification is derived from profile/clientProfile — no need for separate state
 
               if (resolved === "enterprise") {
-                signInAsClient(email)
+                signInAsClient(email);
 
-                setPage("specform") // Verified Business Owner → Post a Project (specform) per spec; pending shows placeholder
+                setPage("specform"); // Verified Business Owner → Post a Project (specform) per spec; pending shows placeholder
               } else if (resolved === "admin") {
                 // PSITS Moderator: also populate dev profile so own Developer Profile is editable (clarification #4)
 
-                signInAs(email)
+                signInAs(email);
 
-                setPage("admin")
+                setPage("admin");
               } else {
-                signInAs(email)
+                signInAs(email);
 
-                setPage("developer")
+                setPage("developer");
 
-                setDevNav("dashboard")
+                setDevNav("dashboard");
               }
             } catch {
               // Error handling: store update failed — stay on auth with role set for retry
 
-              setPage("auth")
+              setPage("auth");
             }
           }}
         />
@@ -15991,9 +16009,9 @@ export default function App() {
                 <DevSidebar
                   active={devNav}
                   onNav={(id) => {
-                    setDevNav(id)
+                    setDevNav(id);
 
-                    setSidebarOpen(false)
+                    setSidebarOpen(false);
                   }}
                   collapsed={collapsed}
                 />
@@ -16174,9 +16192,9 @@ export default function App() {
               <AdminSidebar
                 active={adminNav}
                 onNav={(id) => {
-                  setAdminNav(id)
+                  setAdminNav(id);
 
-                  setSidebarOpen(false)
+                  setSidebarOpen(false);
                 }}
                 collapsed={collapsed}
               />
@@ -16442,9 +16460,9 @@ export default function App() {
                 <SprintSidebar
                   active={sprintNav}
                   onNav={(id) => {
-                    setSprintNav(id)
+                    setSprintNav(id);
 
-                    setSidebarOpen(false)
+                    setSidebarOpen(false);
                   }}
                   collapsed={collapsed}
                 />
@@ -16540,7 +16558,7 @@ export default function App() {
                       const due = project.phases.find(
                         (p) =>
                           p.status === "active" || p.status === "in_review",
-                      )
+                      );
 
                       return (
                         <span
@@ -16581,7 +16599,7 @@ export default function App() {
                             ? `Sprint ${due.number} due ${due.dev.deadline.split(",")[0]}`
                             : `Due ${project.deadline}`}
                         </span>
-                      )
+                      );
                     })()}
                   <button
                     style={{
@@ -16760,25 +16778,25 @@ export default function App() {
 
               try {
                 if (appRole === "guest") {
-                  setPage("auth")
+                  setPage("auth");
 
-                  return
+                  return;
                 }
 
                 if (appRole === "enterprise") {
-                  setPage("milestone")
+                  setPage("milestone");
 
-                  return
+                  return;
                 }
 
                 const allowed =
-                  ROLE_PAGE_MAP[(appRole as Exclude<AppRole, "guest">)]
+                  ROLE_PAGE_MAP[appRole as Exclude<AppRole, "guest">];
 
-                if (allowed?.includes("developer")) setPage("developer")
-                else if (allowed?.[0]) setPage(allowed[0] as AppPage)
-                else setPage("auth")
+                if (allowed?.includes("developer")) setPage("developer");
+                else if (allowed?.[0]) setPage(allowed[0] as AppPage);
+                else setPage("auth");
               } catch {
-                setPage("auth")
+                setPage("auth");
               }
             }}
           />
@@ -16813,5 +16831,5 @@ export default function App() {
         />
       )}
     </div>
-  )
+  );
 }
