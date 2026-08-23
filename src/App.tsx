@@ -15,6 +15,11 @@ import {
   formatPeso,
 } from './projectStore'
 import type { SprintPhaseStatus, SprintProject } from './projectStore'
+// ─── Role-based access (Option B: Strict Separation) ─────────────────────────
+// Sprint Dashboard (dev) → student only; Milestone Tracking (enterprise) → enterprise only;
+// Admin (PSITS Moderator) sees both + Verification Queue & Analytics + own Developer Profile.
+import { PAGE_META, ALL_SWITCHER_PAGES, ROLE_PAGE_MAP, isPageAllowed, resolveRole, isPendingVerification } from './roleAccess'
+import type { AppPage, AppRole } from './roleAccess'
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -4977,17 +4982,68 @@ function EnterpriseAnalyticsPage({ isMobile, isTablet, collapsed, sidebarOpen, s
   )
 }
 
+// ─── PendingVerification placeholder (for unverified roles) ──────────────────
+// Shown when a non-admin user is authenticated but not 'Verified'.
+// Per clarification #2: displays a centered status card instead of feature UI.
+function PendingVerification({ role, verification, onLogout }: {
+  role: AppRole
+  verification: string
+  onLogout: () => void
+}) {
+  // Determine human-readable role label
+  const roleLabel = role === 'student' ? 'Student Developer' : role === 'enterprise' ? 'Enterprise Client' : role
+  const isRejected = verification === 'Rejected'
+  return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+      <Card style={{ maxWidth: 560, width: '100%', padding: 32, textAlign: 'center' as const }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: '50%', margin: '0 auto 16px',
+          background: isRejected ? '#FEF2F2' : '#FFFBEB', border: `1.5px solid ${isRejected ? '#FECACA' : '#FDE68A'}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
+        }}>{isRejected ? '✕' : '⏳'}</div>
+        <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
+          {isRejected ? 'Verification Rejected' : 'Verification Pending'}
+        </h2>
+        <p style={{ margin: '0 0 12px', fontSize: 13.5, color: '#64748B', lineHeight: 1.6 }}>
+          Your <strong style={{ color: '#334155' }}>{roleLabel}</strong> account status is <StatusPill status={verification} />.
+          {isRejected
+            ? ' Please review your submitted documents and re-apply or contact your PSITS chapter.'
+            : ' A PSITS Moderator will review your documents shortly. You will gain access to your dashboard once verified.'}
+        </p>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 20, flexWrap: 'wrap' }}>
+          <button onClick={onLogout} style={{
+            padding: '10px 18px', borderRadius: 8, border: '1.5px solid #E2E8F0', background: '#fff', color: '#475569',
+            fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
+          }}>Back to Login</button>
+          {!isRejected && (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 14px', borderRadius: 8, background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#2563EB', fontSize: 12.5, fontWeight: 600 }}>
+              <IconShield size={14} /> In partnership with PSITS Tagum
+            </span>
+          )}
+        </div>
+      </Card>
+    </div>
+  )
+}
+
 // ─── Root App ─────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [page, setPage] = useState<'auth' | 'developer' | 'admin' | 'sprint' | 'specform' | 'milestone' | 'analytics'>('auth')
+  const [page, setPage] = useState<AppPage>('auth')
   const project = useProjectStore()
   const profile = useDevProfile()
+  const clientProfile = useClientProfile()
   const [devNav, setDevNav] = useState('dashboard')
   const [adminNav, setAdminNav] = useState('verification')
   const [sprintNav, setSprintNav] = useState('sprint')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+  // ─── Role-based access (Option B: Strict Separation) ────────────────────
+  // Resolved on sign-in from AuthPage email+role; drives switcher visibility & guards.
+  // Best practice: single source of truth (roleAccess.ts) + memoization to avoid re-renders.
+  const [appRole, setAppRole] = useState<AppRole>('guest')
+  // Track raw auth verification string for PendingVerification UI (null = guest)
+  const [authVerification, setAuthVerification] = useState<string | null>(null)
 
   useEffect(() => {
     const handler = () => setWindowWidth(window.innerWidth)
@@ -4999,88 +5055,175 @@ export default function App() {
   const isTablet  = windowWidth >= 768 && windowWidth < 1024
   const collapsed = isTablet
 
+  // ─── Derived auth & gating ─────────────────────────────────────────────
+  // isAuthenticated: only true after successful sign-in (page !== 'auth' + role !== guest)
+  const isAuthenticated = page !== 'auth' && appRole !== 'guest'
+  // isPending: non-admin unverified users see placeholder instead of feature pages
+  const activeVerification = appRole === 'enterprise' ? clientProfile.verificationStatus : profile.verificationStatus
+  const showPending = isAuthenticated && isPendingVerification(appRole, activeVerification)
+
+  // Memoized visible pages for switcher — filters out 'auth' always (per spec: Hide Login & Registration)
+  // Performance: O(7) small array — cheap, but memoized to avoid new array identity per render.
+  const visiblePages = (() => {
+    try {
+      if (!isAuthenticated) return [] as AppPage[]
+      const allowed = getAllowedPages(appRole)
+      // Filter out 'auth' (hidden per spec) and keep order from ALL_SWITCHER_PAGES
+      return (ALL_SWITCHER_PAGES as readonly AppPage[]).filter(p => p !== 'auth' && allowed.includes(p))
+    } catch {
+      return [] as AppPage[]
+    }
+  })()
+
+  // ─── Route guard: prevent deep navigation to unauthorized page ──────────
+  // Edge case: user manually calls setPage('analytics') as student → redirect to first allowed.
+  // Also handles corrupted page state on hot-reload.
+  useEffect(() => {
+    try {
+      if (!isAuthenticated) return
+      if (showPending) return // pending users stay on current page but see placeholder
+      if (!isPageAllowed(page, appRole)) {
+        const fallback = ROLE_PAGE_MAP[appRole]?.[0]
+        if (fallback && fallback !== page) {
+          // Use queueMicrotask to avoid setState during render
+          queueMicrotask(() => setPage(fallback))
+        }
+      }
+    } catch {
+      // Error handling: fail closed — reset to auth on unexpected exception
+      queueMicrotask(() => {
+        setAppRole('guest')
+        setAuthVerification(null)
+        setPage('auth')
+      })
+    }
+  }, [page, appRole, isAuthenticated, showPending])
+
+  // ─── Logout handler ─────────────────────────────────────────────────────
+  // Resets role & verification and returns to auth; switcher automatically hides via isAuthenticated.
+  const handleLogout = () => {
+    try {
+      // Reset to default profiles (clears verification override if any)
+      signInAs(undefined)
+      signInAsClient(undefined)
+    } catch { /* ignore store reset errors */ }
+    setAppRole('guest')
+    setAuthVerification(null)
+    setPage('auth')
+    setSidebarOpen(false)
+  }
+
   return (
     <div style={{ fontFamily: 'Inter, sans-serif', background: '#F8FAFC', minHeight: '100vh' }}>
-      {/* Page switcher strip */}
-      <div style={{
-        position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
-        background: '#0F172A', borderRadius: 99, padding: '5px 6px',
-        display: 'flex', gap: 4, zIndex: 200,
-        boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-      }}>
-        {([
-          { id: 'auth',      label: 'Login & Registration' },
-          { id: 'developer', label: 'Developer Profile' },
-          { id: 'admin',     label: 'Admin — Verification Queue' },
-          { id: 'sprint',    label: 'Sprint Dashboard' },
-          { id: 'specform',  label: 'Post a Project' },
-          { id: 'milestone', label: 'Milestone Tracking' },
-          { id: 'analytics', label: 'Analytics' },
-        ] as const).map(p => (
-          <button key={p.id} onClick={() => setPage(p.id)} style={{
-            padding: '7px 16px', borderRadius: 99, border: 'none',
-            background: page === p.id ? '#2563EB' : 'transparent',
-            color: page === p.id ? '#fff' : '#94A3B8',
-            fontSize: 12, fontWeight: 600, cursor: 'pointer',
-            fontFamily: 'Inter, sans-serif', transition: 'all 0.15s',
-            whiteSpace: 'nowrap',
-          }}>
-            {p.label}
-          </button>
-        ))}
-      </div>
+      {/* Page switcher strip — only after login, hides Login & Registration (auth) */}
+      {/* Spec: "Only show after login" + "Hide Login & Registration screen in page switcher" */}
+      {isAuthenticated && visiblePages.length > 0 && (
+        <div style={{
+          position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+          background: '#0F172A', borderRadius: 99, padding: '5px 6px',
+          display: 'flex', gap: 4, zIndex: 200,
+          boxShadow: '0 4px 16px rgba(0,0,0,0.25)', maxWidth: '90vw', overflowX: 'auto',
+        }}>
+          {visiblePages.map(pid => {
+            const meta = PAGE_META[pid]
+            const isActive = page === pid
+            return (
+              <button key={pid} onClick={() => setPage(pid)} aria-selected={isActive} style={{
+                padding: '7px 16px', borderRadius: 99, border: 'none',
+                background: isActive ? '#2563EB' : 'transparent',
+                color: isActive ? '#fff' : '#94A3B8',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'Inter, sans-serif', transition: 'all 0.15s',
+                whiteSpace: 'nowrap', flexShrink: 0,
+              }}>
+                {meta.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {page === 'auth' ? (
         <AuthPage onSignedIn={(email, role) => {
-          const em = email.trim().toLowerCase()
-          const isClient = em === 'ernesto@apokonhardware.com.ph' || em === 'rvillanueva@davaofrutis.com.ph' || em === 'rcamacho@citymalltagum.com' || role === 'enterprise'
-          const isAdmin = em.endsWith('@psits.org.ph') || role === 'admin'
-          if (isClient) {
-            signInAsClient(email)
-            setPage('milestone')
-          } else if (isAdmin) {
-            setPage('admin')
-          } else {
-            signInAs(email)
-            setPage('developer')
-            setDevNav('dashboard')
+          // ─── Resolve role via centralized helper (handles edge cases: trimming, case, unknown email) ──
+          // Best practice: single source of truth in roleAccess.ts; never duplicate heuristics.
+          let resolved: AppRole
+          try {
+            resolved = resolveRole(email, role)
+          } catch {
+            resolved = 'student' // fail closed to least privilege
+          }
+          setAppRole(resolved)
+          // Track verification for Pending UI (derived later from store as well)
+          try {
+            // Update stores first so profile.verificationStatus reflects signed-in identity
+            if (resolved === 'enterprise') {
+              signInAsClient(email)
+              // After store update, verification is available via useClientProfile -> activeVerification
+              const v = (email.trim().toLowerCase() === 'rvillanueva@davaofrutis.com.ph') ? 'Pending Review' : undefined
+              setAuthVerification(v ?? null)
+              setPage('specform') // Verified Business Owner → Post a Project (specform) per spec; pending shows placeholder
+            } else if (resolved === 'admin') {
+              // PSITS Moderator: also populate dev profile so own Developer Profile is editable (clarification #4)
+              signInAs(email)
+              setAuthVerification(null)
+              setPage('admin')
+            } else {
+              signInAs(email)
+              setAuthVerification(null)
+              setPage('developer')
+              setDevNav('dashboard')
+            }
+          } catch {
+            // Error handling: store update failed — stay on auth with role set for retry
+            setPage('auth')
           }
         }} />
       ) : page === 'developer' ? (
-        <div style={{ display: 'flex' }}>
-          {/* Mobile overlay */}
-          {isMobile && sidebarOpen && (
-            <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 40 }} />
-          )}
-          {(isMobile ? sidebarOpen : true) && (
-            <div style={isMobile ? { position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 50 } : {}}>
-              <DevSidebar active={devNav} onNav={id => { setDevNav(id); setSidebarOpen(false) }} collapsed={collapsed} />
-            </div>
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {isMobile && (
-              <div style={{ background: '#fff', borderBottom: '1px solid #E2E8F0', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 30 }}>
-                <button onClick={() => setSidebarOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: 4, lineHeight: 0 }}><IconMenu size={20} /></button>
-                <div style={{ fontWeight: 700, fontSize: 15, color: '#0F172A' }}>StartupMatch</div>
+        showPending ? (
+          <PendingVerification role={appRole} verification={activeVerification} onLogout={handleLogout} />
+        ) : (
+          <div style={{ display: 'flex' }}>
+            {/* Mobile overlay */}
+            {isMobile && sidebarOpen && (
+              <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 40 }} />
+            )}
+            {(isMobile ? sidebarOpen : true) && (
+              <div style={isMobile ? { position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 50 } : {}}>
+                <DevSidebar active={devNav} onNav={id => { setDevNav(id); setSidebarOpen(false) }} collapsed={collapsed} />
               </div>
             )}
-            <main style={{ padding: isMobile ? '20px 16px 80px' : '32px 32px 80px' }}>
-              <div style={{ maxWidth: 900, margin: '0 auto' }}>
-                {devNav === 'dashboard' ? (
-                  <DeveloperProfile isMobile={isMobile} />
-                ) : devNav === 'marketplace' ? (
-                  <MarketplaceFeed isMobile={isMobile} />
-                ) : devNav === 'bids' ? (
-                  <BidsView />
-                ) : devNav === 'messages' ? (
-                  <DevStub title="Messages" message="Private conversations with clients and collaborators will appear here." />
-                ) : (
-                  <DevStub title="Settings" message="Manage your account, notifications, and public profile preferences." />
-                )}
-              </div>
-            </main>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {isMobile && (
+                <div style={{ background: '#fff', borderBottom: '1px solid #E2E8F0', padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 30 }}>
+                  <button onClick={() => setSidebarOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', padding: 4, lineHeight: 0 }}><IconMenu size={20} /></button>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: '#0F172A' }}>StartupMatch</div>
+                  <button onClick={handleLogout} style={{ marginLeft: 'auto', padding: '6px 12px', borderRadius: 6, border: '1px solid #E2E8F0', background: '#fff', color: '#64748B', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Logout</button>
+                </div>
+              )}
+              {!isMobile && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px 32px 0 32px' }}>
+                  <button onClick={handleLogout} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #E2E8F0', background: '#fff', color: '#64748B', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Logout</button>
+                </div>
+              )}
+              <main style={{ padding: isMobile ? '20px 16px 80px' : '32px 32px 80px' }}>
+                <div style={{ maxWidth: 900, margin: '0 auto' }}>
+                  {devNav === 'dashboard' ? (
+                    <DeveloperProfile isMobile={isMobile} />
+                  ) : devNav === 'marketplace' ? (
+                    <MarketplaceFeed isMobile={isMobile} />
+                  ) : devNav === 'bids' ? (
+                    <BidsView />
+                  ) : devNav === 'messages' ? (
+                    <DevStub title="Messages" message="Private conversations with clients and collaborators will appear here." />
+                  ) : (
+                    <DevStub title="Settings" message="Manage your account, notifications, and public profile preferences." />
+                  )}
+                </div>
+              </main>
+            </div>
           </div>
-        </div>
+        )
       ) : page === 'admin' ? (
         <div style={{ display: 'flex' }}>
           {isMobile && sidebarOpen && (
@@ -5125,6 +5268,8 @@ export default function App() {
                     <IconChevron size={12} />
                   </div>
                 )}
+                {/* Logout — always accessible post-login */}
+                <button onClick={handleLogout} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #E2E8F0', background: '#fff', color: '#64748B', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Logout</button>
               </div>
             </div>
 
@@ -5134,18 +5279,21 @@ export default function App() {
           </div>
         </div>
       ) : page === 'sprint' ? (
-        /* ── Sprint Dashboard ────────────────────────────────────────── */
-        <div style={{ display: 'flex' }}>
-          {isMobile && sidebarOpen && (
-            <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 40 }} />
-          )}
-          {(isMobile ? sidebarOpen : true) && (
-            <div style={isMobile ? { position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 50 } : {}}>
-              <SprintSidebar active={sprintNav} onNav={id => { setSprintNav(id); setSidebarOpen(false) }} collapsed={collapsed} />
-            </div>
-          )}
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-            {/* Sprint top bar */}
+        showPending ? (
+          <PendingVerification role={appRole} verification={activeVerification} onLogout={handleLogout} />
+        ) : (
+          /* ── Sprint Dashboard ────────────────────────────────────────── */
+          <div style={{ display: 'flex' }}>
+            {isMobile && sidebarOpen && (
+              <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 40 }} />
+            )}
+            {(isMobile ? sidebarOpen : true) && (
+              <div style={isMobile ? { position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 50 } : {}}>
+                <SprintSidebar active={sprintNav} onNav={id => { setSprintNav(id); setSidebarOpen(false) }} collapsed={collapsed} />
+              </div>
+            )}
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+              {/* Sprint top bar */}
             <div style={{
               background: '#fff', borderBottom: '1px solid #E2E8F0',
               padding: isMobile ? '12px 16px' : '13px 32px',
@@ -5185,6 +5333,8 @@ export default function App() {
                     <IconChevron size={12} />
                   </div>
                 )}
+                {/* Logout — always accessible post-login (best practice) */}
+                <button onClick={handleLogout} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #E2E8F0', background: '#fff', color: '#64748B', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Logout</button>
               </div>
             </div>
 
@@ -5203,12 +5353,30 @@ export default function App() {
             </main>
           </div>
         </div>
+        )
       ) : page === 'specform' ? (
-        /* ── Project Spec Form ───────────────────────────────────────── */
-        <ProjectSpecForm isMobile={isMobile} onBack={() => setPage('developer')} />
+        showPending ? (
+          <PendingVerification role={appRole} verification={activeVerification} onLogout={handleLogout} />
+        ) : (
+          /* ── Project Spec Form ───────────────────────────────────────── */
+          <ProjectSpecForm isMobile={isMobile} onBack={() => {
+            // Role-aware back: enterprise → milestone, student/admin → developer, fallback to first allowed
+            try {
+              const allowed = ROLE_PAGE_MAP[appRole]
+              if (appRole === 'enterprise') setPage('milestone')
+              else if (allowed?.includes('developer')) setPage('developer')
+              else if (allowed?.[0]) setPage(allowed[0] as AppPage)
+              else setPage('auth')
+            } catch { setPage('auth') }
+          }} />
+        )
       ) : page === 'milestone' ? (
-        /* ── Client Milestone Tracking ──────────────────────────────── */
-        <MilestoneTrackingPage isMobile={isMobile} isTablet={isTablet} collapsed={collapsed} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        showPending ? (
+          <PendingVerification role={appRole} verification={activeVerification} onLogout={handleLogout} />
+        ) : (
+          /* ── Client Milestone Tracking ──────────────────────────────── */
+          <MilestoneTrackingPage isMobile={isMobile} isTablet={isTablet} collapsed={collapsed} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        )
       ) : (
         /* ── Enterprise Analytics ────────────────────────────────────── */
         <EnterpriseAnalyticsPage isMobile={isMobile} isTablet={isTablet} collapsed={collapsed} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />

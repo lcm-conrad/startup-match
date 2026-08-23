@@ -135,6 +135,19 @@ const MOCK_USERS: Record<string, DevIdentity> = {
     chapter: 'PSITS — Tagum City College', email: 'jmjr@tagumcitycollege.edu.ph',
     verificationStatus: 'Rejected',
   },
+  // PSITS Moderator — also has an editable Developer Profile per clarification #4
+  'juanita@psits.org.ph': {
+    name: 'Juanita Arceo', initials: 'JA', avatarColors: ['#F5F3FF', '#5B21B6'],
+    title: 'PSITS Regional Moderator', school: "St. Mary's College of Tagum",
+    chapter: 'PSITS — Regional Chapter Tagum', email: 'juanita@psits.org.ph',
+    verificationStatus: 'Verified',
+  },
+  'admin@psits.org.ph': {
+    name: 'Juanita Arceo', initials: 'JA', avatarColors: ['#F5F3FF', '#5B21B6'],
+    title: 'PSITS Regional Moderator', school: "St. Mary's College of Tagum",
+    chapter: 'PSITS — Regional Chapter Tagum', email: 'admin@psits.org.ph',
+    verificationStatus: 'Verified',
+  },
 }
 
 export const MARKETPLACE_PROJECTS: MarketplaceProject[] = [
