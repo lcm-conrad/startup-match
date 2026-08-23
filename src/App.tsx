@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react"
+
 import {
   AreaChart,
   Area,
   BarChart,
   Bar,
-  PieChart,
-  Pie,
   Cell,
   XAxis,
   YAxis,
@@ -13,8 +12,10 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from "recharts";
-import AuthPage from "./AuthPage";
+} from "recharts"
+
+import AuthPage from "./AuthPage"
+
 import {
   useDevProfile,
   useDevBids,
@@ -22,7 +23,8 @@ import {
   signInAs,
   setAvailability,
   MARKETPLACE_PROJECTS,
-} from "./devProfile";
+} from "./devProfile"
+
 import {
   useProjectStore,
   submitPhase,
@@ -40,11 +42,16 @@ import {
   markAllNotificationsRead,
   resetDemo,
   formatPeso,
-} from "./projectStore";
-import type { SprintPhaseStatus } from "./projectStore";
+} from "./projectStore"
+
+import type { SprintPhaseStatus } from "./projectStore"
+
 // ─── Role-based access (Option B: Strict Separation) ─────────────────────────
+
 // Sprint Dashboard (dev) → student only; Milestone Tracking (enterprise) → enterprise only;
+
 // Admin (PSITS Moderator) sees both + Verification Queue & Analytics + own Developer Profile.
+
 import {
   PAGE_META,
   ALL_SWITCHER_PAGES,
@@ -52,8 +59,12 @@ import {
   isPageAllowed,
   resolveRole,
   isPendingVerification,
-} from "./roleAccess";
-import type { AppPage, AppRole } from "./roleAccess";
+  getAllowedPages,
+} from "./roleAccess"
+
+import type { AppPage, AppRole } from "./roleAccess"
+
+import { useClientProfile, signInAsClient } from "./clientProfile"
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -97,8 +108,9 @@ function IconDashboard({ size = 20 }: { size?: number }) {
         opacity=".4"
       />
     </svg>
-  );
+  )
 }
+
 function IconShield({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
@@ -116,8 +128,9 @@ function IconShield({ size = 20 }: { size?: number }) {
         strokeLinejoin="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconChart({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
@@ -138,8 +151,9 @@ function IconChart({ size = 20 }: { size?: number }) {
         strokeWidth="1.5"
       />
     </svg>
-  );
+  )
 }
+
 function IconLogs({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
@@ -159,8 +173,9 @@ function IconLogs({ size = 20 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconSettings({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
@@ -172,8 +187,9 @@ function IconSettings({ size = 20 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconSearch({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
@@ -185,8 +201,9 @@ function IconSearch({ size = 16 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconCheck({ size = 12 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 12 12" fill="none">
@@ -198,8 +215,9 @@ function IconCheck({ size = 12 }: { size?: number }) {
         strokeLinejoin="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconX({ size = 12 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 12 12" fill="none">
@@ -210,8 +228,9 @@ function IconX({ size = 12 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconEye({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
@@ -222,16 +241,20 @@ function IconEye({ size = 14 }: { size?: number }) {
       />
       <circle cx="7" cy="7" r="1.8" stroke="currentColor" strokeWidth="1.3" />
     </svg>
-  );
+  )
 }
+
 function IconChevron({
   size = 14,
+
   dir = "down",
 }: {
-  size?: number;
-  dir?: "down" | "up" | "right";
+  size?: number
+
+  dir?: "down" | "up" | "right"
 }) {
-  const rot = dir === "up" ? 180 : dir === "right" ? -90 : 0;
+  const rot = dir === "up" ? 180 : dir === "right" ? -90 : 0
+
   return (
     <svg
       width={size}
@@ -248,8 +271,9 @@ function IconChevron({
         strokeLinejoin="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconClose({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 18 18" fill="none">
@@ -260,8 +284,9 @@ function IconClose({ size = 18 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconMenu({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
@@ -272,8 +297,9 @@ function IconMenu({ size = 20 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconFilter({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
@@ -284,8 +310,9 @@ function IconFilter({ size = 14 }: { size?: number }) {
         strokeLinejoin="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconBell({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 18 18" fill="none">
@@ -302,8 +329,9 @@ function IconBell({ size = 18 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconMarket({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
@@ -315,8 +343,9 @@ function IconMarket({ size = 20 }: { size?: number }) {
         strokeLinecap="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconMessages({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
@@ -327,8 +356,9 @@ function IconMessages({ size = 20 }: { size?: number }) {
         strokeLinejoin="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconBids({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
@@ -349,14 +379,17 @@ function IconBids({ size = 20 }: { size?: number }) {
         strokeWidth="1.5"
       />
     </svg>
-  );
+  )
 }
+
 function IconStar({
   size = 14,
+
   filled = false,
 }: {
-  size?: number;
-  filled?: boolean;
+  size?: number
+
+  filled?: boolean
 }) {
   return (
     <svg
@@ -372,8 +405,9 @@ function IconStar({
         strokeLinejoin="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconExternal({ size = 13 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 13 13" fill="none">
@@ -385,8 +419,9 @@ function IconExternal({ size = 13 }: { size?: number }) {
         strokeLinejoin="round"
       />
     </svg>
-  );
+  )
 }
+
 function IconGlobe({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -397,119 +432,168 @@ function IconGlobe({ size = 18 }: { size?: number }) {
         strokeWidth="1.5"
       />
     </svg>
-  );
+  )
 }
+
 function IconLinkedin({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
       <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z" />
       <circle cx="4" cy="4" r="2" />
     </svg>
-  );
+  )
 }
+
 function IconGithub({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
     </svg>
-  );
+  )
 }
 
 // ─── Shared primitives ──────────────────────────────────────────────────────────
 
 function Card({
   children,
+
   style = {},
 }: {
-  children: React.ReactNode;
-  style?: React.CSSProperties;
+  children: React.ReactNode
+
+  style?: React.CSSProperties
 }) {
   return (
     <div
       style={{
         background: "#fff",
+
         border: "1px solid #E2E8F0",
+
         borderRadius: 12,
+
         boxShadow: "0px 1px 3px rgba(0,0,0,0.08)",
+
         ...style,
       }}
     >
       {children}
     </div>
-  );
+  )
 }
 
 function StatusPill({ status }: { status: string }) {
-  const cfg: Record<
-    string,
-    { bg: string; color: string; border: string; dot: string }
-  > = {
+  const cfg: Record<string, {
+    bg: string
+    color: string
+    border: string
+    dot: string
+  }> = {
     "Pending Review": {
       bg: "#FFFBEB",
+
       color: "#D97706",
+
       border: "#FDE68A",
+
       dot: "#D97706",
     },
+
     Verified: {
       bg: "#F0FDF4",
+
       color: "#16A34A",
+
       border: "#BBF7D0",
+
       dot: "#16A34A",
     },
+
     Rejected: {
       bg: "#FEF2F2",
+
       color: "#DC2626",
+
       border: "#FECACA",
+
       dot: "#DC2626",
     },
+
     "Under Review": {
       bg: "#EFF6FF",
+
       color: "#2563EB",
+
       border: "#BFDBFE",
+
       dot: "#2563EB",
     },
+
     Active: {
       bg: "#F0FDF4",
+
       color: "#16A34A",
+
       border: "#BBF7D0",
+
       dot: "#16A34A",
     },
+
     Suspended: {
       bg: "#FEF2F2",
+
       color: "#DC2626",
+
       border: "#FECACA",
+
       dot: "#DC2626",
     },
-  };
-  const c = cfg[status] ?? cfg["Pending Review"];
+  }
+
+  const c = cfg[status] ?? cfg["Pending Review"]
+
   return (
     <span
       style={{
         display: "inline-flex",
+
         alignItems: "center",
+
         gap: 5,
+
         padding: "3px 10px",
+
         borderRadius: 99,
+
         background: c.bg,
+
         color: c.color,
+
         border: `1px solid ${c.border}`,
+
         fontSize: 11.5,
+
         fontWeight: 600,
+
         whiteSpace: "nowrap",
       }}
     >
       <span
         style={{
           width: 5,
+
           height: 5,
+
           borderRadius: "50%",
+
           background: c.dot,
+
           flexShrink: 0,
         }}
       />
       {status}
     </span>
-  );
+  )
 }
 
 function SkillTag({ label }: { label: string }) {
@@ -517,19 +601,27 @@ function SkillTag({ label }: { label: string }) {
     <span
       style={{
         display: "inline-flex",
+
         alignItems: "center",
+
         padding: "2px 8px",
+
         borderRadius: 99,
+
         background: "#EFF6FF",
+
         border: "1px solid #BFDBFE",
+
         fontSize: 11,
+
         fontWeight: 600,
+
         color: "#2563EB",
       }}
     >
       {label}
     </span>
-  );
+  )
 }
 
 // ─── Data ───────────────────────────────────────────────────────────────────────
@@ -537,230 +629,387 @@ function SkillTag({ label }: { label: string }) {
 const studentApplicants = [
   {
     id: "s1",
+
     name: "Luis Conrad Sagrado",
+
     academicId: "2022-0192",
+
     chapter: "PSITS — St. Mary's College of Tagum",
+
     avatar: "LS",
+
     avatarColor: ["#DBEAFE", "#1D4ED8"],
+
     techStack: ["React", "Node.js", "PostgreSQL"],
+
     submitted: "Jul 12, 2025",
+
     status: "Pending Review",
+
     email: "lcsagrado@stmct.edu.ph",
+
     socialLinks: {
       github: "github.com/lcsagrado",
+
       linkedin: "linkedin.com/in/lcsagrado",
     },
+
     documents: [
       "Student ID (STMCT) — Verified scan",
+
       "COR AY 2024–2025",
+
       "PSITS Membership Certificate #2024-0892",
     ],
   },
+
   {
     id: "s2",
+
     name: "Marian Dela Cruz",
+
     academicId: "2021-0344",
+
     chapter: "PSITS — University of Mindanao Tagum",
+
     avatar: "MD",
+
     avatarColor: ["#F0FDF4", "#166534"],
+
     techStack: ["Vue.js", "Firebase", "Tailwind CSS"],
+
     submitted: "Jul 10, 2025",
+
     status: "Pending Review",
+
     email: "mdelacruz@umtagum.edu.ph",
+
     socialLinks: {
       github: "github.com/mdelacruz",
+
       linkedin: "linkedin.com/in/mdelacruz",
     },
+
     documents: [
       "Student ID (UM Tagum)",
+
       "PSITS Membership Certificate #2024-1104",
+
       "Proof of Enrollment S1 2025",
     ],
   },
+
   {
     id: "s3",
+
     name: "Raphael Obenza",
+
     academicId: "2023-0017",
+
     chapter: "PSITS — Comval College",
+
     avatar: "RO",
+
     avatarColor: ["#FEF9C3", "#92400E"],
+
     techStack: ["Next.js", "TypeScript", "Supabase"],
+
     submitted: "Jul 9, 2025",
+
     status: "Under Review",
+
     email: "robenza@comvalcollege.edu.ph",
+
     socialLinks: {
       github: "github.com/robenza",
+
       linkedin: "linkedin.com/in/robenza",
     },
+
     documents: [
       "Student ID (Comval College)",
+
       "PSITS Chapter Endorsement Letter",
+
       "GitHub Activity Report",
     ],
   },
+
   {
     id: "s4",
+
     name: "Tricia Anne Lim",
+
     academicId: "2020-0558",
+
     chapter: "PSITS — St. Mary's College of Tagum",
+
     avatar: "TL",
+
     avatarColor: ["#F5F3FF", "#6D28D9"],
+
     techStack: ["Django", "Python", "React"],
+
     submitted: "Jul 7, 2025",
+
     status: "Verified",
+
     email: "talim@stmct.edu.ph",
+
     socialLinks: {
       github: "github.com/talim",
+
       linkedin: "linkedin.com/in/talim",
     },
+
     documents: [
       "Student ID (STMCT) — Verified",
+
       "COR AY 2024–2025 — Verified",
+
       "PSITS Certificate — Verified",
     ],
   },
+
   {
     id: "s5",
+
     name: "Joel Macaraeg Jr.",
+
     academicId: "2022-0311",
+
     chapter: "PSITS — Tagum City College",
+
     avatar: "JM",
+
     avatarColor: ["#FFF1F2", "#9F1239"],
+
     techStack: ["Laravel", "PHP", "MySQL"],
+
     submitted: "Jul 5, 2025",
+
     status: "Rejected",
+
     email: "jmjr@tagumcitycollege.edu.ph",
+
     socialLinks: {
       github: "github.com/jmjr",
+
       linkedin: "linkedin.com/in/jmjr",
     },
+
     documents: [
       "Student ID (incomplete scan)",
+
       "No PSITS certificate submitted",
     ],
   },
-];
+]
 
 const enterpriseApplicants = [
   {
     id: "e1",
+
     name: "Davao Fruits Corp.",
+
     rep: "Engr. Ramon Villanueva",
+
     barangay: "Magugpo West",
+
     permit: "DTI-REG-2024-08812",
+
     avatar: "DF",
+
     avatarColor: ["#ECFDF5", "#065F46"],
+
     industry: "Agri-business / Export",
+
     submitted: "Jul 11, 2025",
+
     status: "Pending Review",
+
     email: "rvillanueva@davaofrutis.com.ph",
+
     documents: [
       "DTI Business Name Registration",
+
       "BIR TIN Certificate",
+
       "Barangay Business Clearance — Magugpo West",
     ],
   },
+
   {
     id: "e2",
+
     name: "TagumLog Solutions Inc.",
+
     rep: "Maria Crisanta Bato",
+
     barangay: "Apokon",
+
     permit: "SEC-CORP-2023-04471",
+
     avatar: "TL",
+
     avatarColor: ["#EFF6FF", "#1E40AF"],
+
     industry: "Logistics / Freight",
+
     submitted: "Jul 9, 2025",
+
     status: "Under Review",
+
     email: "mcbato@tagumlog.ph",
+
     documents: [
       "SEC Certificate of Incorporation",
+
       "Mayor's Permit 2025",
+
       "Barangay Business Clearance — Apokon",
     ],
   },
+
   {
     id: "e3",
+
     name: "Metro Tagum Cooperative",
+
     rep: "Atty. Vivian Soriano",
+
     barangay: "Mankilam",
+
     permit: "CDA-REG-2019-00923",
+
     avatar: "MT",
+
     avatarColor: ["#FFF7ED", "#92400E"],
+
     industry: "Cooperative / Finance",
+
     submitted: "Jul 8, 2025",
+
     status: "Verified",
+
     email: "vsoriano@metroc.coop",
+
     documents: [
       "CDA Registration — Verified",
+
       "Audited Financial Report 2024 — Verified",
+
       "Barangay Clearance — Mankilam",
     ],
   },
+
   {
     id: "e4",
+
     name: "CityMall Tagum",
+
     rep: "Ms. Rowena Camacho",
+
     barangay: "Magugpo West",
+
     permit: "DTI-REG-2022-11140",
+
     avatar: "CM",
+
     avatarColor: ["#F5F3FF", "#5B21B6"],
+
     industry: "Retail / Shopping Center",
+
     submitted: "Jul 6, 2025",
+
     status: "Active",
+
     email: "rcamacho@citymalltagum.com",
+
     documents: [
       "DTI Registration",
+
       "Mayor's Business Permit 2025",
+
       "Barangay Clearance — Magugpo West",
     ],
   },
+
   {
     id: "e5",
+
     name: "Mindanao Agri Holdings",
+
     rep: "Mr. Felipe Navarro",
+
     barangay: "Mankilam",
+
     permit: "SEC-CORP-2020-07765",
+
     avatar: "MA",
+
     avatarColor: ["#FEF2F2", "#991B1B"],
+
     industry: "Agriculture / Holdings",
+
     submitted: "Jul 3, 2025",
+
     status: "Suspended",
+
     email: "fnavarro@mindagri.com.ph",
+
     documents: ["SEC Certificate", "Suspended — pending re-verification"],
   },
-];
+]
 
 const adminNavItems = [
   { icon: IconDashboard, label: "Overview", id: "overview" },
+
   { icon: IconShield, label: "Verification Queue", id: "verification" },
+
   { icon: IconChart, label: "Enterprise Analytics", id: "analytics" },
+
   { icon: IconLogs, label: "Audit Logs", id: "auditlogs" },
+
   { icon: IconSettings, label: "Settings", id: "settings" },
-];
+]
 
 // ─── Admin Sidebar ───────────────────────────────────────────────────────────
 
 function AdminSidebar({
   active,
+
   onNav,
+
   collapsed,
 }: {
-  active: string;
-  onNav: (id: string) => void;
-  collapsed: boolean;
+  active: string
+
+  onNav: (id: string) => void
+
+  collapsed: boolean
 }) {
   return (
     <aside
       style={{
         width: collapsed ? 72 : 260,
+
         minHeight: "100vh",
+
         background: "#0F172A",
+
         display: "flex",
+
         flexDirection: "column",
+
         flexShrink: 0,
+
         transition: "width 0.2s ease",
+
         position: "sticky",
+
         top: 0,
+
         height: "100vh",
       }}
     >
@@ -768,23 +1017,36 @@ function AdminSidebar({
       <div
         style={{
           padding: collapsed ? "20px 0" : "20px 22px",
+
           display: "flex",
+
           alignItems: "center",
+
           gap: 10,
+
           borderBottom: "1px solid rgba(255,255,255,0.07)",
         }}
       >
         <div
           style={{
             width: 36,
+
             height: 36,
+
             borderRadius: 8,
+
             flexShrink: 0,
+
             background: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
+
             display: "flex",
+
             alignItems: "center",
+
             justifyContent: "center",
+
             marginLeft: collapsed ? "auto" : 0,
+
             marginRight: collapsed ? "auto" : 0,
           }}
         >
@@ -803,8 +1065,11 @@ function AdminSidebar({
             <div
               style={{
                 fontWeight: 700,
+
                 fontSize: 14,
+
                 color: "#fff",
+
                 letterSpacing: "-0.02em",
               }}
             >
@@ -820,45 +1085,60 @@ function AdminSidebar({
       {/* Nav */}
       <nav style={{ padding: "10px 0", flex: 1 }}>
         {adminNavItems.map(({ icon: Icon, label, id }) => {
-          const isActive = active === id;
+          const isActive = active === id
+
           return (
             <button
               key={id}
               onClick={() => onNav(id)}
               style={{
                 width: "100%",
+
                 display: "flex",
+
                 alignItems: "center",
+
                 gap: 11,
+
                 padding: collapsed ? "11px 0" : "11px 20px",
+
                 justifyContent: collapsed ? "center" : "flex-start",
+
                 border: "none",
+
                 background: isActive ? "rgba(37,99,235,0.18)" : "transparent",
+
                 color: isActive ? "#60A5FA" : "#94A3B8",
+
                 borderLeft: isActive
                   ? "3px solid #2563EB"
                   : "3px solid transparent",
+
                 cursor: "pointer",
+
                 fontFamily: "Inter, sans-serif",
+
                 fontSize: 13.5,
+
                 fontWeight: isActive ? 600 : 400,
+
                 transition: "all 0.12s ease",
               }}
               onMouseEnter={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "rgba(255,255,255,0.05)";
+                    "rgba(255,255,255,0.05)"
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "transparent";
+                    "transparent"
               }}
             >
               <Icon size={18} />
               {!collapsed && label}
             </button>
-          );
+          )
         })}
       </nav>
 
@@ -867,6 +1147,7 @@ function AdminSidebar({
         <div
           style={{
             padding: "14px 18px",
+
             borderTop: "1px solid rgba(255,255,255,0.07)",
           }}
         >
@@ -874,15 +1155,25 @@ function AdminSidebar({
             <div
               style={{
                 width: 32,
+
                 height: 32,
+
                 borderRadius: "50%",
+
                 flexShrink: 0,
+
                 background: "linear-gradient(135deg, #1E3A5F, #2563EB)",
+
                 display: "flex",
+
                 alignItems: "center",
+
                 justifyContent: "center",
+
                 fontSize: 11,
+
                 fontWeight: 700,
+
                 color: "#fff",
               }}
             >
@@ -900,68 +1191,96 @@ function AdminSidebar({
         </div>
       )}
     </aside>
-  );
+  )
 }
 
 // ─── Credentials Modal ──────────────────────────────────────────────────────────
 
-type StudentRecord = (typeof studentApplicants)[number];
-type EnterpriseRecord = (typeof enterpriseApplicants)[number];
+type StudentRecord = typeof studentApplicants[number]
+
+type EnterpriseRecord = typeof enterpriseApplicants[number]
 
 function CredentialsModal({
   record,
+
   type,
+
   onClose,
+
   onApprove,
+
   onReject,
 }: {
-  record: StudentRecord | EnterpriseRecord;
-  type: "student" | "enterprise";
-  onClose: () => void;
-  onApprove: () => void;
-  onReject: () => void;
+  record: StudentRecord | EnterpriseRecord
+
+  type: "student" | "enterprise"
+
+  onClose: () => void
+
+  onApprove: () => void
+
+  onReject: () => void
 }) {
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [onClose]);
+      if (e.key === "Escape") onClose()
+    }
 
-  const isStudent = type === "student";
-  const student = isStudent ? (record as StudentRecord) : null;
-  const enterprise = !isStudent ? (record as EnterpriseRecord) : null;
+    document.addEventListener("keydown", handler)
+
+    return () => document.removeEventListener("keydown", handler)
+  }, [onClose])
+
+  const isStudent = type === "student"
+
+  const student = isStudent ? record as StudentRecord : null
+
+  const enterprise = !isStudent ? record as EnterpriseRecord : null
 
   return (
     <div
       ref={overlayRef}
       onClick={(e) => {
-        if (e.target === overlayRef.current) onClose();
+        if (e.target === overlayRef.current) onClose()
       }}
       style={{
         position: "fixed",
+
         inset: 0,
+
         zIndex: 100,
+
         background: "rgba(0,0,0,0.48)",
+
         display: "flex",
+
         alignItems: "center",
+
         justifyContent: "center",
+
         padding: 24,
       }}
     >
       <div
         style={{
           background: "#fff",
+
           borderRadius: 16,
+
           width: "100%",
+
           maxWidth: 560,
+
           maxHeight: "85vh",
+
           overflow: "hidden",
+
           boxShadow: "0px 8px 24px rgba(0,0,0,0.16)",
+
           display: "flex",
+
           flexDirection: "column",
         }}
       >
@@ -969,10 +1288,15 @@ function CredentialsModal({
         <div
           style={{
             padding: "20px 24px 16px",
+
             borderBottom: "1px solid #F1F5F9",
+
             display: "flex",
+
             alignItems: "flex-start",
+
             justifyContent: "space-between",
+
             gap: 12,
           }}
         >
@@ -980,16 +1304,27 @@ function CredentialsModal({
             <div
               style={{
                 width: 48,
+
                 height: 48,
+
                 borderRadius: "50%",
+
                 flexShrink: 0,
+
                 background: `linear-gradient(135deg, ${record.avatarColor[0]}, ${record.avatarColor[1]}20)`,
+
                 border: `2px solid ${record.avatarColor[1]}30`,
+
                 display: "flex",
+
                 alignItems: "center",
+
                 justifyContent: "center",
+
                 fontSize: 14,
+
                 fontWeight: 700,
+
                 color: record.avatarColor[1],
               }}
             >
@@ -999,8 +1334,11 @@ function CredentialsModal({
               <div
                 style={{
                   fontSize: 16,
+
                   fontWeight: 700,
+
                   color: "#0F172A",
+
                   letterSpacing: "-0.02em",
                 }}
               >
@@ -1017,11 +1355,17 @@ function CredentialsModal({
             onClick={onClose}
             style={{
               background: "none",
+
               border: "none",
+
               cursor: "pointer",
+
               color: "#94A3B8",
+
               padding: 4,
+
               flexShrink: 0,
+
               lineHeight: 0,
             }}
           >
@@ -1033,10 +1377,15 @@ function CredentialsModal({
         <div
           style={{
             padding: "20px 24px",
+
             overflowY: "auto",
+
             flex: 1,
+
             display: "flex",
+
             flexDirection: "column",
+
             gap: 20,
           }}
         >
@@ -1053,10 +1402,15 @@ function CredentialsModal({
             <div
               style={{
                 fontSize: 12,
+
                 fontWeight: 700,
+
                 color: "#94A3B8",
+
                 textTransform: "uppercase",
+
                 letterSpacing: "0.07em",
+
                 marginBottom: 10,
               }}
             >
@@ -1068,12 +1422,19 @@ function CredentialsModal({
                   key={i}
                   style={{
                     display: "flex",
+
                     alignItems: "center",
+
                     justifyContent: "space-between",
+
                     padding: "9px 14px",
+
                     background: "#F8FAFC",
+
                     border: "1px solid #E2E8F0",
+
                     borderRadius: 8,
+
                     gap: 10,
                   }}
                 >
@@ -1083,21 +1444,27 @@ function CredentialsModal({
                     <div
                       style={{
                         width: 6,
+
                         height: 6,
+
                         borderRadius: "50%",
+
                         background: doc.includes("Verified")
                           ? "#16A34A"
                           : doc.toLowerCase().includes("no ") ||
                               doc.toLowerCase().includes("incomplete")
                             ? "#DC2626"
                             : "#D97706",
+
                         flexShrink: 0,
                       }}
                     />
                     <span
                       style={{
                         fontSize: 13,
+
                         color: "#334155",
+
                         fontWeight: 500,
                       }}
                     >
@@ -1107,16 +1474,27 @@ function CredentialsModal({
                   <button
                     style={{
                       background: "none",
+
                       border: "none",
+
                       cursor: "pointer",
+
                       color: "#2563EB",
+
                       fontSize: 12,
+
                       fontWeight: 600,
+
                       padding: "2px 8px",
+
                       borderRadius: 6,
+
                       display: "flex",
+
                       alignItems: "center",
+
                       gap: 4,
+
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -1132,10 +1510,15 @@ function CredentialsModal({
             <div
               style={{
                 fontSize: 12,
+
                 fontWeight: 700,
+
                 color: "#94A3B8",
+
                 textTransform: "uppercase",
+
                 letterSpacing: "0.07em",
+
                 marginBottom: 10,
               }}
             >
@@ -1182,10 +1565,15 @@ function CredentialsModal({
             <div
               style={{
                 fontSize: 12,
+
                 fontWeight: 700,
+
                 color: "#94A3B8",
+
                 textTransform: "uppercase",
+
                 letterSpacing: "0.07em",
+
                 marginBottom: 8,
               }}
             >
@@ -1195,17 +1583,29 @@ function CredentialsModal({
               placeholder="Add a review note (visible only to admins)…"
               style={{
                 width: "100%",
+
                 minHeight: 80,
+
                 padding: "10px 12px",
+
                 border: "1px solid #E2E8F0",
+
                 borderRadius: 8,
+
                 fontFamily: "Inter, sans-serif",
+
                 fontSize: 13,
+
                 color: "#334155",
+
                 resize: "vertical",
+
                 outline: "none",
+
                 background: "#FAFCFF",
+
                 boxSizing: "border-box",
+
                 lineHeight: 1.5,
               }}
               onFocus={(e) => (e.currentTarget.style.borderColor = "#2563EB")}
@@ -1222,9 +1622,13 @@ function CredentialsModal({
             <div
               style={{
                 padding: "16px 24px",
+
                 borderTop: "1px solid #F1F5F9",
+
                 display: "flex",
+
                 gap: 10,
+
                 justifyContent: "flex-end",
               }}
             >
@@ -1232,13 +1636,21 @@ function CredentialsModal({
                 onClick={onClose}
                 style={{
                   background: "transparent",
+
                   color: "#475569",
+
                   border: "1px solid #E2E8F0",
+
                   borderRadius: 8,
+
                   padding: "8px 16px",
+
                   fontSize: 13,
+
                   fontWeight: 600,
+
                   cursor: "pointer",
+
                   fontFamily: "Inter, sans-serif",
                 }}
               >
@@ -1248,16 +1660,27 @@ function CredentialsModal({
                 onClick={onReject}
                 style={{
                   background: "#DC2626",
+
                   color: "#fff",
+
                   border: "none",
+
                   borderRadius: 8,
+
                   padding: "8px 16px",
+
                   fontSize: 13,
+
                   fontWeight: 600,
+
                   cursor: "pointer",
+
                   fontFamily: "Inter, sans-serif",
+
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 6,
                 }}
               >
@@ -1267,16 +1690,27 @@ function CredentialsModal({
                 onClick={onApprove}
                 style={{
                   background: "#16A34A",
+
                   color: "#fff",
+
                   border: "none",
+
                   borderRadius: 8,
+
                   padding: "8px 16px",
+
                   fontSize: 13,
+
                   fontWeight: 600,
+
                   cursor: "pointer",
+
                   fontFamily: "Inter, sans-serif",
+
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 6,
                 }}
               >
@@ -1286,35 +1720,48 @@ function CredentialsModal({
           )}
       </div>
     </div>
-  );
+  )
 }
 
 function VettingLink({
   icon,
+
   label,
+
   display,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  display?: string;
+  icon: React.ReactNode
+
+  label: string
+
+  display?: string
 }) {
   return (
     <div
       style={{
         display: "flex",
+
         alignItems: "center",
+
         justifyContent: "space-between",
+
         padding: "8px 14px",
+
         background: "#F8FAFC",
+
         border: "1px solid #E2E8F0",
+
         borderRadius: 8,
       }}
     >
       <div
         style={{
           display: "flex",
+
           alignItems: "center",
+
           gap: 8,
+
           color: "#64748B",
         }}
       >
@@ -1332,90 +1779,116 @@ function VettingLink({
         <IconExternal size={12} />
       </a>
     </div>
-  );
+  )
 }
 
 // ─── Verification Queue Page ────────────────────────────────────────────────────
 
 function VerificationQueue({
   isMobile,
+
   isTablet,
 }: {
-  isMobile: boolean;
-  isTablet: boolean;
+  isMobile: boolean
+
+  isTablet: boolean
 }) {
   const [activeTab, setActiveTab] = useState<"students" | "enterprises">(
     "students",
-  );
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  )
+
+  const [search, setSearch] = useState("")
+
+  const [statusFilter, setStatusFilter] = useState("All")
+
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>(
     {},
-  );
+  )
+
   const [modal, setModal] = useState<{
-    record: StudentRecord | EnterpriseRecord;
-    type: "student" | "enterprise";
-  } | null>(null);
+    record: StudentRecord | EnterpriseRecord
+
+    type: "student" | "enterprise"
+  } | null>(null)
+
   const [statuses, setStatuses] = useState<Record<string, string>>(() => {
-    const s: Record<string, string> = {};
+    const s: Record<string, string> = {}
+
     studentApplicants.forEach((a) => {
-      s[a.id] = a.status;
-    });
+      s[a.id] = a.status
+    })
+
     enterpriseApplicants.forEach((a) => {
-      s[a.id] = a.status;
-    });
-    return s;
-  });
+      s[a.id] = a.status
+    })
+
+    return s
+  })
 
   const pendingStudents = studentApplicants.filter(
     (a) =>
       statuses[a.id] === "Pending Review" || statuses[a.id] === "Under Review",
-  ).length;
+  ).length
+
   const pendingEnterprises = enterpriseApplicants.filter(
     (a) =>
       statuses[a.id] === "Pending Review" || statuses[a.id] === "Under Review",
-  ).length;
+  ).length
 
   const filterStudents = studentApplicants.filter((a) => {
     const matchSearch =
       a.name.toLowerCase().includes(search.toLowerCase()) ||
       a.academicId.includes(search) ||
-      a.chapter.toLowerCase().includes(search.toLowerCase());
+      a.chapter.toLowerCase().includes(search.toLowerCase())
+
     const matchStatus =
-      statusFilter === "All" || statuses[a.id] === statusFilter;
-    return matchSearch && matchStatus;
-  });
+      statusFilter === "All" || statuses[a.id] === statusFilter
+
+    return matchSearch && matchStatus
+  })
 
   const filterEnterprises = enterpriseApplicants.filter((a) => {
     const matchSearch =
       a.name.toLowerCase().includes(search.toLowerCase()) ||
-      a.barangay.toLowerCase().includes(search.toLowerCase());
+      a.barangay.toLowerCase().includes(search.toLowerCase())
+
     const matchStatus =
-      statusFilter === "All" || statuses[a.id] === statusFilter;
-    return matchSearch && matchStatus;
-  });
+      statusFilter === "All" || statuses[a.id] === statusFilter
+
+    return matchSearch && matchStatus
+  })
 
   function approve(id: string) {
     setStatuses((s) => ({
       ...s,
+
       [id]: activeTab === "students" ? "Verified" : "Active",
-    }));
-    setModal(null);
+    }))
+
+    setModal(null)
   }
+
   function reject(id: string) {
-    setStatuses((s) => ({ ...s, [id]: "Rejected" }));
-    setModal(null);
+    setStatuses((s) => ({ ...s, [id]: "Rejected" }))
+
+    setModal(null)
   }
 
   const statusOptions = [
     "All",
+
     "Pending Review",
+
     "Under Review",
+
     "Verified",
+
     "Active",
+
     "Rejected",
+
     "Suspended",
-  ];
+  ]
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -1434,10 +1907,15 @@ function VerificationQueue({
         <div
           style={{
             display: "flex",
+
             alignItems: "flex-start",
+
             justifyContent: "space-between",
+
             gap: 16,
+
             flexWrap: "wrap",
+
             marginBottom: 16,
           }}
         >
@@ -1445,9 +1923,13 @@ function VerificationQueue({
             <h1
               style={{
                 margin: "0 0 6px",
+
                 fontSize: isMobile ? 22 : 26,
+
                 fontWeight: 700,
+
                 color: "#0F172A",
+
                 letterSpacing: "-0.03em",
               }}
             >
@@ -1462,23 +1944,36 @@ function VerificationQueue({
             <span
               style={{
                 display: "inline-flex",
+
                 alignItems: "center",
+
                 gap: 6,
+
                 padding: "6px 14px",
+
                 borderRadius: 99,
+
                 background: "#FFFBEB",
+
                 border: "1px solid #FDE68A",
+
                 color: "#D97706",
+
                 fontSize: 12.5,
+
                 fontWeight: 700,
               }}
             >
               <span
                 style={{
                   width: 7,
+
                   height: 7,
+
                   borderRadius: "50%",
+
                   background: "#D97706",
+
                   animation: "pulse 2s infinite",
                 }}
               />
@@ -1487,22 +1982,34 @@ function VerificationQueue({
             <span
               style={{
                 display: "inline-flex",
+
                 alignItems: "center",
+
                 gap: 6,
+
                 padding: "6px 14px",
+
                 borderRadius: 99,
+
                 background: "#EFF6FF",
+
                 border: "1px solid #BFDBFE",
+
                 color: "#2563EB",
+
                 fontSize: 12.5,
+
                 fontWeight: 700,
               }}
             >
               <span
                 style={{
                   width: 7,
+
                   height: 7,
+
                   borderRadius: "50%",
+
                   background: "#2563EB",
                 }}
               />
@@ -1517,10 +2024,15 @@ function VerificationQueue({
             <span
               style={{
                 position: "absolute",
+
                 left: 12,
+
                 top: "50%",
+
                 transform: "translateY(-50%)",
+
                 color: "#94A3B8",
+
                 lineHeight: 0,
               }}
             >
@@ -1533,14 +2045,23 @@ function VerificationQueue({
               onChange={(e) => setSearch(e.target.value)}
               style={{
                 width: "100%",
+
                 padding: "9px 12px 9px 36px",
+
                 border: "1px solid #E2E8F0",
+
                 borderRadius: 8,
+
                 fontFamily: "Inter, sans-serif",
+
                 fontSize: 13.5,
+
                 color: "#334155",
+
                 outline: "none",
+
                 background: "#fff",
+
                 boxSizing: "border-box",
               }}
               onFocus={(e) => (e.currentTarget.style.borderColor = "#2563EB")}
@@ -1551,11 +2072,17 @@ function VerificationQueue({
             <span
               style={{
                 position: "absolute",
+
                 left: 10,
+
                 top: "50%",
+
                 transform: "translateY(-50%)",
+
                 color: "#94A3B8",
+
                 lineHeight: 0,
+
                 pointerEvents: "none",
               }}
             >
@@ -1566,14 +2093,23 @@ function VerificationQueue({
               onChange={(e) => setStatusFilter(e.target.value)}
               style={{
                 padding: "9px 28px 9px 30px",
+
                 border: "1px solid #E2E8F0",
+
                 borderRadius: 8,
+
                 fontFamily: "Inter, sans-serif",
+
                 fontSize: 13,
+
                 color: "#334155",
+
                 background: "#fff",
+
                 outline: "none",
+
                 cursor: "pointer",
+
                 appearance: "none",
               }}
             >
@@ -1586,11 +2122,17 @@ function VerificationQueue({
             <span
               style={{
                 position: "absolute",
+
                 right: 9,
+
                 top: "50%",
+
                 transform: "translateY(-50%)",
+
                 color: "#94A3B8",
+
                 pointerEvents: "none",
+
                 lineHeight: 0,
               }}
             >
@@ -1604,64 +2146,91 @@ function VerificationQueue({
       <div
         style={{
           borderBottom: "1px solid #E2E8F0",
+
           marginBottom: 20,
+
           display: "flex",
+
           gap: 0,
         }}
       >
-        {(
-          [
-            {
-              id: "students",
-              label: "Student Developers (PSITS Members)",
-              count: filterStudents.length,
-            },
-            {
-              id: "enterprises",
-              label: "Local Enterprises (MSMEs)",
-              count: filterEnterprises.length,
-            },
-          ] as const
-        ).map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "10px 18px 11px",
-              fontFamily: "Inter, sans-serif",
-              fontSize: 13.5,
-              fontWeight: activeTab === tab.id ? 600 : 500,
-              color: activeTab === tab.id ? "#2563EB" : "#64748B",
-              borderBottom:
-                activeTab === tab.id
-                  ? "2.5px solid #2563EB"
-                  : "2.5px solid transparent",
-              marginBottom: -1,
-              transition: "all 0.12s",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              whiteSpace: "nowrap",
-            }}
-          >
-            {tab.label}
-            <span
+        {([
+          {
+            id: "students",
+
+            label: "Student Developers (PSITS Members)",
+
+            count: filterStudents.length,
+          },
+
+          {
+            id: "enterprises",
+
+            label: "Local Enterprises (MSMEs)",
+
+            count: filterEnterprises.length,
+          },
+        ] as const)
+
+          .map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
               style={{
-                background: activeTab === tab.id ? "#EFF6FF" : "#F1F5F9",
-                color: activeTab === tab.id ? "#2563EB" : "#94A3B8",
-                borderRadius: 99,
-                fontSize: 11,
-                fontWeight: 700,
-                padding: "1px 7px",
+                background: "none",
+
+                border: "none",
+
+                cursor: "pointer",
+
+                padding: "10px 18px 11px",
+
+                fontFamily: "Inter, sans-serif",
+
+                fontSize: 13.5,
+
+                fontWeight: activeTab === tab.id ? 600 : 500,
+
+                color: activeTab === tab.id ? "#2563EB" : "#64748B",
+
+                borderBottom:
+                  activeTab === tab.id
+                    ? "2.5px solid #2563EB"
+                    : "2.5px solid transparent",
+
+                marginBottom: -1,
+
+                transition: "all 0.12s",
+
+                display: "flex",
+
+                alignItems: "center",
+
+                gap: 8,
+
+                whiteSpace: "nowrap",
               }}
             >
-              {tab.count}
-            </span>
-          </button>
-        ))}
+              {tab.label}
+              <span
+                style={{
+                  background: activeTab === tab.id ? "#EFF6FF" : "#F1F5F9",
+
+                  color: activeTab === tab.id ? "#2563EB" : "#94A3B8",
+
+                  borderRadius: 99,
+
+                  fontSize: 11,
+
+                  fontWeight: 700,
+
+                  padding: "1px 7px",
+                }}
+              >
+                {tab.count}
+              </span>
+            </button>
+          ))}
       </div>
 
       {/* Table or Cards */}
@@ -1721,33 +2290,48 @@ function VerificationQueue({
         />
       )}
     </div>
-  );
+  )
 }
 
 // ─── Student Table (Desktop) ──────────────────────────────────────────────────
 
 function StudentTable({
   records,
+
   statuses,
+
   onView,
+
   onApprove,
+
   onReject,
 }: {
-  records: StudentRecord[];
-  statuses: Record<string, string>;
-  onView: (r: StudentRecord) => void;
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
+  records: StudentRecord[]
+
+  statuses: Record<string, string>
+
+  onView: (r: StudentRecord) => void
+
+  onApprove: (id: string) => void
+
+  onReject: (id: string) => void
 }) {
   const cols = [
     "Applicant",
+
     "Chapter / School",
+
     "Academic ID",
+
     "Tech Stack",
+
     "Submitted",
+
     "Status",
+
     "Actions",
-  ];
+  ]
+
   return (
     <Card style={{ overflow: "hidden", padding: 0 }}>
       <div style={{ overflowX: "auto" }}>
@@ -1761,13 +2345,21 @@ function StudentTable({
                   key={c}
                   style={{
                     padding: "10px 16px",
+
                     textAlign: "left",
+
                     fontSize: 11,
+
                     fontWeight: 700,
+
                     color: "#94A3B8",
+
                     textTransform: "uppercase",
+
                     letterSpacing: "0.06em",
+
                     borderBottom: "1px solid #E2E8F0",
+
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -1778,15 +2370,18 @@ function StudentTable({
           </thead>
           <tbody>
             {records.map((r, i) => {
-              const status = statuses[r.id];
+              const status = statuses[r.id]
+
               const canAct =
-                status === "Pending Review" || status === "Under Review";
+                status === "Pending Review" || status === "Under Review"
+
               return (
                 <tr
                   key={r.id}
                   style={{
                     borderBottom:
                       i < records.length - 1 ? "1px solid #F1F5F9" : "none",
+
                     transition: "background 0.1s",
                   }}
                   onMouseEnter={(e) =>
@@ -1804,16 +2399,27 @@ function StudentTable({
                       <div
                         style={{
                           width: 36,
+
                           height: 36,
+
                           borderRadius: "50%",
+
                           flexShrink: 0,
+
                           background: `linear-gradient(135deg, ${r.avatarColor[0]}, ${r.avatarColor[0]})`,
+
                           border: `1.5px solid ${r.avatarColor[1]}30`,
+
                           display: "flex",
+
                           alignItems: "center",
+
                           justifyContent: "center",
+
                           fontSize: 11,
+
                           fontWeight: 700,
+
                           color: r.avatarColor[1],
                         }}
                       >
@@ -1823,7 +2429,9 @@ function StudentTable({
                         <div
                           style={{
                             fontWeight: 600,
+
                             color: "#0F172A",
+
                             fontSize: 13,
                           }}
                         >
@@ -1839,16 +2447,22 @@ function StudentTable({
                   <td
                     style={{
                       padding: "13px 16px",
+
                       color: "#475569",
+
                       fontSize: 12.5,
+
                       maxWidth: 180,
                     }}
                   >
                     <span
                       style={{
                         display: "-webkit-box",
+
                         WebkitLineClamp: 2,
+
                         WebkitBoxOrient: "vertical",
+
                         overflow: "hidden",
                       }}
                     >
@@ -1859,9 +2473,13 @@ function StudentTable({
                   <td
                     style={{
                       padding: "13px 16px",
+
                       fontFamily: "monospace",
+
                       fontSize: 12.5,
+
                       color: "#334155",
+
                       fontWeight: 600,
                     }}
                   >
@@ -1879,8 +2497,11 @@ function StudentTable({
                   <td
                     style={{
                       padding: "13px 16px",
+
                       color: "#64748B",
+
                       fontSize: 12.5,
+
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -1895,8 +2516,11 @@ function StudentTable({
                     <div
                       style={{
                         display: "flex",
+
                         gap: 6,
+
                         alignItems: "center",
+
                         flexWrap: "nowrap",
                       }}
                     >
@@ -1922,7 +2546,7 @@ function StudentTable({
                     </div>
                   </td>
                 </tr>
-              );
+              )
             })}
           </tbody>
         </table>
@@ -1931,66 +2555,99 @@ function StudentTable({
         )}
       </div>
     </Card>
-  );
+  )
 }
 
 // ─── Student Tablet Cards ──────────────────────────────────────────────────────
 
 function StudentTabletCards({
   records,
+
   statuses,
+
   expanded,
+
   setExpanded,
+
   onView,
+
   onApprove,
+
   onReject,
 }: {
-  records: StudentRecord[];
-  statuses: Record<string, string>;
-  expanded: Record<string, boolean>;
-  setExpanded: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  onView: (r: StudentRecord) => void;
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
+  records: StudentRecord[]
+
+  statuses: Record<string, string>
+
+  expanded: Record<string, boolean>
+
+  setExpanded: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+
+  onView: (r: StudentRecord) => void
+
+  onApprove: (id: string) => void
+
+  onReject: (id: string) => void
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {records.map((r) => {
-        const status = statuses[r.id];
-        const canAct = status === "Pending Review" || status === "Under Review";
-        const isExpanded = expanded[r.id];
+        const status = statuses[r.id]
+
+        const canAct = status === "Pending Review" || status === "Under Review"
+
+        const isExpanded = expanded[r.id]
+
         return (
           <Card key={r.id} style={{ padding: "14px 16px" }}>
             <div
               style={{
                 display: "flex",
+
                 alignItems: "center",
+
                 gap: 12,
+
                 justifyContent: "space-between",
               }}
             >
               <div
                 style={{
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 10,
+
                   flex: 1,
+
                   minWidth: 0,
                 }}
               >
                 <div
                   style={{
                     width: 38,
+
                     height: 38,
+
                     borderRadius: "50%",
+
                     flexShrink: 0,
+
                     background: `linear-gradient(135deg, ${r.avatarColor[0]}, ${r.avatarColor[0]})`,
+
                     border: `1.5px solid ${r.avatarColor[1]}30`,
+
                     display: "flex",
+
                     alignItems: "center",
+
                     justifyContent: "center",
+
                     fontSize: 12,
+
                     fontWeight: 700,
+
                     color: r.avatarColor[1],
                   }}
                 >
@@ -2000,7 +2657,9 @@ function StudentTabletCards({
                   <div
                     style={{
                       fontWeight: 600,
+
                       color: "#0F172A",
+
                       fontSize: 13.5,
                     }}
                   >
@@ -2009,9 +2668,13 @@ function StudentTabletCards({
                   <div
                     style={{
                       fontSize: 11.5,
+
                       color: "#64748B",
+
                       overflow: "hidden",
+
                       textOverflow: "ellipsis",
+
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -2022,8 +2685,11 @@ function StudentTabletCards({
               <div
                 style={{
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 8,
+
                   flexShrink: 0,
                 }}
               >
@@ -2034,9 +2700,13 @@ function StudentTabletCards({
                   }
                   style={{
                     background: "none",
+
                     border: "none",
+
                     cursor: "pointer",
+
                     color: "#94A3B8",
+
                     lineHeight: 0,
                   }}
                 >
@@ -2048,10 +2718,15 @@ function StudentTabletCards({
               <div
                 style={{
                   marginTop: 14,
+
                   paddingTop: 12,
+
                   borderTop: "1px solid #F1F5F9",
+
                   display: "flex",
+
                   flexDirection: "column",
+
                   gap: 10,
                 }}
               >
@@ -2065,8 +2740,11 @@ function StudentTabletCards({
                 <div
                   style={{
                     display: "flex",
+
                     gap: 8,
+
                     flexWrap: "wrap",
+
                     marginTop: 4,
                   }}
                 >
@@ -2090,58 +2768,82 @@ function StudentTabletCards({
               </div>
             )}
           </Card>
-        );
+        )
       })}
       {records.length === 0 && (
         <EmptyState message="No applicants match your current filters." />
       )}
     </div>
-  );
+  )
 }
 
 // ─── Student Mobile Cards ────────────────────────────────────────────────────
 
 function StudentCards({
   records,
+
   statuses,
+
   onView,
+
   onApprove,
+
   onReject,
 }: {
-  records: StudentRecord[];
-  statuses: Record<string, string>;
-  onView: (r: StudentRecord) => void;
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
+  records: StudentRecord[]
+
+  statuses: Record<string, string>
+
+  onView: (r: StudentRecord) => void
+
+  onApprove: (id: string) => void
+
+  onReject: (id: string) => void
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {records.map((r) => {
-        const status = statuses[r.id];
-        const canAct = status === "Pending Review" || status === "Under Review";
+        const status = statuses[r.id]
+
+        const canAct = status === "Pending Review" || status === "Under Review"
+
         return (
           <Card key={r.id} style={{ padding: 16 }}>
             <div
               style={{
                 display: "flex",
+
                 alignItems: "center",
+
                 gap: 12,
+
                 marginBottom: 12,
               }}
             >
               <div
                 style={{
                   width: 44,
+
                   height: 44,
+
                   borderRadius: "50%",
+
                   flexShrink: 0,
+
                   background: `linear-gradient(135deg, ${r.avatarColor[0]}, ${r.avatarColor[0]})`,
+
                   border: `1.5px solid ${r.avatarColor[1]}30`,
+
                   display: "flex",
+
                   alignItems: "center",
+
                   justifyContent: "center",
+
                   fontSize: 13,
+
                   fontWeight: 700,
+
                   color: r.avatarColor[1],
                 }}
               >
@@ -2165,8 +2867,11 @@ function StudentCards({
             <div
               style={{
                 display: "flex",
+
                 flexWrap: "wrap",
+
                 gap: 4,
+
                 marginBottom: 12,
               }}
             >
@@ -2199,38 +2904,52 @@ function StudentCards({
               )}
             </div>
           </Card>
-        );
+        )
       })}
       {records.length === 0 && (
         <EmptyState message="No applicants match your current filters." />
       )}
     </div>
-  );
+  )
 }
 
 // ─── Enterprise Table (Desktop) ───────────────────────────────────────────────
 
 function EnterpriseTable({
   records,
+
   statuses,
+
   onView,
+
   onApprove,
+
   onReject,
 }: {
-  records: EnterpriseRecord[];
-  statuses: Record<string, string>;
-  onView: (r: EnterpriseRecord) => void;
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
+  records: EnterpriseRecord[]
+
+  statuses: Record<string, string>
+
+  onView: (r: EnterpriseRecord) => void
+
+  onApprove: (id: string) => void
+
+  onReject: (id: string) => void
 }) {
   const cols = [
     "Business Name",
+
     "Representative",
+
     "Barangay",
+
     "Permit / DTI Reg",
+
     "Status",
+
     "Actions",
-  ];
+  ]
+
   return (
     <Card style={{ overflow: "hidden", padding: 0 }}>
       <div style={{ overflowX: "auto" }}>
@@ -2244,13 +2963,21 @@ function EnterpriseTable({
                   key={c}
                   style={{
                     padding: "10px 16px",
+
                     textAlign: "left",
+
                     fontSize: 11,
+
                     fontWeight: 700,
+
                     color: "#94A3B8",
+
                     textTransform: "uppercase",
+
                     letterSpacing: "0.06em",
+
                     borderBottom: "1px solid #E2E8F0",
+
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -2261,15 +2988,18 @@ function EnterpriseTable({
           </thead>
           <tbody>
             {records.map((r, i) => {
-              const status = statuses[r.id];
+              const status = statuses[r.id]
+
               const canAct =
-                status === "Pending Review" || status === "Under Review";
+                status === "Pending Review" || status === "Under Review"
+
               return (
                 <tr
                   key={r.id}
                   style={{
                     borderBottom:
                       i < records.length - 1 ? "1px solid #F1F5F9" : "none",
+
                     transition: "background 0.1s",
                   }}
                   onMouseEnter={(e) =>
@@ -2286,16 +3016,27 @@ function EnterpriseTable({
                       <div
                         style={{
                           width: 36,
+
                           height: 36,
+
                           borderRadius: 8,
+
                           flexShrink: 0,
+
                           background: `linear-gradient(135deg, ${r.avatarColor[0]}, ${r.avatarColor[0]})`,
+
                           border: `1.5px solid ${r.avatarColor[1]}30`,
+
                           display: "flex",
+
                           alignItems: "center",
+
                           justifyContent: "center",
+
                           fontSize: 11,
+
                           fontWeight: 700,
+
                           color: r.avatarColor[1],
                         }}
                       >
@@ -2305,7 +3046,9 @@ function EnterpriseTable({
                         <div
                           style={{
                             fontWeight: 600,
+
                             color: "#0F172A",
+
                             fontSize: 13,
                           }}
                         >
@@ -2320,7 +3063,9 @@ function EnterpriseTable({
                   <td
                     style={{
                       padding: "13px 16px",
+
                       color: "#475569",
+
                       fontSize: 13,
                     }}
                   >
@@ -2330,10 +3075,15 @@ function EnterpriseTable({
                     <span
                       style={{
                         background: "#F1F5F9",
+
                         color: "#475569",
+
                         fontSize: 12,
+
                         fontWeight: 600,
+
                         padding: "2px 9px",
+
                         borderRadius: 99,
                       }}
                     >
@@ -2343,9 +3093,13 @@ function EnterpriseTable({
                   <td
                     style={{
                       padding: "13px 16px",
+
                       fontFamily: "monospace",
+
                       fontSize: 12,
+
                       color: "#334155",
+
                       fontWeight: 600,
                     }}
                   >
@@ -2380,7 +3134,7 @@ function EnterpriseTable({
                     </div>
                   </td>
                 </tr>
-              );
+              )
             })}
           </tbody>
         </table>
@@ -2389,66 +3143,99 @@ function EnterpriseTable({
         )}
       </div>
     </Card>
-  );
+  )
 }
 
 // ─── Enterprise Tablet Cards ──────────────────────────────────────────────────
 
 function EnterpriseTabletCards({
   records,
+
   statuses,
+
   expanded,
+
   setExpanded,
+
   onView,
+
   onApprove,
+
   onReject,
 }: {
-  records: EnterpriseRecord[];
-  statuses: Record<string, string>;
-  expanded: Record<string, boolean>;
-  setExpanded: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  onView: (r: EnterpriseRecord) => void;
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
+  records: EnterpriseRecord[]
+
+  statuses: Record<string, string>
+
+  expanded: Record<string, boolean>
+
+  setExpanded: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+
+  onView: (r: EnterpriseRecord) => void
+
+  onApprove: (id: string) => void
+
+  onReject: (id: string) => void
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {records.map((r) => {
-        const status = statuses[r.id];
-        const canAct = status === "Pending Review" || status === "Under Review";
-        const isExpanded = expanded[r.id];
+        const status = statuses[r.id]
+
+        const canAct = status === "Pending Review" || status === "Under Review"
+
+        const isExpanded = expanded[r.id]
+
         return (
           <Card key={r.id} style={{ padding: "14px 16px" }}>
             <div
               style={{
                 display: "flex",
+
                 alignItems: "center",
+
                 gap: 12,
+
                 justifyContent: "space-between",
               }}
             >
               <div
                 style={{
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 10,
+
                   flex: 1,
+
                   minWidth: 0,
                 }}
               >
                 <div
                   style={{
                     width: 38,
+
                     height: 38,
+
                     borderRadius: 8,
+
                     flexShrink: 0,
+
                     background: `linear-gradient(135deg, ${r.avatarColor[0]}, ${r.avatarColor[0]})`,
+
                     border: `1.5px solid ${r.avatarColor[1]}30`,
+
                     display: "flex",
+
                     alignItems: "center",
+
                     justifyContent: "center",
+
                     fontSize: 12,
+
                     fontWeight: 700,
+
                     color: r.avatarColor[1],
                   }}
                 >
@@ -2458,7 +3245,9 @@ function EnterpriseTabletCards({
                   <div
                     style={{
                       fontWeight: 600,
+
                       color: "#0F172A",
+
                       fontSize: 13.5,
                     }}
                   >
@@ -2472,8 +3261,11 @@ function EnterpriseTabletCards({
               <div
                 style={{
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 8,
+
                   flexShrink: 0,
                 }}
               >
@@ -2484,9 +3276,13 @@ function EnterpriseTabletCards({
                   }
                   style={{
                     background: "none",
+
                     border: "none",
+
                     cursor: "pointer",
+
                     color: "#94A3B8",
+
                     lineHeight: 0,
                   }}
                 >
@@ -2498,10 +3294,15 @@ function EnterpriseTabletCards({
               <div
                 style={{
                   marginTop: 14,
+
                   paddingTop: 12,
+
                   borderTop: "1px solid #F1F5F9",
+
                   display: "flex",
+
                   flexDirection: "column",
+
                   gap: 10,
                 }}
               >
@@ -2511,13 +3312,16 @@ function EnterpriseTabletCards({
                 <div
                   style={{
                     fontSize: 12,
+
                     color: "#64748B",
+
                     fontFamily: "monospace",
                   }}
                 >
                   <b
                     style={{
                       color: "#475569",
+
                       fontFamily: "Inter, sans-serif",
                     }}
                   >
@@ -2528,8 +3332,11 @@ function EnterpriseTabletCards({
                 <div
                   style={{
                     display: "flex",
+
                     gap: 8,
+
                     flexWrap: "wrap",
+
                     marginTop: 4,
                   }}
                 >
@@ -2553,58 +3360,82 @@ function EnterpriseTabletCards({
               </div>
             )}
           </Card>
-        );
+        )
       })}
       {records.length === 0 && (
         <EmptyState message="No enterprises match your current filters." />
       )}
     </div>
-  );
+  )
 }
 
 // ─── Enterprise Mobile Cards ──────────────────────────────────────────────────
 
 function EnterpriseCards({
   records,
+
   statuses,
+
   onView,
+
   onApprove,
+
   onReject,
 }: {
-  records: EnterpriseRecord[];
-  statuses: Record<string, string>;
-  onView: (r: EnterpriseRecord) => void;
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
+  records: EnterpriseRecord[]
+
+  statuses: Record<string, string>
+
+  onView: (r: EnterpriseRecord) => void
+
+  onApprove: (id: string) => void
+
+  onReject: (id: string) => void
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {records.map((r) => {
-        const status = statuses[r.id];
-        const canAct = status === "Pending Review" || status === "Under Review";
+        const status = statuses[r.id]
+
+        const canAct = status === "Pending Review" || status === "Under Review"
+
         return (
           <Card key={r.id} style={{ padding: 16 }}>
             <div
               style={{
                 display: "flex",
+
                 alignItems: "center",
+
                 gap: 12,
+
                 marginBottom: 12,
               }}
             >
               <div
                 style={{
                   width: 44,
+
                   height: 44,
+
                   borderRadius: 10,
+
                   flexShrink: 0,
+
                   background: `linear-gradient(135deg, ${r.avatarColor[0]}, ${r.avatarColor[0]})`,
+
                   border: `1.5px solid ${r.avatarColor[1]}30`,
+
                   display: "flex",
+
                   alignItems: "center",
+
                   justifyContent: "center",
+
                   fontSize: 13,
+
                   fontWeight: 700,
+
                   color: r.avatarColor[1],
                 }}
               >
@@ -2623,18 +3454,26 @@ function EnterpriseCards({
             <div
               style={{
                 display: "flex",
+
                 gap: 8,
+
                 marginBottom: 8,
+
                 flexWrap: "wrap",
               }}
             >
               <span
                 style={{
                   background: "#F1F5F9",
+
                   color: "#475569",
+
                   fontSize: 12,
+
                   fontWeight: 600,
+
                   padding: "2px 9px",
+
                   borderRadius: 99,
                 }}
               >
@@ -2643,11 +3482,17 @@ function EnterpriseCards({
               <span
                 style={{
                   background: "#F8FAFC",
+
                   color: "#64748B",
+
                   fontSize: 11,
+
                   padding: "2px 9px",
+
                   borderRadius: 99,
+
                   border: "1px solid #E2E8F0",
+
                   fontFamily: "monospace",
                 }}
               >
@@ -2679,65 +3524,94 @@ function EnterpriseCards({
               )}
             </div>
           </Card>
-        );
+        )
       })}
       {records.length === 0 && (
         <EmptyState message="No enterprises match your current filters." />
       )}
     </div>
-  );
+  )
 }
 
 // ─── Shared small components ──────────────────────────────────────────────────
 
 function ActionBtn({
   variant,
+
   onClick,
+
   children,
 }: {
-  variant: "outline" | "success" | "danger";
-  onClick: () => void;
-  children: React.ReactNode;
+  variant: "outline" | "success" | "danger"
+
+  onClick: () => void
+
+  children: React.ReactNode
 }) {
   const cfg = {
     outline: {
       bg: "#fff",
+
       color: "#475569",
+
       border: "#E2E8F0",
+
       hoverBg: "#F8FAFC",
     },
+
     success: {
       bg: "#16A34A",
+
       color: "#fff",
+
       border: "#16A34A",
+
       hoverBg: "#15803D",
     },
+
     danger: {
       bg: "#DC2626",
+
       color: "#fff",
+
       border: "#DC2626",
+
       hoverBg: "#B91C1C",
     },
-  }[variant];
+  }[variant]
 
   return (
     <button
       onClick={onClick}
       style={{
         display: "inline-flex",
+
         alignItems: "center",
+
         gap: 4,
+
         padding: "5px 10px",
+
         borderRadius: 6,
+
         background: cfg.bg,
+
         color: cfg.color,
+
         border: `1px solid ${cfg.border}`,
+
         fontSize: 12,
+
         fontWeight: 600,
+
         cursor: "pointer",
+
         fontFamily: "Inter, sans-serif",
+
         whiteSpace: "nowrap",
+
         transition: "background 0.12s",
+
         lineHeight: 1.4,
       }}
       onMouseEnter={(e) => (e.currentTarget.style.background = cfg.hoverBg)}
@@ -2745,31 +3619,47 @@ function ActionBtn({
     >
       {children}
     </button>
-  );
+  )
 }
 
 function mobileActionStyle(
   bg: string,
+
   color: string,
+
   border: string,
 ): React.CSSProperties {
   return {
     display: "flex",
+
     alignItems: "center",
+
     justifyContent: "center",
+
     gap: 6,
+
     width: "100%",
+
     padding: "9px 14px",
+
     borderRadius: 8,
+
     background: bg,
+
     color,
+
     border: `1.5px solid ${border}`,
+
     fontSize: 13.5,
+
     fontWeight: 600,
+
     cursor: "pointer",
+
     fontFamily: "Inter, sans-serif",
+
     transition: "opacity 0.12s",
-  };
+  }
 }
 
 function EmptyState({ message }: { message: string }) {
@@ -2778,13 +3668,21 @@ function EmptyState({ message }: { message: string }) {
       <div
         style={{
           width: 56,
+
           height: 56,
+
           borderRadius: 14,
+
           background: "#F1F5F9",
+
           margin: "0 auto 14px",
+
           display: "flex",
+
           alignItems: "center",
+
           justifyContent: "center",
+
           color: "#94A3B8",
         }}
       >
@@ -2794,66 +3692,99 @@ function EmptyState({ message }: { message: string }) {
         {message}
       </p>
     </div>
-  );
+  )
 }
 
 // ─── Developer Profile Page (Screen 1) ────────────────────────────────────────
 
 const devNavItems = [
   { icon: IconDashboard, label: "Dashboard", id: "dashboard" },
+
   { icon: IconMarket, label: "Marketplace", id: "marketplace" },
+
   { icon: IconBids, label: "Bids", id: "bids" },
+
   { icon: IconMessages, label: "Messages", id: "messages" },
+
   { icon: IconSettings, label: "Settings", id: "settings" },
-];
+]
 
 function DevSidebar({
   active,
+
   onNav,
+
   collapsed,
 }: {
-  active: string;
-  onNav: (id: string) => void;
-  collapsed: boolean;
+  active: string
+
+  onNav: (id: string) => void
+
+  collapsed: boolean
 }) {
-  const profile = useDevProfile();
+  const profile = useDevProfile()
+
   return (
     <aside
       style={{
         width: collapsed ? 72 : 260,
+
         minHeight: "100vh",
+
         background: "#fff",
+
         borderRight: "1px solid #E2E8F0",
+
         display: "flex",
+
         flexDirection: "column",
+
         flexShrink: 0,
+
         transition: "width 0.2s ease",
+
         position: "sticky",
+
         top: 0,
+
         height: "100vh",
+
         overflow: "hidden",
       }}
     >
       <div
         style={{
           padding: collapsed ? "20px 0" : "20px 24px",
+
           display: "flex",
+
           alignItems: "center",
+
           gap: 10,
+
           borderBottom: "1px solid #F1F5F9",
         }}
       >
         <div
           style={{
             width: 36,
+
             height: 36,
+
             borderRadius: 8,
+
             flexShrink: 0,
+
             background: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
+
             display: "flex",
+
             alignItems: "center",
+
             justifyContent: "center",
+
             marginLeft: collapsed ? "auto" : 0,
+
             marginRight: collapsed ? "auto" : 0,
           }}
         >
@@ -2872,8 +3803,11 @@ function DevSidebar({
             <div
               style={{
                 fontWeight: 700,
+
                 fontSize: 15,
+
                 color: "#0F172A",
+
                 letterSpacing: "-0.02em",
               }}
             >
@@ -2887,47 +3821,64 @@ function DevSidebar({
       </div>
       <nav style={{ padding: "12px 0", flex: 1 }}>
         {devNavItems.map(({ icon: Icon, label, id }) => {
-          const isActive = active === id;
+          const isActive = active === id
+
           return (
             <button
               key={id}
               onClick={() => onNav(id)}
               style={{
                 width: "100%",
+
                 display: "flex",
+
                 alignItems: "center",
+
                 gap: 12,
+
                 padding: collapsed ? "10px 0" : "10px 20px",
+
                 justifyContent: collapsed ? "center" : "flex-start",
+
                 border: "none",
+
                 background: isActive ? "#EFF6FF" : "transparent",
+
                 color: isActive ? "#2563EB" : "#475569",
+
                 borderLeft: isActive
                   ? "3px solid #2563EB"
                   : "3px solid transparent",
+
                 cursor: "pointer",
+
                 fontFamily: "Inter, sans-serif",
+
                 fontSize: 14,
+
                 fontWeight: isActive ? 600 : 500,
+
                 transition: "all 0.15s ease",
+
                 borderRadius: collapsed ? 0 : "0 8px 8px 0",
+
                 marginRight: collapsed ? 0 : 12,
               }}
               onMouseEnter={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "#F8FAFC";
+                    "#F8FAFC"
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "transparent";
+                    "transparent"
               }}
             >
               <Icon size={20} />
               {!collapsed && label}
             </button>
-          );
+          )
         })}
       </nav>
       {!collapsed && (
@@ -2936,15 +3887,25 @@ function DevSidebar({
             <div
               style={{
                 width: 32,
+
                 height: 32,
+
                 borderRadius: "50%",
+
                 flexShrink: 0,
+
                 background: `linear-gradient(135deg, ${profile.avatarColors[0]}, ${profile.avatarColors[1]})`,
+
                 display: "flex",
+
                 alignItems: "center",
+
                 justifyContent: "center",
+
                 fontSize: 12,
+
                 fontWeight: 700,
+
                 color: "#fff",
               }}
             >
@@ -2957,7 +3918,9 @@ function DevSidebar({
               <div
                 style={{
                   fontSize: 11,
+
                   color: profile.availability ? "#16A34A" : "#64748B",
+
                   fontWeight: 600,
                 }}
               >
@@ -2968,7 +3931,7 @@ function DevSidebar({
         </div>
       )}
     </aside>
-  );
+  )
 }
 
 function DevStatusPill({ status }: { status: string }) {
@@ -2977,60 +3940,84 @@ function DevStatusPill({ status }: { status: string }) {
       ? { bg: "#F0FDF4", color: "#16A34A", border: "#BBF7D0" }
       : status === "Active"
         ? { bg: "#EFF6FF", color: "#2563EB", border: "#BFDBFE" }
-        : { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A" };
+        : { bg: "#FFFBEB", color: "#D97706", border: "#FDE68A" }
+
   return (
     <span
       style={{
         display: "inline-flex",
+
         alignItems: "center",
+
         gap: 4,
+
         padding: "2px 10px",
+
         borderRadius: 99,
+
         background: cfg.bg,
+
         color: cfg.color,
+
         border: `1px solid ${cfg.border}`,
+
         fontSize: 12,
+
         fontWeight: 600,
       }}
     >
       <span
         style={{
           width: 6,
+
           height: 6,
+
           borderRadius: "50%",
+
           background: cfg.color,
+
           flexShrink: 0,
         }}
       />
       {status}
     </span>
-  );
+  )
 }
 
 function DevSkillTag({
   label,
+
   muted = false,
 }: {
-  label: string;
-  muted?: boolean;
+  label: string
+
+  muted?: boolean
 }) {
   return (
     <span
       style={{
         display: "inline-flex",
+
         alignItems: "center",
+
         padding: muted ? "3px 10px" : "4px 12px",
+
         borderRadius: 99,
+
         background: muted ? "#F8FAFC" : "#F1F5F9",
+
         border: `1px solid ${muted ? "#E2E8F0" : "#CBD5E1"}`,
+
         fontSize: muted ? 12 : 13,
+
         fontWeight: 500,
+
         color: muted ? "#64748B" : "#334155",
       }}
     >
       {label}
     </span>
-  );
+  )
 }
 
 function Stars({ rating }: { rating: number }) {
@@ -3040,32 +4027,46 @@ function Stars({ rating }: { rating: number }) {
         <IconStar key={i} filled={i <= rating} />
       ))}
     </span>
-  );
+  )
 }
 
 function DeveloperProfile({
   isMobile,
-  isTablet,
+
+  // isTablet kept optional for backward compatibility; not used in this view but retained to avoid breaking callers that pass it
+
+  isTablet: _isTablet,
 }: {
-  isMobile: boolean;
-  isTablet: boolean;
+  isMobile: boolean
+
+  isTablet?: boolean
 }) {
-  const p = useDevProfile();
-  const verified = p.verificationStatus === "Verified";
+  void _isTablet
+
+  const p = useDevProfile()
+
+  const verified = p.verificationStatus === "Verified"
+
   const linkIcons: Record<string, React.ReactNode> = {
     github: <IconGithub size={18} />,
+
     linkedin: <IconLinkedin size={18} />,
+
     globe: <IconGlobe size={18} />,
-  };
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div
         style={{
           fontSize: 12,
+
           color: "#94A3B8",
+
           display: "flex",
+
           gap: 6,
+
           alignItems: "center",
         }}
       >
@@ -3081,8 +4082,11 @@ function DeveloperProfile({
         <div
           style={{
             display: "flex",
+
             flexDirection: isMobile ? "column" : "row",
+
             alignItems: isMobile ? "center" : "flex-start",
+
             gap: isMobile ? 16 : 20,
           }}
         >
@@ -3090,16 +4094,27 @@ function DeveloperProfile({
             <div
               style={{
                 width: 96,
+
                 height: 96,
+
                 borderRadius: "50%",
+
                 background: `linear-gradient(135deg, ${p.avatarColors[0]} 0%, ${p.avatarColors[1]} 60%, ${p.avatarColors[0]} 100%)`,
+
                 display: "flex",
+
                 alignItems: "center",
+
                 justifyContent: "center",
+
                 fontSize: 28,
+
                 fontWeight: 700,
+
                 color: "#fff",
+
                 border: "3px solid #fff",
+
                 boxShadow: "0 0 0 2px #E2E8F0",
               }}
             >
@@ -3108,15 +4123,25 @@ function DeveloperProfile({
             <div
               style={{
                 position: "absolute",
+
                 bottom: 2,
+
                 right: 2,
+
                 width: 22,
+
                 height: 22,
+
                 borderRadius: "50%",
+
                 background: verified ? "#16A34A" : "#D97706",
+
                 border: "2.5px solid #fff",
+
                 display: "flex",
+
                 alignItems: "center",
+
                 justifyContent: "center",
               }}
             >
@@ -3127,19 +4152,28 @@ function DeveloperProfile({
             <div
               style={{
                 display: "flex",
+
                 alignItems: "center",
+
                 gap: 10,
+
                 flexWrap: "wrap",
+
                 justifyContent: isMobile ? "center" : "flex-start",
+
                 marginBottom: 4,
               }}
             >
               <h1
                 style={{
                   margin: 0,
+
                   fontSize: 24,
+
                   fontWeight: 700,
+
                   color: "#0F172A",
+
                   letterSpacing: "-0.03em",
                 }}
               >
@@ -3149,14 +4183,23 @@ function DeveloperProfile({
                 <span
                   style={{
                     display: "inline-flex",
+
                     alignItems: "center",
+
                     gap: 4,
+
                     padding: "3px 10px",
+
                     borderRadius: 99,
+
                     background: "#F0FDF4",
+
                     border: "1px solid #BBF7D0",
+
                     color: "#16A34A",
+
                     fontSize: 11,
+
                     fontWeight: 700,
                   }}
                 >
@@ -3169,24 +4212,38 @@ function DeveloperProfile({
                 onClick={() => setAvailability(!p.availability)}
                 style={{
                   display: "inline-flex",
+
                   alignItems: "center",
+
                   gap: 5,
+
                   padding: "3px 10px",
+
                   borderRadius: 99,
+
                   cursor: "pointer",
+
                   background: p.availability ? "#F0FDF4" : "#F1F5F9",
+
                   border: `1px solid ${p.availability ? "#BBF7D0" : "#E2E8F0"}`,
+
                   color: p.availability ? "#16A34A" : "#64748B",
+
                   fontFamily: "Inter, sans-serif",
+
                   fontSize: 11,
+
                   fontWeight: 700,
                 }}
               >
                 <span
                   style={{
                     width: 6,
+
                     height: 6,
+
                     borderRadius: "50%",
+
                     background: p.availability ? "#16A34A" : "#94A3B8",
                   }}
                 />
@@ -3196,8 +4253,11 @@ function DeveloperProfile({
             <p
               style={{
                 margin: "0 0 12px",
+
                 fontSize: 14,
+
                 color: "#64748B",
+
                 fontWeight: 500,
               }}
             >
@@ -3206,17 +4266,23 @@ function DeveloperProfile({
             <div
               style={{
                 display: "flex",
+
                 gap: 24,
+
                 flexWrap: "wrap",
+
                 justifyContent: isMobile ? "center" : "flex-start",
               }}
             >
               {[
                 {
                   value: String(p.stats.projectsCompleted),
+
                   label: "Projects Completed",
                 },
+
                 { value: p.stats.peerScore, label: "Peer Validation Score" },
+
                 { value: p.stats.responseRate, label: "Response Rate" },
               ].map((stat) => (
                 <div
@@ -3226,8 +4292,11 @@ function DeveloperProfile({
                   <div
                     style={{
                       fontSize: 20,
+
                       fontWeight: 700,
+
                       color: "#0F172A",
+
                       letterSpacing: "-0.02em",
                     }}
                   >
@@ -3236,8 +4305,11 @@ function DeveloperProfile({
                   <div
                     style={{
                       fontSize: 11,
+
                       color: "#64748B",
+
                       fontWeight: 500,
+
                       marginTop: 2,
                     }}
                   >
@@ -3250,20 +4322,30 @@ function DeveloperProfile({
           <div
             style={{
               display: "flex",
+
               gap: 8,
+
               flexShrink: 0,
+
               flexDirection: isMobile ? "row" : "column",
             }}
           >
             <button
               style={{
                 background: "#2563EB",
+
                 color: "#fff",
+
                 border: "none",
+
                 borderRadius: 8,
+
                 padding: "9px 18px",
+
                 fontSize: 13,
+
                 fontWeight: 600,
+
                 cursor: "pointer",
               }}
             >
@@ -3272,12 +4354,19 @@ function DeveloperProfile({
             <button
               style={{
                 background: "transparent",
+
                 color: "#2563EB",
+
                 border: "1.5px solid #2563EB",
+
                 borderRadius: 8,
+
                 padding: "9px 18px",
+
                 fontSize: 13,
+
                 fontWeight: 600,
+
                 cursor: "pointer",
               }}
             >
@@ -3290,7 +4379,9 @@ function DeveloperProfile({
       <div
         style={{
           display: "grid",
+
           gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+
           gap: 20,
         }}
       >
@@ -3298,8 +4389,11 @@ function DeveloperProfile({
           <h2
             style={{
               margin: "0 0 16px",
+
               fontSize: 16,
+
               fontWeight: 700,
+
               color: "#0F172A",
             }}
           >
@@ -3308,8 +4402,11 @@ function DeveloperProfile({
           <div
             style={{
               display: "flex",
+
               flexWrap: "wrap",
+
               gap: 8,
+
               marginBottom: 16,
             }}
           >
@@ -3320,10 +4417,15 @@ function DeveloperProfile({
           <div
             style={{
               fontSize: 12,
+
               fontWeight: 600,
+
               color: "#94A3B8",
+
               textTransform: "uppercase",
+
               letterSpacing: "0.07em",
+
               marginBottom: 8,
             }}
           >
@@ -3339,8 +4441,11 @@ function DeveloperProfile({
           <h2
             style={{
               margin: "0 0 16px",
+
               fontSize: 16,
+
               fontWeight: 700,
+
               color: "#0F172A",
             }}
           >
@@ -3355,13 +4460,21 @@ function DeveloperProfile({
                 rel="noreferrer"
                 style={{
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 12,
+
                   padding: "10px 12px",
+
                   borderRadius: 8,
+
                   color: "#334155",
+
                   textDecoration: "none",
+
                   fontSize: 14,
+
                   fontWeight: 500,
                 }}
                 onMouseEnter={(e) =>
@@ -3386,17 +4499,24 @@ function DeveloperProfile({
         <div
           style={{
             padding: "20px 24px 16px",
+
             borderBottom: "1px solid #F1F5F9",
+
             display: "flex",
+
             alignItems: "center",
+
             justifyContent: "space-between",
           }}
         >
           <h2
             style={{
               margin: 0,
+
               fontSize: 16,
+
               fontWeight: 700,
+
               color: "#0F172A",
             }}
           >
@@ -3418,13 +4538,21 @@ function DeveloperProfile({
                       key={h}
                       style={{
                         padding: "10px 24px",
+
                         textAlign: "left",
+
                         fontSize: 11,
+
                         fontWeight: 600,
+
                         color: "#94A3B8",
+
                         textTransform: "uppercase",
+
                         letterSpacing: "0.06em",
+
                         borderBottom: "1px solid #E2E8F0",
+
                         whiteSpace: "nowrap",
                       }}
                     >
@@ -3452,7 +4580,9 @@ function DeveloperProfile({
                   <td
                     style={{
                       padding: "14px 24px",
+
                       fontWeight: 600,
+
                       color: "#0F172A",
                     }}
                   >
@@ -3464,7 +4594,9 @@ function DeveloperProfile({
                   <td
                     style={{
                       padding: "14px 24px",
+
                       color: "#64748B",
+
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -3479,8 +4611,11 @@ function DeveloperProfile({
                       onClick={(e) => e.preventDefault()}
                       style={{
                         color: "#2563EB",
+
                         fontSize: 13,
+
                         fontWeight: 600,
+
                         textDecoration: "none",
                       }}
                     >
@@ -3498,8 +4633,11 @@ function DeveloperProfile({
         <h2
           style={{
             margin: "0 0 20px",
+
             fontSize: 16,
+
             fontWeight: 700,
+
             color: "#0F172A",
           }}
         >
@@ -3508,9 +4646,13 @@ function DeveloperProfile({
         <div
           style={{
             display: "flex",
+
             gap: 32,
+
             flexWrap: "wrap",
+
             marginBottom: 24,
+
             alignItems: "center",
           }}
         >
@@ -3518,9 +4660,13 @@ function DeveloperProfile({
             <div
               style={{
                 fontSize: 52,
+
                 fontWeight: 800,
+
                 color: "#0F172A",
+
                 letterSpacing: "-0.04em",
+
                 lineHeight: 1,
               }}
             >
@@ -3530,8 +4676,11 @@ function DeveloperProfile({
             <div
               style={{
                 fontSize: 12,
+
                 color: "#64748B",
+
                 marginTop: 4,
+
                 fontWeight: 500,
               }}
             >
@@ -3541,17 +4690,25 @@ function DeveloperProfile({
           <div
             style={{
               flex: 1,
+
               minWidth: 200,
+
               display: "flex",
+
               flexDirection: "column",
+
               gap: 7,
             }}
           >
             {[
               { label: "5", pct: 70, count: 16 },
+
               { label: "4", pct: 22, count: 5 },
+
               { label: "3", pct: 4, count: 1 },
+
               { label: "2", pct: 4, count: 1 },
+
               { label: "1", pct: 0, count: 0 },
             ].map((row) => (
               <div
@@ -3561,9 +4718,13 @@ function DeveloperProfile({
                 <span
                   style={{
                     fontSize: 12,
+
                     color: "#64748B",
+
                     width: 10,
+
                     textAlign: "right",
+
                     fontWeight: 600,
                   }}
                 >
@@ -3572,17 +4733,24 @@ function DeveloperProfile({
                 <div
                   style={{
                     flex: 1,
+
                     height: 8,
+
                     background: "#F1F5F9",
+
                     borderRadius: 4,
+
                     overflow: "hidden",
                   }}
                 >
                   <div
                     style={{
                       width: `${row.pct}%`,
+
                       height: "100%",
+
                       background: "#F59E0B",
+
                       borderRadius: 4,
                     }}
                   />
@@ -3590,8 +4758,11 @@ function DeveloperProfile({
                 <span
                   style={{
                     fontSize: 11,
+
                     color: "#94A3B8",
+
                     width: 14,
+
                     fontWeight: 500,
                   }}
                 >
@@ -3607,18 +4778,26 @@ function DeveloperProfile({
               key={r.id}
               style={{
                 background: "#F8FAFC",
+
                 border: "1px solid #E2E8F0",
+
                 borderRadius: 10,
+
                 padding: "14px 16px",
               }}
             >
               <div
                 style={{
                   display: "flex",
+
                   alignItems: "flex-start",
+
                   justifyContent: "space-between",
+
                   gap: 8,
+
                   marginBottom: 6,
+
                   flexWrap: "wrap",
                 }}
               >
@@ -3639,8 +4818,11 @@ function DeveloperProfile({
               <p
                 style={{
                   margin: 0,
+
                   fontSize: 13,
+
                   color: "#475569",
+
                   lineHeight: 1.55,
                 }}
               >
@@ -3654,30 +4836,39 @@ function DeveloperProfile({
       <div
         style={{
           textAlign: "center",
+
           padding: "8px 0 24px",
+
           fontSize: 12,
+
           color: "#CBD5E1",
         }}
       >
         StartupMatch · Tagum City Developer Platform · © 2025
       </div>
     </div>
-  );
+  )
 }
 
 // ─── Developer Marketplace & Bids ─────────────────────────────────────────────
 
 function MarketplaceFeed({ isMobile }: { isMobile: boolean }) {
-  const [placed, setPlaced] = useState<Record<string, boolean>>({});
+  const [placed, setPlaced] = useState<Record<string, boolean>>({})
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div
         style={{
           display: "flex",
+
           alignItems: "flex-start",
+
           justifyContent: "space-between",
+
           gap: 16,
+
           flexWrap: "wrap",
+
           marginBottom: 4,
         }}
       >
@@ -3685,9 +4876,13 @@ function MarketplaceFeed({ isMobile }: { isMobile: boolean }) {
           <h1
             style={{
               margin: "0 0 6px",
+
               fontSize: 24,
+
               fontWeight: 700,
+
               color: "#0F172A",
+
               letterSpacing: "-0.03em",
             }}
           >
@@ -3701,22 +4896,34 @@ function MarketplaceFeed({ isMobile }: { isMobile: boolean }) {
         <span
           style={{
             display: "inline-flex",
+
             alignItems: "center",
+
             gap: 6,
+
             padding: "5px 13px",
+
             borderRadius: 99,
+
             background: "#EFF6FF",
+
             border: "1px solid #BFDBFE",
+
             color: "#2563EB",
+
             fontSize: 12.5,
+
             fontWeight: 700,
           }}
         >
           <span
             style={{
               width: 7,
+
               height: 7,
+
               borderRadius: "50%",
+
               background: "#2563EB",
             }}
           />
@@ -3727,7 +4934,9 @@ function MarketplaceFeed({ isMobile }: { isMobile: boolean }) {
       <div
         style={{
           display: "grid",
+
           gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+
           gap: 16,
         }}
       >
@@ -3736,8 +4945,11 @@ function MarketplaceFeed({ isMobile }: { isMobile: boolean }) {
             key={project.id}
             style={{
               padding: 20,
+
               display: "flex",
+
               flexDirection: "column",
+
               gap: 12,
             }}
           >
@@ -3745,8 +4957,11 @@ function MarketplaceFeed({ isMobile }: { isMobile: boolean }) {
               <div
                 style={{
                   fontSize: 15,
+
                   fontWeight: 700,
+
                   color: "#0F172A",
+
                   letterSpacing: "-0.01em",
                 }}
               >
@@ -3767,24 +4982,34 @@ function MarketplaceFeed({ isMobile }: { isMobile: boolean }) {
             <div
               style={{
                 display: "flex",
+
                 gap: 18,
+
                 flexWrap: "wrap",
+
                 paddingTop: 12,
+
                 borderTop: "1px solid #F1F5F9",
               }}
             >
               {[
                 { label: "Budget", value: project.budget },
+
                 { label: "Deadline", value: project.deadline },
+
                 { label: "Phases", value: String(project.phases) },
               ].map((stat) => (
                 <div key={stat.label}>
                   <div
                     style={{
                       fontSize: 10.5,
+
                       fontWeight: 700,
+
                       color: "#94A3B8",
+
                       textTransform: "uppercase",
+
                       letterSpacing: "0.06em",
                     }}
                   >
@@ -3793,8 +5018,11 @@ function MarketplaceFeed({ isMobile }: { isMobile: boolean }) {
                   <div
                     style={{
                       fontSize: 13,
+
                       fontWeight: 600,
+
                       color: "#0F172A",
+
                       marginTop: 3,
                     }}
                   >
@@ -3805,24 +5033,38 @@ function MarketplaceFeed({ isMobile }: { isMobile: boolean }) {
             </div>
             <button
               onClick={() => {
-                placeBid(project.id);
-                setPlaced((s) => ({ ...s, [project.id]: true }));
+                placeBid(project.id)
+
+                setPlaced((s) => ({ ...s, [project.id]: true }))
               }}
               disabled={placed[project.id]}
               style={{
                 marginTop: "auto",
+
                 height: 40,
+
                 borderRadius: 8,
+
                 cursor: placed[project.id] ? "default" : "pointer",
+
                 background: placed[project.id] ? "#F0FDF4" : "#2563EB",
+
                 color: placed[project.id] ? "#16A34A" : "#fff",
+
                 border: placed[project.id] ? "1px solid #BBF7D0" : "none",
+
                 fontFamily: "Inter, sans-serif",
+
                 fontSize: 13,
+
                 fontWeight: 700,
+
                 display: "flex",
+
                 alignItems: "center",
+
                 justifyContent: "center",
+
                 gap: 6,
               }}
             >
@@ -3840,20 +5082,25 @@ function MarketplaceFeed({ isMobile }: { isMobile: boolean }) {
         ))}
       </div>
     </div>
-  );
+  )
 }
 
 function BidsView() {
-  const bids = useDevBids();
+  const bids = useDevBids()
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <div>
         <h1
           style={{
             margin: "0 0 6px",
+
             fontSize: 24,
+
             fontWeight: 700,
+
             color: "#0F172A",
+
             letterSpacing: "-0.03em",
           }}
         >
@@ -3873,7 +5120,9 @@ function BidsView() {
             <table
               style={{
                 width: "100%",
+
                 borderCollapse: "collapse",
+
                 fontSize: 13,
               }}
             >
@@ -3885,13 +5134,21 @@ function BidsView() {
                         key={h}
                         style={{
                           padding: "10px 20px",
+
                           textAlign: "left",
+
                           fontSize: 11,
+
                           fontWeight: 600,
+
                           color: "#94A3B8",
+
                           textTransform: "uppercase",
+
                           letterSpacing: "0.06em",
+
                           borderBottom: "1px solid #E2E8F0",
+
                           whiteSpace: "nowrap",
                         }}
                       >
@@ -3919,7 +5176,9 @@ function BidsView() {
                     <td
                       style={{
                         padding: "14px 20px",
+
                         fontWeight: 600,
+
                         color: "#0F172A",
                       }}
                     >
@@ -3931,8 +5190,11 @@ function BidsView() {
                     <td
                       style={{
                         padding: "14px 20px",
+
                         fontWeight: 700,
+
                         color: "#0F172A",
+
                         whiteSpace: "nowrap",
                       }}
                     >
@@ -3941,7 +5203,9 @@ function BidsView() {
                     <td
                       style={{
                         padding: "14px 20px",
+
                         color: "#64748B",
+
                         whiteSpace: "nowrap",
                       }}
                     >
@@ -3958,7 +5222,7 @@ function BidsView() {
         </Card>
       )}
     </div>
-  );
+  )
 }
 
 function DevStub({ title, message }: { title: string; message: string }) {
@@ -3968,9 +5232,13 @@ function DevStub({ title, message }: { title: string; message: string }) {
         <h1
           style={{
             margin: "0 0 6px",
+
             fontSize: 24,
+
             fontWeight: 700,
+
             color: "#0F172A",
+
             letterSpacing: "-0.03em",
           }}
         >
@@ -3982,110 +5250,171 @@ function DevStub({ title, message }: { title: string; message: string }) {
         <EmptyState message={`${title} is coming in a future iteration.`} />
       </Card>
     </div>
-  );
+  )
 }
 
 // ─── Sprint Dashboard ──────────────────────────────────────────────────────────
 
 const sprintNavItems = [
   { icon: IconDashboard, label: "Dashboard", id: "dashboard" },
+
   { icon: IconChart, label: "Sprint Dashboard", id: "sprint" },
+
   { icon: IconBids, label: "Bids", id: "bids" },
+
   { icon: IconMessages, label: "Messages", id: "messages" },
+
   { icon: IconSettings, label: "Settings", id: "settings" },
-];
+]
 
 const stakeholders = [
   {
     name: "Ernesto Dela Vega",
+
     role: "Client — Apokon Hardware",
+
     avatar: "ED",
+
     status: "active",
+
     lastSeen: "Active now",
   },
+
   {
     name: "Marco Ramirez",
+
     role: "Lead Developer",
+
     avatar: "MR",
+
     status: "active",
+
     lastSeen: "Active now",
   },
+
   {
     name: "Juanita Arceo",
+
     role: "Platform Admin",
+
     avatar: "JA",
+
     status: "away",
+
     lastSeen: "Last seen 2 hrs ago",
   },
+
   {
     name: "Tricia Anne Lim",
+
     role: "Co-developer",
+
     avatar: "TL",
+
     status: "active",
+
     lastSeen: "Active now",
   },
+
   {
     name: "Rodel Santos",
+
     role: "PSITS Chapter Advisor",
+
     avatar: "RS",
+
     status: "offline",
+
     lastSeen: "Last seen Jul 30",
   },
-];
+]
 
-const notifColor = { warning: "#D97706", success: "#16A34A", info: "#2563EB" };
-const notifBg = { warning: "#FFFBEB", success: "#F0FDF4", info: "#EFF6FF" };
-const notifBorder = { warning: "#FDE68A", success: "#BBF7D0", info: "#BFDBFE" };
-const notifIcon = { warning: "⚠️", success: "✅", info: "💬" };
+const notifColor = { warning: "#D97706", success: "#16A34A", info: "#2563EB" }
+
+const notifBg = { warning: "#FFFBEB", success: "#F0FDF4", info: "#EFF6FF" }
+
+const notifBorder = { warning: "#FDE68A", success: "#BBF7D0", info: "#BFDBFE" }
+
+const notifIcon = { warning: "⚠️", success: "✅", info: "💬" }
 
 function SprintSidebar({
   active,
+
   onNav,
+
   collapsed,
 }: {
-  active: string;
-  onNav: (id: string) => void;
-  collapsed: boolean;
+  active: string
+
+  onNav: (id: string) => void
+
+  collapsed: boolean
 }) {
-  const project = useProjectStore();
-  const profile = useDevProfile();
+  const project = useProjectStore()
+
+  const profile = useDevProfile()
+
   return (
     <aside
       style={{
         width: collapsed ? 72 : 260,
+
         minHeight: "100vh",
+
         background: "#fff",
+
         borderRight: "1px solid #E2E8F0",
+
         display: "flex",
+
         flexDirection: "column",
+
         flexShrink: 0,
+
         transition: "width 0.2s ease",
+
         position: "sticky",
+
         top: 0,
+
         height: "100vh",
+
         overflow: "hidden",
       }}
     >
       <div
         style={{
           padding: collapsed ? "20px 0" : "20px 24px",
+
           display: "flex",
+
           alignItems: "center",
+
           gap: 10,
+
           borderBottom: "1px solid #F1F5F9",
         }}
       >
         <div
           style={{
             width: 36,
+
             height: 36,
+
             borderRadius: 8,
+
             flexShrink: 0,
+
             background: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
+
             display: "flex",
+
             alignItems: "center",
+
             justifyContent: "center",
+
             marginLeft: collapsed ? "auto" : 0,
+
             marginRight: collapsed ? "auto" : 0,
           }}
         >
@@ -4104,8 +5433,11 @@ function SprintSidebar({
             <div
               style={{
                 fontWeight: 700,
+
                 fontSize: 15,
+
                 color: "#0F172A",
+
                 letterSpacing: "-0.02em",
               }}
             >
@@ -4123,19 +5455,28 @@ function SprintSidebar({
         <div
           style={{
             margin: "12px 16px 4px",
+
             padding: "10px 12px",
+
             background: "#F0F7FF",
+
             border: "1px solid #BFDBFE",
+
             borderRadius: 10,
           }}
         >
           <div
             style={{
               fontSize: 10,
+
               fontWeight: 700,
+
               color: "#2563EB",
+
               textTransform: "uppercase",
+
               letterSpacing: "0.06em",
+
               marginBottom: 3,
             }}
           >
@@ -4144,8 +5485,11 @@ function SprintSidebar({
           <div
             style={{
               fontSize: 12,
+
               fontWeight: 600,
+
               color: "#0F172A",
+
               lineHeight: 1.3,
             }}
           >
@@ -4159,47 +5503,64 @@ function SprintSidebar({
 
       <nav style={{ padding: "8px 0", flex: 1 }}>
         {sprintNavItems.map(({ icon: Icon, label, id }) => {
-          const isActive = active === id;
+          const isActive = active === id
+
           return (
             <button
               key={id}
               onClick={() => onNav(id)}
               style={{
                 width: "100%",
+
                 display: "flex",
+
                 alignItems: "center",
+
                 gap: 12,
+
                 padding: collapsed ? "10px 0" : "10px 20px",
+
                 justifyContent: collapsed ? "center" : "flex-start",
+
                 border: "none",
+
                 background: isActive ? "#EFF6FF" : "transparent",
+
                 color: isActive ? "#2563EB" : "#475569",
+
                 borderLeft: isActive
                   ? "3px solid #2563EB"
                   : "3px solid transparent",
+
                 cursor: "pointer",
+
                 fontFamily: "Inter, sans-serif",
+
                 fontSize: 13.5,
+
                 fontWeight: isActive ? 600 : 500,
+
                 transition: "all 0.12s ease",
+
                 borderRadius: collapsed ? 0 : "0 8px 8px 0",
+
                 marginRight: collapsed ? 0 : 12,
               }}
               onMouseEnter={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "#F8FAFC";
+                    "#F8FAFC"
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "transparent";
+                    "transparent"
               }}
             >
               <Icon size={19} />
               {!collapsed && label}
             </button>
-          );
+          )
         })}
       </nav>
 
@@ -4209,15 +5570,25 @@ function SprintSidebar({
             <div
               style={{
                 width: 32,
+
                 height: 32,
+
                 borderRadius: "50%",
+
                 flexShrink: 0,
+
                 background: `linear-gradient(135deg, ${profile.avatarColors[0]}, ${profile.avatarColors[0]})`,
+
                 display: "flex",
+
                 alignItems: "center",
+
                 justifyContent: "center",
+
                 fontSize: 11,
+
                 fontWeight: 700,
+
                 color: profile.avatarColors[1],
               }}
             >
@@ -4230,19 +5601,28 @@ function SprintSidebar({
               <div
                 style={{
                   fontSize: 11,
+
                   color: "#16A34A",
+
                   fontWeight: 600,
+
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 4,
                 }}
               >
                 <span
                   style={{
                     width: 6,
+
                     height: 6,
+
                     borderRadius: "50%",
+
                     background: "#16A34A",
+
                     display: "inline-block",
                   }}
                 />
@@ -4253,113 +5633,164 @@ function SprintSidebar({
         </div>
       )}
     </aside>
-  );
+  )
 }
 
 function SprintDashboard({
   isMobile,
+
   isTablet,
 }: {
-  isMobile: boolean;
-  isTablet: boolean;
+  isMobile: boolean
+
+  isTablet: boolean
 }) {
-  const project = useProjectStore();
-  const profile = useDevProfile();
-  const [expandedPhase, setExpandedPhase] = useState<number | null>(2);
-  const [taskInput, setTaskInput] = useState<Record<number, string>>({});
-  const [commentInput, setCommentInput] = useState<Record<number, string>>({});
-  const stacked = isMobile || isTablet;
+  const project = useProjectStore()
 
-  const phases = project.phases;
-  const completedPhases = phases.filter((p) => p.status === "completed").length;
-  const pct = Math.round((completedPhases / project.totalPhases) * 100);
+  const profile = useDevProfile()
 
-  const phaseStatusCfg: Record<
-    SprintPhaseStatus,
-    { bg: string; color: string; border: string; label: string }
-  > = {
+  const [expandedPhase, setExpandedPhase] = useState<number | null>(2)
+
+  const [taskInput, setTaskInput] = useState<Record<number, string>>({})
+
+  const [commentInput, setCommentInput] = useState<Record<number, string>>({})
+
+  const stacked = isMobile || isTablet
+
+  const phases = project.phases
+
+  const completedPhases = phases.filter((p) => p.status === "completed").length
+
+  const pct = Math.round((completedPhases / project.totalPhases) * 100)
+
+  const phaseStatusCfg: Record<SprintPhaseStatus, {
+    bg: string
+    color: string
+    border: string
+    label: string
+  }> = {
     completed: {
       bg: "#F0FDF4",
+
       color: "#16A34A",
+
       border: "#BBF7D0",
+
       label: "Completed",
     },
+
     active: {
       bg: "#EFF6FF",
+
       color: "#2563EB",
+
       border: "#BFDBFE",
+
       label: "Active Sprint",
     },
+
     in_review: {
       bg: "#EFF6FF",
+
       color: "#2563EB",
+
       border: "#93C5FD",
+
       label: "Under Review",
     },
+
     disputed: {
       bg: "#FEF2F2",
+
       color: "#DC2626",
+
       border: "#FECACA",
+
       label: "Needs Revision",
     },
+
     revision: {
       bg: "#FEF2F2",
+
       color: "#DC2626",
+
       border: "#FECACA",
+
       label: "Needs Revision",
     },
+
     upcoming: {
       bg: "#F8FAFC",
+
       color: "#94A3B8",
+
       border: "#E2E8F0",
+
       label: "Upcoming",
     },
-  };
+  }
 
   const velocity = {
     completed: phases.filter((p) => p.status === "completed").length,
+
     inReview: phases.filter(
       (p) => p.status === "in_review" || p.status === "revision",
     ).length,
+
     onTrack: phases.filter((p) => p.status === "active").length,
+
     atRisk: phases.filter((p) => p.status === "disputed").length,
-  };
+  }
 
   const dueLabel = (daysLeft: number, status: SprintPhaseStatus) => {
-    if (status === "completed") return "✅ Delivered";
-    if (daysLeft < 0) return `Overdue by ${Math.abs(daysLeft)}d`;
-    return `Due in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`;
-  };
+    if (status === "completed") return "✅ Delivered"
+
+    if (daysLeft < 0) return `Overdue by ${Math.abs(daysLeft)}d`
+
+    return `Due in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`
+  }
 
   const postComment = (number: number) => {
-    const text = (commentInput[number] ?? "").trim();
-    if (!text) return;
-    addComment(number, text, "developer");
-    setCommentInput((s) => ({ ...s, [number]: "" }));
-  };
+    const text = (commentInput[number] ?? "").trim()
+
+    if (!text) return
+
+    addComment(number, text, "developer")
+
+    setCommentInput((s) => ({ ...s, [number]: "" }))
+  }
 
   const addPhaseTask = (number: number) => {
-    const label = (taskInput[number] ?? "").trim();
-    if (!label) return;
-    addTask(number, label);
-    setTaskInput((s) => ({ ...s, [number]: "" }));
-  };
+    const label = (taskInput[number] ?? "").trim()
+
+    if (!label) return
+
+    addTask(number, label)
+
+    setTaskInput((s) => ({ ...s, [number]: "" }))
+  }
 
   const burndownData = phases.map((p) => {
-    const done = p.tasks.filter((t) => t.done).length;
-    return { name: `S${p.number}`, done, remaining: p.tasks.length - done };
-  });
+    const done = p.tasks.filter((t) => t.done).length
 
-  const paidPhases = phases.filter((p) => p.status === "completed");
-  const paidPct = Math.round((project.paidToDate / project.totalBudget) * 100);
-  const unreadNotifs = project.notifications.filter((n) => !n.read);
+    return { name: `S${p.number}`, done, remaining: p.tasks.length - done }
+  })
+
+  const paidPhases = phases.filter((p) => p.status === "completed")
+
+  const paidPct = Math.round((project.paidToDate / project.totalBudget) * 100)
+
+  const unreadNotifs = project.notifications.filter((n) => !n.read)
 
   return (
     <div
       style={{
         display: "flex",
+
         flexDirection: stacked ? "column" : "row",
+
         gap: 20,
+
         alignItems: "flex-start",
       }}
     >
@@ -4367,9 +5798,13 @@ function SprintDashboard({
       <div
         style={{
           flex: stacked ? "unset" : "0 0 calc(66.67% - 10px)",
+
           width: stacked ? "100%" : undefined,
+
           display: "flex",
+
           flexDirection: "column",
+
           gap: 20,
         }}
       >
@@ -4379,10 +5814,15 @@ function SprintDashboard({
           <div
             style={{
               display: "flex",
+
               alignItems: "flex-start",
+
               justifyContent: "space-between",
+
               gap: 12,
+
               flexWrap: "wrap",
+
               marginBottom: 20,
             }}
           >
@@ -4390,18 +5830,26 @@ function SprintDashboard({
               <div
                 style={{
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 10,
+
                   flexWrap: "wrap",
+
                   marginBottom: 5,
                 }}
               >
                 <h2
                   style={{
                     margin: 0,
+
                     fontSize: 20,
+
                     fontWeight: 700,
+
                     color: "#0F172A",
+
                     letterSpacing: "-0.02em",
                   }}
                 >
@@ -4411,23 +5859,36 @@ function SprintDashboard({
                 <span
                   style={{
                     display: "inline-flex",
+
                     alignItems: "center",
+
                     gap: 5,
+
                     padding: "3px 11px",
+
                     borderRadius: 99,
+
                     background: "#EFF6FF",
+
                     border: "1px solid #BFDBFE",
+
                     color: "#2563EB",
+
                     fontSize: 11.5,
+
                     fontWeight: 700,
                   }}
                 >
                   <span
                     style={{
                       width: 6,
+
                       height: 6,
+
                       borderRadius: "50%",
+
                       background: "#2563EB",
+
                       animation: "none",
                     }}
                   />
@@ -4437,9 +5898,13 @@ function SprintDashboard({
               <div
                 style={{
                   fontSize: 13.5,
+
                   color: "#64748B",
+
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 6,
                 }}
               >
@@ -4466,6 +5931,7 @@ function SprintDashboard({
                   <span
                     style={{
                       fontWeight: 600,
+
                       color: project.daysLeft < 7 ? "#DC2626" : "#334155",
                     }}
                   >
@@ -4479,17 +5945,24 @@ function SprintDashboard({
               <div
                 style={{
                   textAlign: "center",
+
                   padding: "8px 16px",
+
                   background: "#F8FAFC",
+
                   border: "1px solid #E2E8F0",
+
                   borderRadius: 10,
                 }}
               >
                 <div
                   style={{
                     fontSize: 20,
+
                     fontWeight: 800,
+
                     color: "#0F172A",
+
                     letterSpacing: "-0.03em",
                   }}
                 >
@@ -4504,17 +5977,26 @@ function SprintDashboard({
               <div
                 style={{
                   textAlign: "center",
+
                   padding: "8px 16px",
+
                   background: project.daysLeft < 7 ? "#FEF2F2" : "#F8FAFC",
-                  border: `1px solid ${project.daysLeft < 7 ? "#FECACA" : "#E2E8F0"}`,
+
+                  border: `1px solid ${
+                    project.daysLeft < 7 ? "#FECACA" : "#E2E8F0"
+                  }`,
+
                   borderRadius: 10,
                 }}
               >
                 <div
                   style={{
                     fontSize: 20,
+
                     fontWeight: 800,
+
                     color: project.daysLeft < 7 ? "#DC2626" : "#0F172A",
+
                     letterSpacing: "-0.03em",
                   }}
                 >
@@ -4534,8 +6016,11 @@ function SprintDashboard({
             <div
               style={{
                 display: "flex",
+
                 justifyContent: "space-between",
+
                 alignItems: "center",
+
                 marginBottom: 8,
               }}
             >
@@ -4545,8 +6030,11 @@ function SprintDashboard({
               <span
                 style={{
                   fontSize: 14,
+
                   fontWeight: 800,
+
                   color: "#2563EB",
+
                   letterSpacing: "-0.02em",
                 }}
               >
@@ -4556,19 +6044,27 @@ function SprintDashboard({
             <div
               style={{
                 height: 10,
+
                 background: "#F1F5F9",
+
                 borderRadius: 99,
+
                 overflow: "hidden",
+
                 position: "relative",
               }}
             >
               <div
                 style={{
                   width: `${pct}%`,
+
                   height: "100%",
+
                   background:
                     "linear-gradient(90deg, #2563EB 0%, #3B82F6 100%)",
+
                   borderRadius: 99,
+
                   transition: "width 0.6s ease",
                 }}
               />
@@ -4577,7 +6073,9 @@ function SprintDashboard({
             <div
               style={{
                 display: "flex",
+
                 justifyContent: "space-between",
+
                 marginTop: 6,
               }}
             >
@@ -4586,7 +6084,9 @@ function SprintDashboard({
                   key={p.number}
                   style={{
                     fontSize: 10.5,
+
                     fontWeight: 600,
+
                     color: p.status === "completed" ? "#2563EB" : "#CBD5E1",
                   }}
                 >
@@ -4602,18 +6102,26 @@ function SprintDashboard({
           <div
             style={{
               padding: "18px 24px 14px",
+
               borderBottom: "1px solid #F1F5F9",
+
               display: "flex",
+
               alignItems: "center",
+
               justifyContent: "space-between",
             }}
           >
             <h2
               style={{
                 margin: 0,
+
                 fontSize: 16,
+
                 fontWeight: 700,
+
                 color: "#0F172A",
+
                 letterSpacing: "-0.02em",
               }}
             >
@@ -4626,16 +6134,24 @@ function SprintDashboard({
 
           <div>
             {phases.map((phase, idx) => {
-              const cfg = phaseStatusCfg[phase.status];
-              const isExpanded = expandedPhase === phase.number;
-              const isActive = phase.status === "active";
-              const isCompleted = phase.status === "completed";
+              const cfg = phaseStatusCfg[phase.status]
+
+              const isExpanded = expandedPhase === phase.number
+
+              const isActive = phase.status === "active"
+
+              const isCompleted = phase.status === "completed"
+
               const isRevision =
-                phase.status === "disputed" || phase.status === "revision";
-              const isInReview = phase.status === "in_review";
-              const isLast = idx === phases.length - 1;
-              const doneCount = phase.tasks.filter((t) => t.done).length;
-              const hasRepo = phase.dev.repoLink.trim().length > 0;
+                phase.status === "disputed" || phase.status === "revision"
+
+              const isInReview = phase.status === "in_review"
+
+              const isLast = idx === phases.length - 1
+
+              const doneCount = phase.tasks.filter((t) => t.done).length
+
+              const hasRepo = phase.dev.repoLink.trim().length > 0
 
               return (
                 <div
@@ -4651,37 +6167,49 @@ function SprintDashboard({
                     }
                     style={{
                       width: "100%",
+
                       display: "flex",
+
                       alignItems: "center",
+
                       gap: 14,
+
                       padding: "16px 24px",
+
                       background: isExpanded ? "#FAFCFF" : "transparent",
+
                       border: "none",
+
                       cursor: "pointer",
+
                       textAlign: "left",
+
                       transition: "background 0.12s",
+
                       fontFamily: "Inter, sans-serif",
                     }}
                     onMouseEnter={(e) => {
                       if (!isExpanded)
-                        (
-                          e.currentTarget as HTMLButtonElement
-                        ).style.background = "#FAFCFF";
+                        (e.currentTarget as HTMLButtonElement).style.background =
+                          "#FAFCFF"
                     }}
                     onMouseLeave={(e) => {
                       if (!isExpanded)
-                        (
-                          e.currentTarget as HTMLButtonElement
-                        ).style.background = "transparent";
+                        (e.currentTarget as HTMLButtonElement).style.background =
+                          "transparent"
                     }}
                   >
                     {/* Phase number circle */}
                     <div
                       style={{
                         width: 36,
+
                         height: 36,
+
                         borderRadius: "50%",
+
                         flexShrink: 0,
+
                         background: isCompleted
                           ? "#F0FDF4"
                           : isActive || isInReview
@@ -4689,10 +6217,23 @@ function SprintDashboard({
                             : isRevision
                               ? "#FEF2F2"
                               : "#F8FAFC",
-                        border: `1.5px solid ${isCompleted ? "#BBF7D0" : isActive || isInReview ? "#BFDBFE" : isRevision ? "#FECACA" : "#E2E8F0"}`,
+
+                        border: `1.5px solid ${
+                          isCompleted
+                            ? "#BBF7D0"
+                            : isActive || isInReview
+                              ? "#BFDBFE"
+                              : isRevision
+                                ? "#FECACA"
+                                : "#E2E8F0"
+                        }`,
+
                         display: "flex",
+
                         alignItems: "center",
+
                         justifyContent: "center",
+
                         color: isCompleted
                           ? "#16A34A"
                           : isActive || isInReview
@@ -4717,15 +6258,20 @@ function SprintDashboard({
                       <div
                         style={{
                           display: "flex",
+
                           alignItems: "center",
+
                           gap: 8,
+
                           flexWrap: "wrap",
                         }}
                       >
                         <span
                           style={{
                             fontSize: 14,
+
                             fontWeight: 600,
+
                             color:
                               phase.status === "upcoming"
                                 ? "#94A3B8"
@@ -4737,14 +6283,23 @@ function SprintDashboard({
                         <span
                           style={{
                             display: "inline-flex",
+
                             alignItems: "center",
+
                             gap: 4,
+
                             padding: "2px 8px",
+
                             borderRadius: 99,
+
                             background: cfg.bg,
+
                             border: `1px solid ${cfg.border}`,
+
                             color: cfg.color,
+
                             fontSize: 11,
+
                             fontWeight: 700,
                           }}
                         >
@@ -4754,11 +6309,17 @@ function SprintDashboard({
                           <span
                             style={{
                               fontSize: 11,
+
                               fontWeight: 700,
+
                               color: "#DC2626",
+
                               background: "#FEF2F2",
+
                               border: "1px solid #FECACA",
+
                               padding: "2px 8px",
+
                               borderRadius: 99,
                             }}
                           >
@@ -4769,11 +6330,17 @@ function SprintDashboard({
                           <span
                             style={{
                               fontSize: 11,
+
                               fontWeight: 700,
+
                               color: "#D97706",
+
                               background: "#FFFBEB",
+
                               border: "1px solid #FDE68A",
+
                               padding: "2px 8px",
+
                               borderRadius: 99,
                             }}
                           >
@@ -4784,11 +6351,17 @@ function SprintDashboard({
                           <span
                             style={{
                               fontSize: 11,
+
                               fontWeight: 600,
+
                               color: "#64748B",
+
                               background: "#F8FAFC",
+
                               border: "1px solid #E2E8F0",
+
                               padding: "2px 8px",
+
                               borderRadius: 99,
                             }}
                           >
@@ -4815,15 +6388,20 @@ function SprintDashboard({
                     <div
                       style={{
                         padding: "0 24px 24px",
+
                         borderTop: "1px solid #F1F5F9",
+
                         background: "#FAFCFF",
                       }}
                     >
                       <div
                         style={{
                           paddingTop: 20,
+
                           display: "flex",
+
                           flexDirection: "column",
+
                           gap: 16,
                         }}
                       >
@@ -4832,10 +6410,15 @@ function SprintDashboard({
                           <div
                             style={{
                               fontSize: 11,
+
                               fontWeight: 700,
+
                               color: "#94A3B8",
+
                               textTransform: "uppercase",
+
                               letterSpacing: "0.07em",
+
                               marginBottom: 6,
                             }}
                           >
@@ -4844,12 +6427,19 @@ function SprintDashboard({
                           <p
                             style={{
                               margin: 0,
+
                               fontSize: 13.5,
+
                               color: "#334155",
+
                               lineHeight: 1.6,
+
                               background: "#fff",
+
                               border: "1px solid #E2E8F0",
+
                               borderRadius: 8,
+
                               padding: "12px 14px",
                             }}
                           >
@@ -4864,20 +6454,30 @@ function SprintDashboard({
                           <div
                             style={{
                               flex: 1,
+
                               minWidth: 160,
+
                               background: "#fff",
+
                               border: "1px solid #E2E8F0",
+
                               borderRadius: 8,
+
                               padding: "12px 14px",
                             }}
                           >
                             <div
                               style={{
                                 fontSize: 11,
+
                                 fontWeight: 700,
+
                                 color: "#94A3B8",
+
                                 textTransform: "uppercase",
+
                                 letterSpacing: "0.06em",
+
                                 marginBottom: 4,
                               }}
                             >
@@ -4886,7 +6486,9 @@ function SprintDashboard({
                             <div
                               style={{
                                 fontSize: 14,
+
                                 fontWeight: 700,
+
                                 color: "#0F172A",
                               }}
                             >
@@ -4896,24 +6498,39 @@ function SprintDashboard({
                           <div
                             style={{
                               flex: 1,
+
                               minWidth: 160,
+
                               borderRadius: 8,
+
                               padding: "12px 14px",
+
                               background:
                                 (isActive || isInReview || isRevision) &&
                                 phase.dev.daysLeft <= 3
                                   ? "#FEF2F2"
                                   : "#fff",
-                              border: `1px solid ${(isActive || isInReview || isRevision) && phase.dev.daysLeft <= 3 ? "#FECACA" : "#E2E8F0"}`,
+
+                              border: `1px solid ${
+                                (isActive || isInReview || isRevision) &&
+                                phase.dev.daysLeft <= 3
+                                  ? "#FECACA"
+                                  : "#E2E8F0"
+                              }`,
                             }}
                           >
                             <div
                               style={{
                                 fontSize: 11,
+
                                 fontWeight: 700,
+
                                 color: "#94A3B8",
+
                                 textTransform: "uppercase",
+
                                 letterSpacing: "0.06em",
+
                                 marginBottom: 4,
                               }}
                             >
@@ -4922,7 +6539,9 @@ function SprintDashboard({
                             <div
                               style={{
                                 fontSize: 14,
+
                                 fontWeight: 700,
+
                                 color:
                                   (isActive || isInReview || isRevision) &&
                                   phase.dev.daysLeft <= 3
@@ -4940,11 +6559,17 @@ function SprintDashboard({
                           <div
                             style={{
                               display: "flex",
+
                               gap: 10,
+
                               alignItems: "flex-start",
+
                               padding: "12px 14px",
+
                               background: "#FFFBEB",
+
                               border: "1.5px solid #FDE68A",
+
                               borderRadius: 10,
                             }}
                           >
@@ -4955,8 +6580,11 @@ function SprintDashboard({
                               <div
                                 style={{
                                   fontSize: 13,
+
                                   fontWeight: 700,
+
                                   color: "#B45309",
+
                                   marginBottom: 3,
                                 }}
                               >
@@ -4965,8 +6593,11 @@ function SprintDashboard({
                               <p
                                 style={{
                                   margin: 0,
+
                                   fontSize: 12.5,
+
                                   color: "#92400E",
+
                                   lineHeight: 1.55,
                                 }}
                               >
@@ -4982,10 +6613,15 @@ function SprintDashboard({
                           <div
                             style={{
                               fontSize: 11,
+
                               fontWeight: 700,
+
                               color: "#94A3B8",
+
                               textTransform: "uppercase",
+
                               letterSpacing: "0.07em",
+
                               marginBottom: 6,
                             }}
                           >
@@ -4994,7 +6630,9 @@ function SprintDashboard({
                           <div
                             style={{
                               display: "flex",
+
                               gap: 8,
+
                               alignItems: "center",
                             }}
                           >
@@ -5002,10 +6640,15 @@ function SprintDashboard({
                               <span
                                 style={{
                                   position: "absolute",
+
                                   left: 11,
+
                                   top: "50%",
+
                                   transform: "translateY(-50%)",
+
                                   color: "#94A3B8",
+
                                   lineHeight: 0,
                                 }}
                               >
@@ -5021,23 +6664,32 @@ function SprintDashboard({
                                 }
                                 style={{
                                   width: "100%",
+
                                   padding: "9px 12px 9px 34px",
+
                                   border: "1px solid #E2E8F0",
+
                                   borderRadius: 8,
+
                                   fontFamily: "monospace",
+
                                   fontSize: 12.5,
+
                                   color: "#334155",
+
                                   outline: "none",
+
                                   background: isCompleted ? "#F8FAFC" : "#fff",
+
                                   boxSizing: "border-box",
                                 }}
                                 onFocus={(e) => {
                                   if (!isCompleted && !isInReview)
                                     e.currentTarget.style.borderColor =
-                                      "#2563EB";
+                                      "#2563EB"
                                 }}
                                 onBlur={(e) => {
-                                  e.currentTarget.style.borderColor = "#E2E8F0";
+                                  e.currentTarget.style.borderColor = "#E2E8F0"
                                 }}
                               />
                             </div>
@@ -5049,16 +6701,27 @@ function SprintDashboard({
                                   rel="noreferrer"
                                   style={{
                                     display: "flex",
+
                                     alignItems: "center",
+
                                     gap: 4,
+
                                     padding: "9px 12px",
+
                                     background: "#F8FAFC",
+
                                     border: "1px solid #E2E8F0",
+
                                     borderRadius: 8,
+
                                     color: "#2563EB",
+
                                     fontSize: 12,
+
                                     fontWeight: 600,
+
                                     textDecoration: "none",
+
                                     whiteSpace: "nowrap",
                                   }}
                                 >
@@ -5074,10 +6737,15 @@ function SprintDashboard({
                             <div
                               style={{
                                 fontSize: 11,
+
                                 fontWeight: 700,
+
                                 color: "#94A3B8",
+
                                 textTransform: "uppercase",
+
                                 letterSpacing: "0.07em",
+
                                 marginBottom: 6,
                               }}
                             >
@@ -5090,18 +6758,27 @@ function SprintDashboard({
                               onChange={(e) =>
                                 updatePrototypeLink(
                                   phase.number,
+
                                   e.target.value,
                                 )
                               }
                               style={{
                                 width: "100%",
+
                                 padding: "9px 12px",
+
                                 boxSizing: "border-box",
+
                                 border: "1px solid #E2E8F0",
+
                                 borderRadius: 8,
+
                                 fontFamily: "monospace",
+
                                 fontSize: 12.5,
+
                                 color: "#334155",
+
                                 outline: "none",
                               }}
                               onFocus={(e) =>
@@ -5120,10 +6797,15 @@ function SprintDashboard({
                             <div
                               style={{
                                 fontSize: 11,
+
                                 fontWeight: 700,
+
                                 color: "#94A3B8",
+
                                 textTransform: "uppercase",
+
                                 letterSpacing: "0.07em",
+
                                 marginBottom: 6,
                               }}
                             >
@@ -5138,25 +6820,37 @@ function SprintDashboard({
                               }
                               style={{
                                 width: "100%",
+
                                 minHeight: 96,
+
                                 padding: "10px 12px",
+
                                 border: "1px solid #E2E8F0",
+
                                 borderRadius: 8,
+
                                 fontFamily: "Inter, sans-serif",
+
                                 fontSize: 13,
+
                                 color: "#334155",
+
                                 resize: "vertical",
+
                                 outline: "none",
+
                                 background: isInReview ? "#F8FAFC" : "#fff",
+
                                 boxSizing: "border-box",
+
                                 lineHeight: 1.55,
                               }}
                               onFocus={(e) => {
                                 if (!isInReview)
-                                  e.currentTarget.style.borderColor = "#2563EB";
+                                  e.currentTarget.style.borderColor = "#2563EB"
                               }}
                               onBlur={(e) => {
-                                e.currentTarget.style.borderColor = "#E2E8F0";
+                                e.currentTarget.style.borderColor = "#E2E8F0"
                               }}
                             />
                           </div>
@@ -5168,10 +6862,15 @@ function SprintDashboard({
                             <div
                               style={{
                                 fontSize: 11,
+
                                 fontWeight: 700,
+
                                 color: "#94A3B8",
+
                                 textTransform: "uppercase",
+
                                 letterSpacing: "0.07em",
+
                                 marginBottom: 6,
                               }}
                             >
@@ -5180,12 +6879,19 @@ function SprintDashboard({
                             <p
                               style={{
                                 margin: 0,
+
                                 fontSize: 13,
+
                                 color: "#475569",
+
                                 lineHeight: 1.6,
+
                                 background: "#fff",
+
                                 border: "1px solid #E2E8F0",
+
                                 borderRadius: 8,
+
                                 padding: "12px 14px",
                               }}
                             >
@@ -5195,8 +6901,11 @@ function SprintDashboard({
                               <div
                                 style={{
                                   marginTop: 8,
+
                                   fontSize: 12,
+
                                   color: "#16A34A",
+
                                   fontWeight: 700,
                                 }}
                               >
@@ -5215,17 +6924,24 @@ function SprintDashboard({
                             <div
                               style={{
                                 display: "flex",
+
                                 alignItems: "center",
+
                                 justifyContent: "space-between",
+
                                 marginBottom: 8,
                               }}
                             >
                               <span
                                 style={{
                                   fontSize: 11,
+
                                   fontWeight: 700,
+
                                   color: "#94A3B8",
+
                                   textTransform: "uppercase",
+
                                   letterSpacing: "0.07em",
                                 }}
                               >
@@ -5234,7 +6950,9 @@ function SprintDashboard({
                               <span
                                 style={{
                                   fontSize: 11.5,
+
                                   fontWeight: 700,
+
                                   color: "#2563EB",
                                 }}
                               >
@@ -5244,7 +6962,9 @@ function SprintDashboard({
                             <div
                               style={{
                                 display: "flex",
+
                                 flexDirection: "column",
+
                                 gap: 6,
                               }}
                             >
@@ -5257,45 +6977,60 @@ function SprintDashboard({
                                   disabled={isCompleted}
                                   style={{
                                     display: "flex",
+
                                     alignItems: "center",
+
                                     gap: 10,
+
                                     padding: "8px 12px",
+
                                     border: "1px solid #E2E8F0",
+
                                     borderRadius: 8,
+
                                     background: t.done ? "#F0FDF4" : "#fff",
+
                                     cursor: isCompleted ? "default" : "pointer",
+
                                     textAlign: "left",
+
                                     fontFamily: "Inter, sans-serif",
+
                                     transition: "background 0.1s",
                                   }}
                                   onMouseEnter={(e) => {
                                     if (!isCompleted)
-                                      (
-                                        e.currentTarget as HTMLButtonElement
-                                      ).style.background = t.done
-                                        ? "#F0FDF4"
-                                        : "#F8FAFC";
+                                      (e.currentTarget as HTMLButtonElement).style.background =
+                                        t.done ? "#F0FDF4" : "#F8FAFC"
                                   }}
                                   onMouseLeave={(e) => {
                                     if (!isCompleted)
-                                      (
-                                        e.currentTarget as HTMLButtonElement
-                                      ).style.background = t.done
-                                        ? "#F0FDF4"
-                                        : "#fff";
+                                      (e.currentTarget as HTMLButtonElement).style.background =
+                                        t.done ? "#F0FDF4" : "#fff"
                                   }}
                                 >
                                   <span
                                     style={{
                                       width: 16,
+
                                       height: 16,
+
                                       borderRadius: 4,
+
                                       flexShrink: 0,
+
                                       background: t.done ? "#16A34A" : "#fff",
-                                      border: `1.5px solid ${t.done ? "#16A34A" : "#CBD5E1"}`,
+
+                                      border: `1.5px solid ${
+                                        t.done ? "#16A34A" : "#CBD5E1"
+                                      }`,
+
                                       display: "flex",
+
                                       alignItems: "center",
+
                                       justifyContent: "center",
+
                                       color: "#fff",
                                     }}
                                   >
@@ -5304,8 +7039,11 @@ function SprintDashboard({
                                   <span
                                     style={{
                                       fontSize: 13,
+
                                       color: t.done ? "#16A34A" : "#334155",
+
                                       fontWeight: t.done ? 600 : 500,
+
                                       textDecoration: t.done
                                         ? "line-through"
                                         : "none",
@@ -5320,7 +7058,9 @@ function SprintDashboard({
                               <div
                                 style={{
                                   display: "flex",
+
                                   gap: 8,
+
                                   marginTop: 8,
                                 }}
                               >
@@ -5329,23 +7069,31 @@ function SprintDashboard({
                                   onChange={(e) =>
                                     setTaskInput((s) => ({
                                       ...s,
+
                                       [phase.number]: e.target.value,
                                     }))
                                   }
                                   onKeyDown={(e) => {
                                     if (e.key === "Enter") {
-                                      e.preventDefault();
-                                      addPhaseTask(phase.number);
+                                      e.preventDefault()
+
+                                      addPhaseTask(phase.number)
                                     }
                                   }}
                                   placeholder="Add a task…"
                                   style={{
                                     flex: 1,
+
                                     padding: "8px 12px",
+
                                     border: "1px solid #E2E8F0",
+
                                     borderRadius: 8,
+
                                     fontFamily: "Inter, sans-serif",
+
                                     fontSize: 12.5,
+
                                     outline: "none",
                                   }}
                                   onFocus={(e) =>
@@ -5361,13 +7109,21 @@ function SprintDashboard({
                                   onClick={() => addPhaseTask(phase.number)}
                                   style={{
                                     padding: "8px 14px",
+
                                     borderRadius: 8,
+
                                     border: "none",
+
                                     background: "#EFF6FF",
+
                                     color: "#2563EB",
+
                                     fontSize: 12.5,
+
                                     fontWeight: 700,
+
                                     cursor: "pointer",
+
                                     fontFamily: "Inter, sans-serif",
                                   }}
                                 >
@@ -5384,10 +7140,15 @@ function SprintDashboard({
                             <div
                               style={{
                                 fontSize: 11,
+
                                 fontWeight: 700,
+
                                 color: "#94A3B8",
+
                                 textTransform: "uppercase",
+
                                 letterSpacing: "0.07em",
+
                                 marginBottom: 8,
                               }}
                             >
@@ -5397,7 +7158,9 @@ function SprintDashboard({
                               <p
                                 style={{
                                   margin: "0 0 8px",
+
                                   fontSize: 12.5,
+
                                   color: "#94A3B8",
                                 }}
                               >
@@ -5407,7 +7170,9 @@ function SprintDashboard({
                             <div
                               style={{
                                 display: "flex",
+
                                 flexDirection: "column",
+
                                 gap: 8,
                               }}
                             >
@@ -5416,23 +7181,36 @@ function SprintDashboard({
                                   key={c.id}
                                   style={{
                                     display: "flex",
+
                                     gap: 8,
+
                                     alignItems: "flex-start",
                                   }}
                                 >
                                   <div
                                     style={{
                                       width: 26,
+
                                       height: 26,
+
                                       borderRadius: "50%",
+
                                       flexShrink: 0,
+
                                       background: `linear-gradient(135deg, ${c.avatarBg[0]}, ${c.avatarBg[0]})`,
+
                                       border: `1.5px solid ${c.avatarBg[1]}30`,
+
                                       display: "flex",
+
                                       alignItems: "center",
+
                                       justifyContent: "center",
+
                                       fontSize: 9,
+
                                       fontWeight: 700,
+
                                       color: c.avatarBg[1],
                                     }}
                                   >
@@ -5442,14 +7220,18 @@ function SprintDashboard({
                                     <div
                                       style={{
                                         display: "flex",
+
                                         alignItems: "baseline",
+
                                         gap: 6,
                                       }}
                                     >
                                       <span
                                         style={{
                                           fontSize: 12,
+
                                           fontWeight: 700,
+
                                           color: "#334155",
                                         }}
                                       >
@@ -5458,6 +7240,7 @@ function SprintDashboard({
                                       <span
                                         style={{
                                           fontSize: 10.5,
+
                                           color: "#94A3B8",
                                         }}
                                       >
@@ -5467,12 +7250,19 @@ function SprintDashboard({
                                     <div
                                       style={{
                                         marginTop: 2,
+
                                         padding: "8px 11px",
+
                                         borderRadius: "4px 12px 12px 12px",
+
                                         background: "#F8FAFC",
+
                                         border: "1px solid #E2E8F0",
+
                                         fontSize: 12.5,
+
                                         color: "#334155",
+
                                         lineHeight: 1.5,
                                       }}
                                     >
@@ -5486,7 +7276,9 @@ function SprintDashboard({
                               <div
                                 style={{
                                   display: "flex",
+
                                   gap: 8,
+
                                   marginTop: 10,
                                 }}
                               >
@@ -5495,23 +7287,31 @@ function SprintDashboard({
                                   onChange={(e) =>
                                     setCommentInput((s) => ({
                                       ...s,
+
                                       [phase.number]: e.target.value,
                                     }))
                                   }
                                   onKeyDown={(e) => {
                                     if (e.key === "Enter") {
-                                      e.preventDefault();
-                                      postComment(phase.number);
+                                      e.preventDefault()
+
+                                      postComment(phase.number)
                                     }
                                   }}
                                   placeholder={`Comment as ${profile.name}…`}
                                   style={{
                                     flex: 1,
+
                                     padding: "9px 12px",
+
                                     border: "1.5px solid #E2E8F0",
+
                                     borderRadius: 8,
+
                                     fontFamily: "Inter, sans-serif",
+
                                     fontSize: 12.5,
+
                                     outline: "none",
                                   }}
                                   onFocus={(e) =>
@@ -5527,21 +7327,31 @@ function SprintDashboard({
                                   onClick={() => postComment(phase.number)}
                                   style={{
                                     padding: "9px 16px",
+
                                     borderRadius: 8,
+
                                     border: "none",
+
                                     background: (
                                       commentInput[phase.number] ?? ""
-                                    ).trim()
+                                    )
+
+                                      .trim()
                                       ? "#2563EB"
                                       : "#F1F5F9",
-                                    color: (
-                                      commentInput[phase.number] ?? ""
-                                    ).trim()
+
+                                    color: (commentInput[phase.number] ?? "")
+
+                                      .trim()
                                       ? "#fff"
                                       : "#94A3B8",
+
                                     fontSize: 12.5,
+
                                     fontWeight: 700,
+
                                     cursor: "pointer",
+
                                     fontFamily: "Inter, sans-serif",
                                   }}
                                 >
@@ -5557,8 +7367,11 @@ function SprintDashboard({
                           <div
                             style={{
                               display: "flex",
+
                               flexDirection: "column",
+
                               gap: 8,
+
                               paddingTop: 4,
                             }}
                           >
@@ -5566,7 +7379,9 @@ function SprintDashboard({
                               <p
                                 style={{
                                   margin: 0,
+
                                   fontSize: 12,
+
                                   color: "#D97706",
                                 }}
                               >
@@ -5577,6 +7392,7 @@ function SprintDashboard({
                             <div
                               style={{
                                 display: "flex",
+
                                 justifyContent: "flex-end",
                               }}
                             >
@@ -5585,39 +7401,52 @@ function SprintDashboard({
                                   if (hasRepo)
                                     submitPhase(
                                       phase.number,
+
                                       phase.dev.repoLink,
+
                                       phase.dev.updates,
-                                    );
+                                    )
                                 }}
                                 style={{
                                   display: "inline-flex",
+
                                   alignItems: "center",
+
                                   gap: 8,
+
                                   padding: "10px 22px",
+
                                   borderRadius: 8,
+
                                   background: hasRepo ? "#2563EB" : "#94A3B8",
+
                                   color: "#fff",
+
                                   border: "none",
+
                                   fontSize: 13.5,
+
                                   fontWeight: 700,
+
                                   cursor: hasRepo ? "pointer" : "not-allowed",
+
                                   fontFamily: "Inter, sans-serif",
+
                                   transition: "background 0.15s",
+
                                   boxShadow: hasRepo
                                     ? "0 2px 8px rgba(37,99,235,0.3)"
                                     : "none",
                                 }}
                                 onMouseEnter={(e) => {
                                   if (hasRepo)
-                                    (
-                                      e.currentTarget as HTMLButtonElement
-                                    ).style.background = "#1D4ED8";
+                                    (e.currentTarget as HTMLButtonElement).style.background =
+                                      "#1D4ED8"
                                 }}
                                 onMouseLeave={(e) => {
                                   if (hasRepo)
-                                    (
-                                      e.currentTarget as HTMLButtonElement
-                                    ).style.background = "#2563EB";
+                                    (e.currentTarget as HTMLButtonElement).style.background =
+                                      "#2563EB"
                                 }}
                               >
                                 <svg
@@ -5644,23 +7473,36 @@ function SprintDashboard({
                           <div
                             style={{
                               display: "flex",
+
                               justifyContent: "flex-end",
+
                               alignItems: "center",
+
                               gap: 10,
+
                               paddingTop: 4,
                             }}
                           >
                             <span
                               style={{
                                 display: "inline-flex",
+
                                 alignItems: "center",
+
                                 gap: 6,
+
                                 padding: "10px 18px",
+
                                 borderRadius: 8,
+
                                 background: "#EFF6FF",
+
                                 border: "1px solid #BFDBFE",
+
                                 color: "#2563EB",
+
                                 fontSize: 13,
+
                                 fontWeight: 700,
                               }}
                             >
@@ -5673,13 +7515,21 @@ function SprintDashboard({
                               onClick={() => reviseSubmission(phase.number)}
                               style={{
                                 padding: "9px 14px",
+
                                 borderRadius: 8,
+
                                 border: "1.5px solid #CBD5E1",
+
                                 background: "#fff",
+
                                 color: "#475569",
+
                                 fontSize: 12.5,
+
                                 fontWeight: 700,
+
                                 cursor: "pointer",
+
                                 fontFamily: "Inter, sans-serif",
                               }}
                             >
@@ -5692,7 +7542,9 @@ function SprintDashboard({
                           <div
                             style={{
                               display: "flex",
+
                               justifyContent: "flex-end",
+
                               paddingTop: 4,
                             }}
                           >
@@ -5701,39 +7553,52 @@ function SprintDashboard({
                                 if (hasRepo)
                                   resubmitPhase(
                                     phase.number,
+
                                     phase.dev.repoLink,
+
                                     phase.dev.updates,
-                                  );
+                                  )
                               }}
                               style={{
                                 display: "inline-flex",
+
                                 alignItems: "center",
+
                                 gap: 8,
+
                                 padding: "10px 22px",
+
                                 borderRadius: 8,
+
                                 background: hasRepo ? "#D97706" : "#94A3B8",
+
                                 color: "#fff",
+
                                 border: "none",
+
                                 fontSize: 13.5,
+
                                 fontWeight: 700,
+
                                 cursor: hasRepo ? "pointer" : "not-allowed",
+
                                 fontFamily: "Inter, sans-serif",
+
                                 transition: "background 0.15s",
+
                                 boxShadow: hasRepo
                                   ? "0 2px 8px rgba(217,119,6,0.3)"
                                   : "none",
                               }}
                               onMouseEnter={(e) => {
                                 if (hasRepo)
-                                  (
-                                    e.currentTarget as HTMLButtonElement
-                                  ).style.background = "#B45309";
+                                  (e.currentTarget as HTMLButtonElement).style.background =
+                                    "#B45309"
                               }}
                               onMouseLeave={(e) => {
                                 if (hasRepo)
-                                  (
-                                    e.currentTarget as HTMLButtonElement
-                                  ).style.background = "#D97706";
+                                  (e.currentTarget as HTMLButtonElement).style.background =
+                                    "#D97706"
                               }}
                             >
                               Resubmit Milestone
@@ -5744,7 +7609,7 @@ function SprintDashboard({
                     </div>
                   )}
                 </div>
-              );
+              )
             })}
           </div>
         </Card>
@@ -5754,9 +7619,13 @@ function SprintDashboard({
       <div
         style={{
           flex: stacked ? "unset" : "0 0 calc(33.33% - 10px)",
+
           width: stacked ? "100%" : undefined,
+
           display: "flex",
+
           flexDirection: "column",
+
           gap: 16,
         }}
       >
@@ -5765,10 +7634,15 @@ function SprintDashboard({
           <div
             style={{
               fontSize: 11,
+
               fontWeight: 700,
+
               color: "#94A3B8",
+
               textTransform: "uppercase",
+
               letterSpacing: "0.07em",
+
               marginBottom: 12,
             }}
           >
@@ -5780,30 +7654,49 @@ function SprintDashboard({
             {[
               {
                 label: "Completed",
+
                 value: velocity.completed,
+
                 color: "#16A34A",
+
                 bg: "#F0FDF4",
+
                 border: "#BBF7D0",
               },
+
               {
                 label: "In Review",
+
                 value: velocity.inReview,
+
                 color: "#2563EB",
+
                 bg: "#EFF6FF",
+
                 border: "#BFDBFE",
               },
+
               {
                 label: "On Track",
+
                 value: velocity.onTrack,
+
                 color: "#D97706",
+
                 bg: "#FFFBEB",
+
                 border: "#FDE68A",
               },
+
               {
                 label: "At Risk",
+
                 value: velocity.atRisk,
+
                 color: "#DC2626",
+
                 bg: "#FEF2F2",
+
                 border: "#FECACA",
               },
             ].map((s) => (
@@ -5811,17 +7704,24 @@ function SprintDashboard({
                 key={s.label}
                 style={{
                   background: s.bg,
+
                   border: `1px solid ${s.border}`,
+
                   borderRadius: 8,
+
                   padding: "10px 12px",
+
                   textAlign: "center",
                 }}
               >
                 <div
                   style={{
                     fontSize: 22,
+
                     fontWeight: 800,
+
                     color: s.color,
+
                     letterSpacing: "-0.03em",
                   }}
                 >
@@ -5830,8 +7730,11 @@ function SprintDashboard({
                 <div
                   style={{
                     fontSize: 11,
+
                     color: s.color,
+
                     fontWeight: 600,
+
                     marginTop: 2,
                   }}
                 >
@@ -5847,10 +7750,15 @@ function SprintDashboard({
           <div
             style={{
               fontSize: 11,
+
               fontWeight: 700,
+
               color: "#94A3B8",
+
               textTransform: "uppercase",
+
               letterSpacing: "0.07em",
+
               marginBottom: 8,
             }}
           >
@@ -5899,9 +7807,13 @@ function SprintDashboard({
           <div
             style={{
               padding: "16px 20px 12px",
+
               borderBottom: "1px solid #F1F5F9",
+
               display: "flex",
+
               alignItems: "center",
+
               gap: 10,
             }}
           >
@@ -5917,8 +7829,11 @@ function SprintDashboard({
             <h3
               style={{
                 margin: 0,
+
                 fontSize: 13.5,
+
                 fontWeight: 700,
+
                 color: "#0F172A",
               }}
             >
@@ -5927,12 +7842,21 @@ function SprintDashboard({
             <span
               style={{
                 marginLeft: "auto",
+
                 background: unreadNotifs.length ? "#FEF2F2" : "#F8FAFC",
-                border: `1px solid ${unreadNotifs.length ? "#FECACA" : "#E2E8F0"}`,
+
+                border: `1px solid ${
+                  unreadNotifs.length ? "#FECACA" : "#E2E8F0"
+                }`,
+
                 color: unreadNotifs.length ? "#DC2626" : "#94A3B8",
+
                 fontSize: 10.5,
+
                 fontWeight: 700,
+
                 padding: "2px 7px",
+
                 borderRadius: 99,
               }}
             >
@@ -5942,13 +7866,21 @@ function SprintDashboard({
               onClick={markAllNotificationsRead}
               style={{
                 background: "none",
+
                 border: "none",
+
                 color: "#2563EB",
+
                 fontSize: 11,
+
                 fontWeight: 600,
+
                 cursor: "pointer",
+
                 fontFamily: "Inter, sans-serif",
+
                 padding: 0,
+
                 flexShrink: 0,
               }}
             >
@@ -5957,29 +7889,44 @@ function SprintDashboard({
           </div>
           <div style={{ maxHeight: 340, overflowY: "auto" }}>
             {project.notifications.map((n, i) => {
-              const color = notifColor[n.type];
-              const bg = notifBg[n.type];
-              const border = notifBorder[n.type];
-              const icon = notifIcon[n.type];
+              const color = notifColor[n.type]
+
+              const bg = notifBg[n.type]
+
+              const border = notifBorder[n.type]
+
+              const icon = notifIcon[n.type]
+
               return (
                 <button
                   key={n.id}
                   onClick={() => markNotificationRead(n.id)}
                   style={{
                     width: "100%",
+
                     display: "flex",
+
                     gap: 10,
+
                     textAlign: "left",
+
                     padding: "12px 16px",
+
                     border: "none",
+
                     background: "#fff",
+
                     cursor: "pointer",
+
                     borderBottom:
                       i < project.notifications.length - 1
                         ? "1px solid #F8FAFC"
                         : "none",
+
                     opacity: n.read ? 0.55 : 1,
+
                     transition: "opacity 0.15s",
+
                     fontFamily: "Inter, sans-serif",
                   }}
                   onMouseEnter={(e) =>
@@ -5992,14 +7939,23 @@ function SprintDashboard({
                   <div
                     style={{
                       width: 28,
+
                       height: 28,
+
                       borderRadius: 8,
+
                       flexShrink: 0,
+
                       background: bg,
+
                       border: `1px solid ${border}`,
+
                       display: "flex",
+
                       alignItems: "center",
+
                       justifyContent: "center",
+
                       fontSize: 13,
                     }}
                   >
@@ -6009,9 +7965,13 @@ function SprintDashboard({
                     <p
                       style={{
                         margin: "0 0 3px",
+
                         fontSize: 12.5,
+
                         color: color,
+
                         lineHeight: 1.5,
+
                         fontWeight: n.read ? 500 : 600,
                       }}
                     >
@@ -6020,7 +7980,9 @@ function SprintDashboard({
                     <span
                       style={{
                         fontSize: 11,
+
                         color: "#94A3B8",
+
                         fontWeight: 500,
                       }}
                     >
@@ -6031,16 +7993,21 @@ function SprintDashboard({
                     <span
                       style={{
                         width: 7,
+
                         height: 7,
+
                         borderRadius: "50%",
+
                         background: "#2563EB",
+
                         flexShrink: 0,
+
                         marginTop: 6,
                       }}
                     />
                   )}
                 </button>
-              );
+              )
             })}
           </div>
         </Card>
@@ -6050,17 +8017,24 @@ function SprintDashboard({
           <div
             style={{
               display: "flex",
+
               alignItems: "baseline",
+
               justifyContent: "space-between",
+
               marginBottom: 12,
             }}
           >
             <span
               style={{
                 fontSize: 11,
+
                 fontWeight: 700,
+
                 color: "#94A3B8",
+
                 textTransform: "uppercase",
+
                 letterSpacing: "0.07em",
               }}
             >
@@ -6087,14 +8061,23 @@ function SprintDashboard({
                   <div
                     style={{
                       width: 30,
+
                       height: 30,
+
                       borderRadius: 8,
+
                       flexShrink: 0,
+
                       background: "#F0FDF4",
+
                       border: "1px solid #BBF7D0",
+
                       display: "flex",
+
                       alignItems: "center",
+
                       justifyContent: "center",
+
                       color: "#16A34A",
                     }}
                   >
@@ -6104,7 +8087,9 @@ function SprintDashboard({
                     <div
                       style={{
                         fontSize: 12.5,
+
                         fontWeight: 600,
+
                         color: "#334155",
                       }}
                     >
@@ -6119,8 +8104,11 @@ function SprintDashboard({
                   <div
                     style={{
                       fontSize: 13,
+
                       fontWeight: 700,
+
                       color: "#16A34A",
+
                       flexShrink: 0,
                     }}
                   >
@@ -6133,10 +8121,15 @@ function SprintDashboard({
           <div
             style={{
               marginTop: 12,
+
               paddingTop: 10,
+
               borderTop: "1px solid #F1F5F9",
+
               display: "flex",
+
               justifyContent: "space-between",
+
               fontSize: 12,
             }}
           >
@@ -6154,17 +8147,24 @@ function SprintDashboard({
           <div
             style={{
               padding: "16px 20px 12px",
+
               borderBottom: "1px solid #F1F5F9",
+
               display: "flex",
+
               alignItems: "center",
+
               justifyContent: "space-between",
             }}
           >
             <h3
               style={{
                 margin: 0,
+
                 fontSize: 13.5,
+
                 fontWeight: 700,
+
                 color: "#0F172A",
               }}
             >
@@ -6183,9 +8183,13 @@ function SprintDashboard({
                 key={i}
                 style={{
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 10,
+
                   padding: "10px 16px",
+
                   transition: "background 0.1s",
                 }}
                 onMouseEnter={(e) =>
@@ -6200,18 +8204,28 @@ function SprintDashboard({
                   <div
                     style={{
                       width: 34,
+
                       height: 34,
+
                       borderRadius: "50%",
+
                       background:
                         s.status === "active"
                           ? "linear-gradient(135deg, #DBEAFE, #BFDBFE)"
                           : "#F1F5F9",
+
                       border: "1.5px solid #E2E8F0",
+
                       display: "flex",
+
                       alignItems: "center",
+
                       justifyContent: "center",
+
                       fontSize: 11,
+
                       fontWeight: 700,
+
                       color: s.status === "active" ? "#1D4ED8" : "#94A3B8",
                     }}
                   >
@@ -6220,17 +8234,24 @@ function SprintDashboard({
                   <span
                     style={{
                       position: "absolute",
+
                       bottom: 0,
+
                       right: 0,
+
                       width: 9,
+
                       height: 9,
+
                       borderRadius: "50%",
+
                       background:
                         s.status === "active"
                           ? "#16A34A"
                           : s.status === "away"
                             ? "#D97706"
                             : "#CBD5E1",
+
                       border: "1.5px solid #fff",
                     }}
                   />
@@ -6239,10 +8260,15 @@ function SprintDashboard({
                   <div
                     style={{
                       fontSize: 13,
+
                       fontWeight: 600,
+
                       color: "#0F172A",
+
                       whiteSpace: "nowrap",
+
                       overflow: "hidden",
+
                       textOverflow: "ellipsis",
                     }}
                   >
@@ -6251,9 +8277,13 @@ function SprintDashboard({
                   <div
                     style={{
                       fontSize: 11,
+
                       color: "#64748B",
+
                       whiteSpace: "nowrap",
+
                       overflow: "hidden",
+
                       textOverflow: "ellipsis",
                     }}
                   >
@@ -6263,9 +8293,13 @@ function SprintDashboard({
                 <div
                   style={{
                     fontSize: 11,
+
                     color: s.status === "active" ? "#16A34A" : "#94A3B8",
+
                     fontWeight: 600,
+
                     whiteSpace: "nowrap",
+
                     flexShrink: 0,
                   }}
                 >
@@ -6283,10 +8317,15 @@ function SprintDashboard({
           <div
             style={{
               fontSize: 11,
+
               fontWeight: 700,
+
               color: "#94A3B8",
+
               textTransform: "uppercase",
+
               letterSpacing: "0.07em",
+
               marginBottom: 12,
             }}
           >
@@ -6295,21 +8334,30 @@ function SprintDashboard({
           <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             {[
               { label: "Contract Type", value: project.contractType },
+
               { label: "Total Budget", value: formatPeso(project.totalBudget) },
+
               {
                 label: "Paid to Date",
+
                 value: `${formatPeso(project.paidToDate)} (${paidPct}%)`,
               },
+
               { label: "Platform", value: project.platform },
+
               { label: "Started", value: project.started },
+
               { label: "Est. Completion", value: project.deadline },
             ].map((m) => (
               <div
                 key={m.label}
                 style={{
                   display: "flex",
+
                   justifyContent: "space-between",
+
                   alignItems: "center",
+
                   fontSize: 12.5,
                 }}
               >
@@ -6325,69 +8373,100 @@ function SprintDashboard({
         </Card>
       </div>
     </div>
-  );
+  )
 }
 
 // ─── Sprint Overview (Dashboard nav item) ──────────────────────────────────────
 
 function SprintOverview({
   isMobile,
+
   isTablet,
+
   onNavigate,
 }: {
-  isMobile: boolean;
-  isTablet: boolean;
-  onNavigate: () => void;
+  isMobile: boolean
+
+  isTablet: boolean
+
+  onNavigate: () => void
 }) {
-  const project = useProjectStore();
-  const stacked = isMobile || isTablet;
+  const project = useProjectStore()
+
+  const stacked = isMobile || isTablet
+
   const completed = project.phases.filter(
     (p) => p.status === "completed",
-  ).length;
-  const pct = Math.round((completed / project.totalPhases) * 100);
+  ).length
+
+  const pct = Math.round((completed / project.totalPhases) * 100)
+
   const inReview = project.phases.filter(
     (p) => p.status === "in_review" || p.status === "revision",
-  ).length;
-  const atRisk = project.phases.filter((p) => p.status === "disputed").length;
+  ).length
+
+  const atRisk = project.phases.filter((p) => p.status === "disputed").length
+
   const nextPhase = project.phases.find(
     (p) =>
       p.status === "active" ||
       p.status === "in_review" ||
       p.status === "disputed",
-  );
-  const unread = project.notifications.filter((n) => !n.read).length;
-  const paidPct = Math.round((project.paidToDate / project.totalBudget) * 100);
+  )
+
+  const unread = project.notifications.filter((n) => !n.read).length
+
+  const paidPct = Math.round((project.paidToDate / project.totalBudget) * 100)
 
   const tiles = [
     {
       label: "Phases Completed",
+
       value: `${completed}/${project.totalPhases}`,
+
       color: "#16A34A",
+
       bg: "#F0FDF4",
+
       border: "#BBF7D0",
     },
+
     {
       label: "In Review",
+
       value: String(inReview),
+
       color: "#2563EB",
+
       bg: "#EFF6FF",
+
       border: "#BFDBFE",
     },
+
     {
       label: "Next Deadline",
+
       value: nextPhase ? `${nextPhase.dev.daysLeft}d` : "—",
+
       color: "#D97706",
+
       bg: "#FFFBEB",
+
       border: "#FDE68A",
     },
+
     {
       label: "Paid to Date",
+
       value: formatPeso(project.paidToDate),
+
       color: "#7C3AED",
+
       bg: "#F5F3FF",
+
       border: "#DDD6FE",
     },
-  ];
+  ]
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -6396,10 +8475,15 @@ function SprintOverview({
         <div
           style={{
             display: "flex",
+
             alignItems: "flex-start",
+
             justifyContent: "space-between",
+
             gap: 12,
+
             flexWrap: "wrap",
+
             marginBottom: 18,
           }}
         >
@@ -6407,18 +8491,26 @@ function SprintOverview({
             <div
               style={{
                 display: "flex",
+
                 alignItems: "center",
+
                 gap: 10,
+
                 flexWrap: "wrap",
+
                 marginBottom: 5,
               }}
             >
               <h2
                 style={{
                   margin: 0,
+
                   fontSize: 20,
+
                   fontWeight: 700,
+
                   color: "#0F172A",
+
                   letterSpacing: "-0.02em",
                 }}
               >
@@ -6427,22 +8519,34 @@ function SprintOverview({
               <span
                 style={{
                   display: "inline-flex",
+
                   alignItems: "center",
+
                   gap: 5,
+
                   padding: "3px 11px",
+
                   borderRadius: 99,
+
                   background: "#EFF6FF",
+
                   border: "1px solid #BFDBFE",
+
                   color: "#2563EB",
+
                   fontSize: 11.5,
+
                   fontWeight: 700,
                 }}
               >
                 <span
                   style={{
                     width: 6,
+
                     height: 6,
+
                     borderRadius: "50%",
+
                     background: "#2563EB",
                   }}
                 />
@@ -6459,6 +8563,7 @@ function SprintOverview({
               <span
                 style={{
                   fontWeight: 600,
+
                   color: project.daysLeft < 7 ? "#DC2626" : "#334155",
                 }}
               >
@@ -6470,14 +8575,23 @@ function SprintOverview({
             onClick={onNavigate}
             style={{
               padding: "9px 18px",
+
               borderRadius: 8,
+
               border: "none",
+
               background: "#2563EB",
+
               color: "#fff",
+
               fontSize: 13,
+
               fontWeight: 700,
+
               cursor: "pointer",
+
               fontFamily: "Inter, sans-serif",
+
               boxShadow: "0 2px 8px rgba(37,99,235,0.3)",
             }}
           >
@@ -6488,8 +8602,11 @@ function SprintOverview({
           <div
             style={{
               display: "flex",
+
               justifyContent: "space-between",
+
               alignItems: "center",
+
               marginBottom: 8,
             }}
           >
@@ -6499,8 +8616,11 @@ function SprintOverview({
             <span
               style={{
                 fontSize: 14,
+
                 fontWeight: 800,
+
                 color: "#2563EB",
+
                 letterSpacing: "-0.02em",
               }}
             >
@@ -6510,17 +8630,24 @@ function SprintOverview({
           <div
             style={{
               height: 10,
+
               background: "#F1F5F9",
+
               borderRadius: 99,
+
               overflow: "hidden",
             }}
           >
             <div
               style={{
                 width: `${pct}%`,
+
                 height: "100%",
+
                 background: "linear-gradient(90deg, #2563EB 0%, #3B82F6 100%)",
+
                 borderRadius: 99,
+
                 transition: "width 0.6s ease",
               }}
             />
@@ -6532,7 +8659,9 @@ function SprintOverview({
       <div
         style={{
           display: "grid",
+
           gridTemplateColumns: stacked ? "1fr 1fr" : "repeat(4, 1fr)",
+
           gap: 12,
         }}
       >
@@ -6541,17 +8670,24 @@ function SprintOverview({
             key={t.label}
             style={{
               background: "#fff",
+
               border: "1px solid #E2E8F0",
+
               borderRadius: 12,
+
               padding: "18px 20px",
+
               boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
             }}
           >
             <div
               style={{
                 fontSize: 22,
+
                 fontWeight: 800,
+
                 color: t.color,
+
                 letterSpacing: "-0.03em",
               }}
             >
@@ -6560,8 +8696,11 @@ function SprintOverview({
             <div
               style={{
                 fontSize: 11.5,
+
                 color: "#94A3B8",
+
                 fontWeight: 600,
+
                 marginTop: 4,
               }}
             >
@@ -6575,33 +8714,46 @@ function SprintOverview({
       <div
         style={{
           display: "flex",
+
           flexDirection: stacked ? "column" : "row",
+
           gap: 20,
+
           alignItems: "flex-start",
         }}
       >
         <Card
           style={{
             flex: 1,
+
             width: stacked ? "100%" : undefined,
+
             padding: 0,
+
             overflow: "hidden",
           }}
         >
           <div
             style={{
               padding: "16px 20px 12px",
+
               borderBottom: "1px solid #F1F5F9",
+
               display: "flex",
+
               alignItems: "center",
+
               justifyContent: "space-between",
             }}
           >
             <h3
               style={{
                 margin: 0,
+
                 fontSize: 13.5,
+
                 fontWeight: 700,
+
                 color: "#0F172A",
               }}
             >
@@ -6611,11 +8763,17 @@ function SprintOverview({
               <span
                 style={{
                   background: "#FEF2F2",
+
                   border: "1px solid #FECACA",
+
                   color: "#DC2626",
+
                   fontSize: 10.5,
+
                   fontWeight: 700,
+
                   padding: "2px 7px",
+
                   borderRadius: 99,
                 }}
               >
@@ -6629,23 +8787,36 @@ function SprintOverview({
                 key={n.id}
                 style={{
                   display: "flex",
+
                   gap: 10,
+
                   padding: "12px 16px",
+
                   borderBottom: "1px solid #F8FAFC",
+
                   background: n.read ? "#fff" : "#FAFCFF",
                 }}
               >
                 <div
                   style={{
                     width: 26,
+
                     height: 26,
+
                     borderRadius: 8,
+
                     flexShrink: 0,
+
                     background: notifBg[n.type],
+
                     border: `1px solid ${notifBorder[n.type]}`,
+
                     display: "flex",
+
                     alignItems: "center",
+
                     justifyContent: "center",
+
                     fontSize: 12,
                   }}
                 >
@@ -6655,8 +8826,11 @@ function SprintOverview({
                   <p
                     style={{
                       margin: "0 0 2px",
+
                       fontSize: 12.5,
+
                       color: notifColor[n.type],
+
                       lineHeight: 1.5,
                     }}
                   >
@@ -6679,10 +8853,15 @@ function SprintOverview({
           <div
             style={{
               fontSize: 11,
+
               fontWeight: 700,
+
               color: "#94A3B8",
+
               textTransform: "uppercase",
+
               letterSpacing: "0.07em",
+
               marginBottom: 12,
             }}
           >
@@ -6693,17 +8872,29 @@ function SprintOverview({
               onClick={onNavigate}
               style={{
                 display: "flex",
+
                 alignItems: "center",
+
                 justifyContent: "space-between",
+
                 padding: "11px 14px",
+
                 border: "1px solid #E2E8F0",
+
                 borderRadius: 10,
+
                 background: "#fff",
+
                 color: "#334155",
+
                 fontSize: 13,
+
                 fontWeight: 600,
+
                 cursor: "pointer",
+
                 fontFamily: "Inter, sans-serif",
+
                 textAlign: "left",
               }}
             >
@@ -6713,17 +8904,29 @@ function SprintOverview({
               onClick={resetDemo}
               style={{
                 display: "flex",
+
                 alignItems: "center",
+
                 justifyContent: "space-between",
+
                 padding: "11px 14px",
+
                 border: "1px solid #E2E8F0",
+
                 borderRadius: 10,
+
                 background: "#fff",
+
                 color: "#334155",
+
                 fontSize: 13,
+
                 fontWeight: 600,
+
                 cursor: "pointer",
+
                 fontFamily: "Inter, sans-serif",
+
                 textAlign: "left",
               }}
             >
@@ -6733,17 +8936,24 @@ function SprintOverview({
           <div
             style={{
               marginTop: 14,
+
               paddingTop: 12,
+
               borderTop: "1px solid #F1F5F9",
+
               display: "flex",
+
               flexDirection: "column",
+
               gap: 6,
             }}
           >
             <div
               style={{
                 display: "flex",
+
                 justifyContent: "space-between",
+
                 fontSize: 12.5,
               }}
             >
@@ -6757,7 +8967,9 @@ function SprintOverview({
             <div
               style={{
                 display: "flex",
+
                 justifyContent: "space-between",
+
                 fontSize: 12.5,
               }}
             >
@@ -6771,7 +8983,9 @@ function SprintOverview({
             <div
               style={{
                 display: "flex",
+
                 justifyContent: "space-between",
+
                 fontSize: 12.5,
               }}
             >
@@ -6781,6 +8995,7 @@ function SprintOverview({
               <span
                 style={{
                   color: atRisk ? "#DC2626" : "#16A34A",
+
                   fontWeight: 700,
                 }}
               >
@@ -6791,80 +9006,122 @@ function SprintOverview({
         </Card>
       </div>
     </div>
-  );
+  )
 }
 
 // ─── Project Spec Form ────────────────────────────────────────────────────────
 
 const TECH_TAGS = [
   "React",
+
   "Next.js",
+
   "Vue.js",
+
   "Angular",
+
   "TypeScript",
+
   "JavaScript",
+
   "Node.js",
+
   "Express.js",
+
   "Laravel",
+
   "Django",
+
   "Firebase",
+
   "Supabase",
+
   "PostgreSQL",
+
   "MySQL",
+
   "MongoDB",
+
   "Tailwind CSS",
+
   "Bootstrap",
+
   "Android",
+
   "iOS",
+
   "Flutter",
+
   "React Native",
+
   "REST API",
+
   "GraphQL",
+
   "Docker",
+
   "Vercel",
+
   "AWS",
+
   "Google Cloud",
-];
+]
 
 const BARANGAYS = [
   "Barangay Apokon",
+
   "Barangay Mankilam",
+
   "Barangay Magugpo West",
+
   "Barangay Magugpo North",
+
   "Barangay Magugpo South",
+
   "Barangay Canocotan",
+
   "Barangay Visayan Village",
+
   "Other Tagum City Zone",
-];
+]
 
 interface Milestone {
-  id: string;
-  phase: number;
-  title: string;
-  dueDate: string;
+  id: string
+
+  phase: number
+
+  title: string
+
+  dueDate: string
 }
 
 function FormLabel({
   children,
+
   required,
 }: {
-  children: React.ReactNode;
-  required?: boolean;
+  children: React.ReactNode
+
+  required?: boolean
 }) {
   return (
     <label
       style={{
         display: "block",
+
         fontSize: 13,
+
         fontWeight: 600,
+
         color: "#374151",
+
         marginBottom: 6,
       }}
     >
       {children}
       {required && <span style={{ color: "#DC2626", marginLeft: 3 }}>*</span>}
     </label>
-  );
+  )
 }
 
 function FormHint({ children }: { children: React.ReactNode }) {
@@ -6872,41 +9129,61 @@ function FormHint({ children }: { children: React.ReactNode }) {
     <p
       style={{
         margin: "5px 0 0",
+
         fontSize: 12,
+
         color: "#94A3B8",
+
         lineHeight: 1.45,
       }}
     >
       {children}
     </p>
-  );
+  )
 }
 
 function TextInput({
   value,
+
   onChange,
+
   placeholder,
+
   readOnly,
+
   prefix,
+
   type = "text",
 }: {
-  value: string;
-  onChange?: (v: string) => void;
-  placeholder?: string;
-  readOnly?: boolean;
-  prefix?: string;
-  type?: string;
+  value: string
+
+  onChange?: (v: string) => void
+
+  placeholder?: string
+
+  readOnly?: boolean
+
+  prefix?: string
+
+  type?: string
 }) {
-  const [focused, setFocused] = useState(false);
+  const [focused, setFocused] = useState(false)
+
   return (
     <div
       style={{
         display: "flex",
+
         alignItems: "center",
+
         border: `1.5px solid ${focused ? "#2563EB" : "#E2E8F0"}`,
+
         borderRadius: 8,
+
         background: readOnly ? "#F8FAFC" : "#fff",
+
         transition: "border-color 0.15s",
+
         boxShadow: focused ? "0 0 0 3px rgba(37,99,235,0.08)" : "none",
       }}
     >
@@ -6914,13 +9191,21 @@ function TextInput({
         <span
           style={{
             padding: "0 10px 0 12px",
+
             fontSize: 13.5,
+
             color: "#94A3B8",
+
             fontWeight: 600,
+
             flexShrink: 0,
+
             borderRight: "1px solid #E2E8F0",
+
             height: "100%",
+
             display: "flex",
+
             alignItems: "center",
           }}
         >
@@ -6937,12 +9222,19 @@ function TextInput({
         onBlur={() => setFocused(false)}
         style={{
           flex: 1,
+
           padding: prefix ? "10px 12px" : "10px 14px",
+
           border: "none",
+
           outline: "none",
+
           background: "transparent",
+
           fontSize: 13.5,
+
           color: readOnly ? "#64748B" : "#0F172A",
+
           fontFamily: "Inter, sans-serif",
         }}
       />
@@ -6952,21 +9244,28 @@ function TextInput({
         </span>
       )}
     </div>
-  );
+  )
 }
 
 function SelectInput({
   value,
+
   onChange,
+
   options,
+
   placeholder,
 }: {
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-  placeholder?: string;
+  value: string
+
+  onChange: (v: string) => void
+
+  options: string[]
+
+  placeholder?: string
 }) {
-  const [focused, setFocused] = useState(false);
+  const [focused, setFocused] = useState(false)
+
   return (
     <div style={{ position: "relative" }}>
       <select
@@ -6976,17 +9275,29 @@ function SelectInput({
         onBlur={() => setFocused(false)}
         style={{
           width: "100%",
+
           padding: "10px 36px 10px 14px",
+
           appearance: "none",
+
           border: `1.5px solid ${focused ? "#2563EB" : "#E2E8F0"}`,
+
           borderRadius: 8,
+
           background: "#fff",
+
           fontSize: 13.5,
+
           color: value ? "#0F172A" : "#94A3B8",
+
           fontFamily: "Inter, sans-serif",
+
           outline: "none",
+
           cursor: "pointer",
+
           boxShadow: focused ? "0 0 0 3px rgba(37,99,235,0.08)" : "none",
+
           transition: "border-color 0.15s",
         }}
       >
@@ -7004,54 +9315,81 @@ function SelectInput({
       <span
         style={{
           position: "absolute",
+
           right: 12,
+
           top: "50%",
+
           transform: "translateY(-50%)",
+
           color: "#94A3B8",
+
           pointerEvents: "none",
+
           lineHeight: 0,
         }}
       >
         <IconChevron size={14} />
       </span>
     </div>
-  );
+  )
 }
 
 function SectionDivider({
   number,
+
   title,
+
   description,
 }: {
-  number: number;
-  title: string;
-  description: string;
+  number: number
+
+  title: string
+
+  description: string
 }) {
   return (
     <div
       style={{
         display: "flex",
+
         alignItems: "flex-start",
+
         gap: 14,
+
         paddingBottom: 20,
+
         borderBottom: "1px solid #F1F5F9",
+
         marginBottom: 4,
       }}
     >
       <div
         style={{
           width: 30,
+
           height: 30,
+
           borderRadius: "50%",
+
           flexShrink: 0,
+
           background: "linear-gradient(135deg, #EFF6FF, #DBEAFE)",
+
           border: "1.5px solid #BFDBFE",
+
           display: "flex",
+
           alignItems: "center",
+
           justifyContent: "center",
+
           fontSize: 13,
+
           fontWeight: 800,
+
           color: "#2563EB",
+
           marginTop: 1,
         }}
       >
@@ -7061,8 +9399,11 @@ function SectionDivider({
         <div
           style={{
             fontSize: 15,
+
             fontWeight: 700,
+
             color: "#0F172A",
+
             letterSpacing: "-0.01em",
           }}
         >
@@ -7073,7 +9414,7 @@ function SectionDivider({
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function FieldGroup({ children }: { children: React.ReactNode }) {
@@ -7081,127 +9422,180 @@ function FieldGroup({ children }: { children: React.ReactNode }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       {children}
     </div>
-  );
+  )
 }
 
 function ProjectSpecForm({
   isMobile,
+
   onBack,
 }: {
-  isMobile: boolean;
-  onBack: () => void;
+  isMobile: boolean
+
+  onBack: () => void
 }) {
   // Form state
-  const [bizName] = useState("Apokon Hardware MSME");
-  const [barangay, setBarangay] = useState("");
-  const [repName, setRepName] = useState("Ernesto Dela Vega");
-  const [repEmail, setRepEmail] = useState("ernesto@apokonhardware.com");
-  const [projTitle, setProjTitle] = useState("");
-  const [scope, setScope] = useState("");
+
+  const [bizName] = useState("Apokon Hardware MSME")
+
+  const [barangay, setBarangay] = useState("")
+
+  const [repName, setRepName] = useState("Ernesto Dela Vega")
+
+  const [repEmail, setRepEmail] = useState("ernesto@apokonhardware.com")
+
+  const [projTitle, setProjTitle] = useState("")
+
+  const [scope, setScope] = useState("")
+
   const [selectedTags, setSelectedTags] = useState<string[]>([
     "React",
+
     "Firebase",
+
     "Tailwind CSS",
-  ]);
-  const [tagSearch, setTagSearch] = useState("");
-  const [numPhases, setNumPhases] = useState("3");
-  const [deadline, setDeadline] = useState("");
+  ])
+
+  const [tagSearch, setTagSearch] = useState("")
+
+  const [numPhases, setNumPhases] = useState("3")
+
+  const [deadline, setDeadline] = useState("")
+
   const [milestones, setMilestones] = useState<Milestone[]>([
     { id: "m1", phase: 1, title: "", dueDate: "" },
+
     { id: "m2", phase: 2, title: "", dueDate: "" },
+
     { id: "m3", phase: 3, title: "", dueDate: "" },
-  ]);
-  const [budget, setBudget] = useState("");
-  const [agreed, setAgreed] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [published, setPublished] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [scopeFocused, setScopeFocused] = useState(false);
-  const [tagInputFocused, setTagInputFocused] = useState(false);
-  const tagDropdownRef = useRef<HTMLDivElement>(null);
+  ])
+
+  const [budget, setBudget] = useState("")
+
+  const [agreed, setAgreed] = useState(false)
+
+  const [saved, setSaved] = useState(false)
+
+  const [published, setPublished] = useState(false)
+
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const [scopeFocused, setScopeFocused] = useState(false)
+
+  const [tagInputFocused, setTagInputFocused] = useState(false)
+
+  const tagDropdownRef = useRef<HTMLDivElement>(null)
 
   // Sync milestone count to numPhases
+
   useEffect(() => {
-    const n = Math.max(1, Math.min(8, parseInt(numPhases) || 1));
+    const n = Math.max(1, Math.min(8, parseInt(numPhases) || 1))
+
     setMilestones((prev) => {
-      if (prev.length === n) return prev;
+      if (prev.length === n) return prev
+
       if (prev.length < n) {
         const added = Array.from({ length: n - prev.length }, (_, i) => ({
           id: `m${Date.now()}-${i}`,
+
           phase: prev.length + i + 1,
+
           title: "",
+
           dueDate: "",
-        }));
-        return [...prev, ...added];
+        }))
+
+        return [...prev, ...added]
       }
-      return prev.slice(0, n);
-    });
-  }, [numPhases]);
+
+      return prev.slice(0, n)
+    })
+  }, [numPhases])
 
   function toggleTag(tag: string) {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
-    );
+    )
   }
 
   function updateMilestone(
     id: string,
+
     field: "title" | "dueDate",
+
     value: string,
   ) {
     setMilestones((prev) =>
       prev.map((m) => (m.id === id ? { ...m, [field]: value } : m)),
-    );
+    )
   }
 
   function addMilestone() {
     setMilestones((prev) => [
       ...prev,
+
       { id: `m${Date.now()}`, phase: prev.length + 1, title: "", dueDate: "" },
-    ]);
-    setNumPhases(String(milestones.length + 1));
+    ])
+
+    setNumPhases(String(milestones.length + 1))
   }
 
   function removeMilestone(id: string) {
-    if (milestones.length <= 1) return;
+    if (milestones.length <= 1) return
+
     setMilestones((prev) => {
-      const next = prev.filter((m) => m.id !== id);
-      return next.map((m, i) => ({ ...m, phase: i + 1 }));
-    });
-    setNumPhases(String(milestones.length - 1));
+      const next = prev.filter((m) => m.id !== id)
+
+      return next.map((m, i) => ({ ...m, phase: i + 1 }))
+    })
+
+    setNumPhases(String(milestones.length - 1))
   }
 
   function validate() {
-    const e: Record<string, string> = {};
-    if (!projTitle.trim()) e.projTitle = "Project title is required.";
-    if (!scope.trim()) e.scope = "Project scope description is required.";
-    if (!barangay) e.barangay = "Please select a barangay.";
-    if (!deadline) e.deadline = "Final deadline is required.";
-    if (!budget.trim()) e.budget = "Proposed budget is required.";
-    if (!agreed) e.agreed = "You must agree to the terms before publishing.";
-    setErrors(e);
-    return Object.keys(e).length === 0;
+    const e: Record<string, string> = {}
+
+    if (!projTitle.trim()) e.projTitle = "Project title is required."
+
+    if (!scope.trim()) e.scope = "Project scope description is required."
+
+    if (!barangay) e.barangay = "Please select a barangay."
+
+    if (!deadline) e.deadline = "Final deadline is required."
+
+    if (!budget.trim()) e.budget = "Proposed budget is required."
+
+    if (!agreed) e.agreed = "You must agree to the terms before publishing."
+
+    setErrors(e)
+
+    return Object.keys(e).length === 0
   }
 
   function handlePublish() {
-    if (validate()) setPublished(true);
+    if (validate()) setPublished(true)
   }
 
   const filteredTags = TECH_TAGS.filter(
     (t) =>
       !selectedTags.includes(t) &&
       t.toLowerCase().includes(tagSearch.toLowerCase()),
-  );
+  )
 
   if (published) {
     return (
       <div
         style={{
           minHeight: "100vh",
+
           display: "flex",
+
           alignItems: "center",
+
           justifyContent: "center",
+
           background: "#F8FAFC",
+
           padding: 24,
         }}
       >
@@ -7209,14 +9603,23 @@ function ProjectSpecForm({
           <div
             style={{
               width: 72,
+
               height: 72,
+
               borderRadius: "50%",
+
               background: "#F0FDF4",
+
               border: "2px solid #BBF7D0",
+
               display: "flex",
+
               alignItems: "center",
+
               justifyContent: "center",
+
               margin: "0 auto 20px",
+
               fontSize: 32,
             }}
           >
@@ -7225,9 +9628,13 @@ function ProjectSpecForm({
           <h2
             style={{
               margin: "0 0 10px",
+
               fontSize: 22,
+
               fontWeight: 800,
+
               color: "#0F172A",
+
               letterSpacing: "-0.03em",
             }}
           >
@@ -7236,8 +9643,11 @@ function ProjectSpecForm({
           <p
             style={{
               margin: "0 0 24px",
+
               fontSize: 14,
+
               color: "#64748B",
+
               lineHeight: 1.6,
             }}
           >
@@ -7249,13 +9659,21 @@ function ProjectSpecForm({
             onClick={() => setPublished(false)}
             style={{
               padding: "10px 24px",
+
               background: "#2563EB",
+
               color: "#fff",
+
               border: "none",
+
               borderRadius: 8,
+
               fontFamily: "Inter, sans-serif",
+
               fontSize: 13.5,
+
               fontWeight: 700,
+
               cursor: "pointer",
             }}
           >
@@ -7263,15 +9681,18 @@ function ProjectSpecForm({
           </button>
         </div>
       </div>
-    );
+    )
   }
 
   return (
     <div
       style={{
         minHeight: "100vh",
+
         background: "#F8FAFC",
+
         display: "flex",
+
         flexDirection: "column",
       }}
     >
@@ -7279,15 +9700,25 @@ function ProjectSpecForm({
       <nav
         style={{
           background: "#fff",
+
           borderBottom: "1px solid #E2E8F0",
+
           padding: "0 32px",
+
           height: 58,
+
           display: "flex",
+
           alignItems: "center",
+
           justifyContent: "space-between",
+
           position: "sticky",
+
           top: 0,
+
           zIndex: 50,
+
           boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
         }}
       >
@@ -7297,12 +9728,19 @@ function ProjectSpecForm({
             <div
               style={{
                 width: 32,
+
                 height: 32,
+
                 borderRadius: 8,
+
                 background: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)",
+
                 display: "flex",
+
                 alignItems: "center",
+
                 justifyContent: "center",
+
                 flexShrink: 0,
               }}
             >
@@ -7319,8 +9757,11 @@ function ProjectSpecForm({
             <span
               style={{
                 fontWeight: 800,
+
                 fontSize: 15,
+
                 color: "#0F172A",
+
                 letterSpacing: "-0.02em",
               }}
             >
@@ -7332,16 +9773,27 @@ function ProjectSpecForm({
             onClick={onBack}
             style={{
               display: "flex",
+
               alignItems: "center",
+
               gap: 6,
+
               background: "none",
+
               border: "none",
+
               cursor: "pointer",
+
               fontSize: 13.5,
+
               fontWeight: 600,
+
               color: "#475569",
+
               fontFamily: "Inter, sans-serif",
+
               padding: 0,
+
               transition: "color 0.12s",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "#2563EB")}
@@ -7375,17 +9827,29 @@ function ProjectSpecForm({
           <div
             style={{
               width: 36,
+
               height: 36,
+
               borderRadius: "50%",
+
               flexShrink: 0,
+
               background: "linear-gradient(135deg, #ECFDF5, #6EE7B7)",
+
               border: "2px solid #fff",
+
               boxShadow: "0 0 0 1.5px #E2E8F0",
+
               display: "flex",
+
               alignItems: "center",
+
               justifyContent: "center",
+
               fontSize: 12,
+
               fontWeight: 800,
+
               color: "#065F46",
             }}
           >
@@ -7398,7 +9862,9 @@ function ProjectSpecForm({
       <div
         style={{
           flex: 1,
+
           padding: isMobile ? "24px 16px 120px" : "40px 24px 120px",
+
           overflowY: "auto",
         }}
       >
@@ -7407,9 +9873,13 @@ function ProjectSpecForm({
           <div
             style={{
               display: "flex",
+
               alignItems: "center",
+
               gap: 8,
+
               marginBottom: 24,
+
               flexWrap: "wrap",
             }}
           >
@@ -7425,16 +9895,27 @@ function ProjectSpecForm({
                     <div
                       style={{
                         width: 20,
+
                         height: 20,
+
                         borderRadius: "50%",
+
                         flexShrink: 0,
+
                         background: "#EFF6FF",
+
                         border: "1.5px solid #BFDBFE",
+
                         display: "flex",
+
                         alignItems: "center",
+
                         justifyContent: "center",
+
                         fontSize: 10,
+
                         fontWeight: 800,
+
                         color: "#2563EB",
                       }}
                     >
@@ -7443,8 +9924,11 @@ function ProjectSpecForm({
                     <span
                       style={{
                         fontSize: 12,
+
                         fontWeight: 600,
+
                         color: "#64748B",
+
                         whiteSpace: "nowrap",
                       }}
                     >
@@ -7463,9 +9947,13 @@ function ProjectSpecForm({
           <div
             style={{
               background: "#fff",
+
               border: "1px solid #E2E8F0",
+
               borderRadius: 16,
+
               padding: isMobile ? "24px 20px" : "36px 40px",
+
               boxShadow: "0px 1px 3px rgba(0,0,0,0.08)",
             }}
           >
@@ -7473,22 +9961,34 @@ function ProjectSpecForm({
             <div
               style={{
                 marginBottom: 36,
+
                 paddingBottom: 24,
+
                 borderBottom: "1px solid #F1F5F9",
               }}
             >
               <div
                 style={{
                   display: "inline-flex",
+
                   alignItems: "center",
+
                   gap: 6,
+
                   padding: "4px 12px",
+
                   borderRadius: 99,
+
                   background: "#EFF6FF",
+
                   border: "1px solid #BFDBFE",
+
                   color: "#2563EB",
+
                   fontSize: 11.5,
+
                   fontWeight: 700,
+
                   marginBottom: 12,
                 }}
               >
@@ -7514,10 +10014,15 @@ function ProjectSpecForm({
               <h1
                 style={{
                   margin: "0 0 8px",
+
                   fontSize: isMobile ? 22 : 26,
+
                   fontWeight: 800,
+
                   color: "#0F172A",
+
                   letterSpacing: "-0.03em",
+
                   lineHeight: 1.2,
                 }}
               >
@@ -7526,9 +10031,13 @@ function ProjectSpecForm({
               <p
                 style={{
                   margin: 0,
+
                   fontSize: 14,
+
                   color: "#64748B",
+
                   lineHeight: 1.6,
+
                   maxWidth: 560,
                 }}
               >
@@ -7566,7 +10075,9 @@ function ProjectSpecForm({
                       <p
                         style={{
                           margin: "5px 0 0",
+
                           fontSize: 12,
+
                           color: "#DC2626",
                         }}
                       >
@@ -7578,7 +10089,9 @@ function ProjectSpecForm({
                   <div
                     style={{
                       display: "grid",
+
                       gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+
                       gap: 14,
                     }}
                   >
@@ -7624,7 +10137,9 @@ function ProjectSpecForm({
                       <p
                         style={{
                           margin: "5px 0 0",
+
                           fontSize: 12,
+
                           color: "#DC2626",
                         }}
                       >
@@ -7646,29 +10161,48 @@ function ProjectSpecForm({
                       placeholder="Describe the full scope of the project: key features, integrations, target users, business goals, and any technical constraints. Be specific — the more detail you provide, the better matched your bids will be."
                       style={{
                         width: "100%",
+
                         padding: "12px 14px",
+
                         minHeight: 148,
-                        border: `1.5px solid ${scopeFocused ? "#2563EB" : "#E2E8F0"}`,
+
+                        border: `1.5px solid ${
+                          scopeFocused ? "#2563EB" : "#E2E8F0"
+                        }`,
+
                         borderRadius: 8,
+
                         resize: "vertical",
+
                         outline: "none",
+
                         fontFamily: "Inter, sans-serif",
+
                         fontSize: 13.5,
+
                         color: "#0F172A",
+
                         lineHeight: 1.6,
+
                         background: "#fff",
+
                         boxSizing: "border-box",
+
                         boxShadow: scopeFocused
                           ? "0 0 0 3px rgba(37,99,235,0.08)"
                           : "none",
+
                         transition: "border-color 0.15s, box-shadow 0.15s",
                       }}
                     />
                     <div
                       style={{
                         display: "flex",
+
                         justifyContent: "space-between",
+
                         alignItems: "center",
+
                         marginTop: 4,
                       }}
                     >
@@ -7684,7 +10218,9 @@ function ProjectSpecForm({
                       <span
                         style={{
                           fontSize: 11.5,
+
                           color: scope.length < 100 ? "#D97706" : "#16A34A",
+
                           fontWeight: 600,
                         }}
                       >
@@ -7699,8 +10235,11 @@ function ProjectSpecForm({
                     <div
                       style={{
                         display: "flex",
+
                         flexWrap: "wrap",
+
                         gap: 7,
+
                         marginBottom: selectedTags.length > 0 ? 10 : 0,
                       }}
                     >
@@ -7709,14 +10248,23 @@ function ProjectSpecForm({
                           key={tag}
                           style={{
                             display: "inline-flex",
+
                             alignItems: "center",
+
                             gap: 5,
+
                             padding: "4px 10px 4px 12px",
+
                             borderRadius: 99,
+
                             background: "#EFF6FF",
+
                             border: "1.5px solid #2563EB",
+
                             color: "#2563EB",
+
                             fontSize: 12.5,
+
                             fontWeight: 700,
                           }}
                         >
@@ -7725,11 +10273,17 @@ function ProjectSpecForm({
                             onClick={() => toggleTag(tag)}
                             style={{
                               background: "none",
+
                               border: "none",
+
                               cursor: "pointer",
+
                               color: "#93C5FD",
+
                               padding: 0,
+
                               lineHeight: 0,
+
                               display: "flex",
                             }}
                           >
@@ -7743,15 +10297,25 @@ function ProjectSpecForm({
                       <div
                         style={{
                           display: "flex",
+
                           alignItems: "center",
+
                           gap: 8,
-                          border: `1.5px solid ${tagInputFocused ? "#2563EB" : "#E2E8F0"}`,
+
+                          border: `1.5px solid ${
+                            tagInputFocused ? "#2563EB" : "#E2E8F0"
+                          }`,
+
                           borderRadius: 8,
+
                           padding: "8px 12px",
+
                           background: "#fff",
+
                           boxShadow: tagInputFocused
                             ? "0 0 0 3px rgba(37,99,235,0.08)"
                             : "none",
+
                           transition: "border-color 0.15s",
                         }}
                       >
@@ -7767,11 +10331,17 @@ function ProjectSpecForm({
                           placeholder="Search and add a technology tag…"
                           style={{
                             flex: 1,
+
                             border: "none",
+
                             outline: "none",
+
                             fontSize: 13.5,
+
                             fontFamily: "Inter, sans-serif",
+
                             color: "#0F172A",
+
                             background: "transparent",
                           }}
                         />
@@ -7780,16 +10350,27 @@ function ProjectSpecForm({
                         <div
                           style={{
                             position: "absolute",
+
                             top: "100%",
+
                             left: 0,
+
                             right: 0,
+
                             zIndex: 20,
+
                             marginTop: 4,
+
                             background: "#fff",
+
                             border: "1px solid #E2E8F0",
+
                             borderRadius: 10,
+
                             boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+
                             maxHeight: 200,
+
                             overflowY: "auto",
                           }}
                         >
@@ -7798,21 +10379,33 @@ function ProjectSpecForm({
                               <button
                                 key={tag}
                                 onMouseDown={() => {
-                                  toggleTag(tag);
-                                  setTagSearch("");
+                                  toggleTag(tag)
+
+                                  setTagSearch("")
                                 }}
                                 style={{
                                   width: "100%",
+
                                   textAlign: "left",
+
                                   padding: "8px 14px",
+
                                   background: "none",
+
                                   border: "none",
+
                                   cursor: "pointer",
+
                                   fontSize: 13.5,
+
                                   color: "#334155",
+
                                   fontFamily: "Inter, sans-serif",
+
                                   display: "flex",
+
                                   alignItems: "center",
+
                                   gap: 8,
                                 }}
                                 onMouseEnter={(e) =>
@@ -7826,13 +10419,21 @@ function ProjectSpecForm({
                                 <span
                                   style={{
                                     width: 20,
+
                                     height: 20,
+
                                     borderRadius: 99,
+
                                     background: "#EFF6FF",
+
                                     border: "1px solid #BFDBFE",
+
                                     display: "flex",
+
                                     alignItems: "center",
+
                                     justifyContent: "center",
+
                                     flexShrink: 0,
                                   }}
                                 >
@@ -7865,44 +10466,56 @@ function ProjectSpecForm({
                     <div
                       style={{
                         display: "flex",
+
                         flexWrap: "wrap",
+
                         gap: 6,
+
                         marginTop: 10,
                       }}
                     >
                       {TECH_TAGS.filter((t) => !selectedTags.includes(t))
+
                         .slice(0, 10)
+
                         .map((tag) => (
                           <button
                             key={tag}
                             onClick={() => toggleTag(tag)}
                             style={{
                               padding: "3px 10px",
+
                               borderRadius: 99,
+
                               border: "1px solid #E2E8F0",
+
                               background: "#F8FAFC",
+
                               color: "#475569",
+
                               fontSize: 12,
+
                               fontWeight: 500,
+
                               cursor: "pointer",
+
                               fontFamily: "Inter, sans-serif",
+
                               transition: "all 0.1s",
                             }}
                             onMouseEnter={(e) => {
-                              (
-                                e.currentTarget as HTMLButtonElement
-                              ).style.borderColor = "#2563EB";
-                              (
-                                e.currentTarget as HTMLButtonElement
-                              ).style.color = "#2563EB";
+                              ;(e.currentTarget as HTMLButtonElement).style.borderColor =
+                                "#2563EB"
+
+                              ;(e.currentTarget as HTMLButtonElement).style.color =
+                                "#2563EB"
                             }}
                             onMouseLeave={(e) => {
-                              (
-                                e.currentTarget as HTMLButtonElement
-                              ).style.borderColor = "#E2E8F0";
-                              (
-                                e.currentTarget as HTMLButtonElement
-                              ).style.color = "#475569";
+                              ;(e.currentTarget as HTMLButtonElement).style.borderColor =
+                                "#E2E8F0"
+
+                              ;(e.currentTarget as HTMLButtonElement).style.color =
+                                "#475569"
                             }}
                           >
                             + {tag}
@@ -7926,7 +10539,9 @@ function ProjectSpecForm({
                   <div
                     style={{
                       display: "grid",
+
                       gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+
                       gap: 14,
                     }}
                   >
@@ -7935,11 +10550,17 @@ function ProjectSpecForm({
                       <div
                         style={{
                           display: "flex",
+
                           alignItems: "center",
+
                           gap: 0,
+
                           border: "1.5px solid #E2E8F0",
+
                           borderRadius: 8,
+
                           overflow: "hidden",
+
                           background: "#fff",
                         }}
                       >
@@ -7951,16 +10572,27 @@ function ProjectSpecForm({
                           }
                           style={{
                             width: 40,
+
                             background: "#F8FAFC",
+
                             border: "none",
+
                             borderRight: "1px solid #E2E8F0",
+
                             cursor: "pointer",
+
                             fontSize: 18,
+
                             color: "#64748B",
+
                             height: 42,
+
                             display: "flex",
+
                             alignItems: "center",
+
                             justifyContent: "center",
+
                             flexShrink: 0,
                           }}
                         >
@@ -7974,14 +10606,23 @@ function ProjectSpecForm({
                           onChange={(e) => setNumPhases(e.target.value)}
                           style={{
                             flex: 1,
+
                             border: "none",
+
                             outline: "none",
+
                             textAlign: "center",
+
                             fontSize: 15,
+
                             fontWeight: 700,
+
                             color: "#0F172A",
+
                             fontFamily: "Inter, sans-serif",
+
                             height: 42,
+
                             background: "transparent",
                           }}
                         />
@@ -7993,16 +10634,27 @@ function ProjectSpecForm({
                           }
                           style={{
                             width: 40,
+
                             background: "#F8FAFC",
+
                             border: "none",
+
                             borderLeft: "1px solid #E2E8F0",
+
                             cursor: "pointer",
+
                             fontSize: 18,
+
                             color: "#64748B",
+
                             height: 42,
+
                             display: "flex",
+
                             alignItems: "center",
+
                             justifyContent: "center",
+
                             flexShrink: 0,
                           }}
                         >
@@ -8023,14 +10675,25 @@ function ProjectSpecForm({
                           min={new Date().toISOString().split("T")[0]}
                           style={{
                             width: "100%",
+
                             padding: "10px 14px",
-                            border: `1.5px solid ${errors.deadline ? "#DC2626" : "#E2E8F0"}`,
+
+                            border: `1.5px solid ${
+                              errors.deadline ? "#DC2626" : "#E2E8F0"
+                            }`,
+
                             borderRadius: 8,
+
                             fontSize: 13.5,
+
                             color: deadline ? "#0F172A" : "#94A3B8",
+
                             fontFamily: "Inter, sans-serif",
+
                             outline: "none",
+
                             background: "#fff",
+
                             boxSizing: "border-box",
                           }}
                           onFocus={(e) =>
@@ -8047,7 +10710,9 @@ function ProjectSpecForm({
                         <p
                           style={{
                             margin: "5px 0 0",
+
                             fontSize: 12,
+
                             color: "#DC2626",
                           }}
                         >
@@ -8063,7 +10728,9 @@ function ProjectSpecForm({
                     <div
                       style={{
                         display: "flex",
+
                         flexDirection: "column",
+
                         gap: 10,
                       }}
                     >
@@ -8072,34 +10739,52 @@ function ProjectSpecForm({
                           key={m.id}
                           style={{
                             padding: "16px",
+
                             border: "1px solid #E2E8F0",
+
                             borderRadius: 10,
+
                             background: "#FAFCFF",
+
                             position: "relative",
                           }}
                         >
                           <div
                             style={{
                               display: "flex",
+
                               alignItems: "center",
+
                               gap: 8,
+
                               marginBottom: 12,
                             }}
                           >
                             <div
                               style={{
                                 width: 24,
+
                                 height: 24,
+
                                 borderRadius: "50%",
+
                                 flexShrink: 0,
+
                                 background:
                                   "linear-gradient(135deg, #EFF6FF, #DBEAFE)",
+
                                 border: "1.5px solid #BFDBFE",
+
                                 display: "flex",
+
                                 alignItems: "center",
+
                                 justifyContent: "center",
+
                                 fontSize: 11,
+
                                 fontWeight: 800,
+
                                 color: "#2563EB",
                               }}
                             >
@@ -8108,7 +10793,9 @@ function ProjectSpecForm({
                             <span
                               style={{
                                 fontSize: 12.5,
+
                                 fontWeight: 700,
+
                                 color: "#475569",
                               }}
                             >
@@ -8119,11 +10806,17 @@ function ProjectSpecForm({
                                 onClick={() => removeMilestone(m.id)}
                                 style={{
                                   marginLeft: "auto",
+
                                   background: "none",
+
                                   border: "none",
+
                                   cursor: "pointer",
+
                                   color: "#CBD5E1",
+
                                   padding: 2,
+
                                   lineHeight: 0,
                                 }}
                                 onMouseEnter={(e) =>
@@ -8140,10 +10833,13 @@ function ProjectSpecForm({
                           <div
                             style={{
                               display: "grid",
+
                               gridTemplateColumns: isMobile
                                 ? "1fr"
                                 : "1fr auto",
+
                               gap: isMobile ? 10 : 12,
+
                               alignItems: "start",
                             }}
                           >
@@ -8152,8 +10848,11 @@ function ProjectSpecForm({
                                 <div
                                   style={{
                                     fontSize: 11.5,
+
                                     fontWeight: 600,
+
                                     color: "#94A3B8",
+
                                     marginBottom: 5,
                                   }}
                                 >
@@ -8169,14 +10868,23 @@ function ProjectSpecForm({
                                 placeholder={`e.g., ${["UI/UX Wireframing", "Backend Development", "Frontend Integration & Testing", "Deployment & Handover"][idx] || "Phase title…"}`}
                                 style={{
                                   width: "100%",
+
                                   padding: "9px 12px",
+
                                   border: "1.5px solid #E2E8F0",
+
                                   borderRadius: 7,
+
                                   fontSize: 13,
+
                                   fontFamily: "Inter, sans-serif",
+
                                   color: "#0F172A",
+
                                   outline: "none",
+
                                   background: "#fff",
+
                                   boxSizing: "border-box",
                                 }}
                                 onFocus={(e) =>
@@ -8194,8 +10902,11 @@ function ProjectSpecForm({
                                 <div
                                   style={{
                                     fontSize: 11.5,
+
                                     fontWeight: 600,
+
                                     color: "#94A3B8",
+
                                     marginBottom: 5,
                                   }}
                                 >
@@ -8208,20 +10919,31 @@ function ProjectSpecForm({
                                 onChange={(e) =>
                                   updateMilestone(
                                     m.id,
+
                                     "dueDate",
+
                                     e.target.value,
                                   )
                                 }
                                 style={{
                                   width: "100%",
+
                                   padding: "9px 12px",
+
                                   border: "1.5px solid #E2E8F0",
+
                                   borderRadius: 7,
+
                                   fontSize: 13,
+
                                   fontFamily: "Inter, sans-serif",
+
                                   color: m.dueDate ? "#0F172A" : "#94A3B8",
+
                                   outline: "none",
+
                                   background: "#fff",
+
                                   boxSizing: "border-box",
                                 }}
                                 onFocus={(e) =>
@@ -8245,41 +10967,56 @@ function ProjectSpecForm({
                         onClick={addMilestone}
                         style={{
                           marginTop: 10,
+
                           display: "flex",
+
                           alignItems: "center",
+
                           gap: 6,
+
                           background: "none",
+
                           border: "1.5px dashed #CBD5E1",
+
                           borderRadius: 10,
+
                           width: "100%",
+
                           padding: "11px 16px",
+
                           cursor: "pointer",
+
                           fontFamily: "Inter, sans-serif",
+
                           fontSize: 13.5,
+
                           fontWeight: 600,
+
                           color: "#64748B",
+
                           transition: "all 0.15s",
+
                           justifyContent: "center",
                         }}
                         onMouseEnter={(e) => {
-                          (
-                            e.currentTarget as HTMLButtonElement
-                          ).style.borderColor = "#2563EB";
-                          (e.currentTarget as HTMLButtonElement).style.color =
-                            "#2563EB";
-                          (
-                            e.currentTarget as HTMLButtonElement
-                          ).style.background = "#F0F7FF";
+                          ;(e.currentTarget as HTMLButtonElement).style.borderColor =
+                            "#2563EB"
+
+                          ;(e.currentTarget as HTMLButtonElement).style.color =
+                            "#2563EB"
+
+                          ;(e.currentTarget as HTMLButtonElement).style.background =
+                            "#F0F7FF"
                         }}
                         onMouseLeave={(e) => {
-                          (
-                            e.currentTarget as HTMLButtonElement
-                          ).style.borderColor = "#CBD5E1";
-                          (e.currentTarget as HTMLButtonElement).style.color =
-                            "#64748B";
-                          (
-                            e.currentTarget as HTMLButtonElement
-                          ).style.background = "transparent";
+                          ;(e.currentTarget as HTMLButtonElement).style.borderColor =
+                            "#CBD5E1"
+
+                          ;(e.currentTarget as HTMLButtonElement).style.color =
+                            "#64748B"
+
+                          ;(e.currentTarget as HTMLButtonElement).style.background =
+                            "transparent"
                         }}
                       >
                         <svg
@@ -8326,7 +11063,9 @@ function ProjectSpecForm({
                       <p
                         style={{
                           margin: "5px 0 0",
+
                           fontSize: 12,
+
                           color: "#DC2626",
                         }}
                       >
@@ -8345,17 +11084,31 @@ function ProjectSpecForm({
                     <label
                       style={{
                         display: "flex",
+
                         alignItems: "flex-start",
+
                         gap: 12,
+
                         cursor: "pointer",
+
                         padding: "14px 16px",
+
                         borderRadius: 10,
+
                         background: agreed
                           ? "#F0FDF4"
                           : errors.agreed
                             ? "#FEF2F2"
                             : "#F8FAFC",
-                        border: `1.5px solid ${agreed ? "#BBF7D0" : errors.agreed ? "#FECACA" : "#E2E8F0"}`,
+
+                        border: `1.5px solid ${
+                          agreed
+                            ? "#BBF7D0"
+                            : errors.agreed
+                              ? "#FECACA"
+                              : "#E2E8F0"
+                        }`,
+
                         transition: "all 0.15s",
                       }}
                     >
@@ -8363,16 +11116,33 @@ function ProjectSpecForm({
                         onClick={() => setAgreed((v) => !v)}
                         style={{
                           width: 20,
+
                           height: 20,
+
                           borderRadius: 5,
+
                           flexShrink: 0,
+
                           marginTop: 1,
+
                           background: agreed ? "#16A34A" : "#fff",
-                          border: `2px solid ${agreed ? "#16A34A" : errors.agreed ? "#DC2626" : "#CBD5E1"}`,
+
+                          border: `2px solid ${
+                            agreed
+                              ? "#16A34A"
+                              : errors.agreed
+                                ? "#DC2626"
+                                : "#CBD5E1"
+                          }`,
+
                           display: "flex",
+
                           alignItems: "center",
+
                           justifyContent: "center",
+
                           cursor: "pointer",
+
                           transition: "all 0.15s",
                         }}
                       >
@@ -8397,9 +11167,13 @@ function ProjectSpecForm({
                         <p
                           style={{
                             margin: "0 0 3px",
+
                             fontSize: 13.5,
+
                             fontWeight: 600,
+
                             color: "#0F172A",
+
                             lineHeight: 1.4,
                           }}
                         >
@@ -8409,8 +11183,11 @@ function ProjectSpecForm({
                         <p
                           style={{
                             margin: 0,
+
                             fontSize: 12,
+
                             color: "#64748B",
+
                             lineHeight: 1.4,
                           }}
                         >
@@ -8431,7 +11208,9 @@ function ProjectSpecForm({
                       <p
                         style={{
                           margin: "6px 0 0",
+
                           fontSize: 12,
+
                           color: "#DC2626",
                         }}
                       >
@@ -8448,17 +11227,29 @@ function ProjectSpecForm({
           <div
             style={{
               position: "sticky",
+
               bottom: 0,
+
               zIndex: 40,
+
               background: "rgba(248,250,252,0.95)",
+
               backdropFilter: "blur(8px)",
+
               borderTop: "1px solid #E2E8F0",
+
               marginTop: 0,
+
               padding: isMobile ? "14px 16px" : "16px 40px",
+
               display: "flex",
+
               alignItems: "center",
+
               justifyContent: "space-between",
+
               gap: 12,
+
               flexWrap: isMobile ? "wrap" : "nowrap",
             }}
           >
@@ -8475,8 +11266,11 @@ function ProjectSpecForm({
             <div
               style={{
                 display: "flex",
+
                 gap: 10,
+
                 flexShrink: 0,
+
                 width: isMobile ? "100%" : "auto",
               }}
             >
@@ -8484,30 +11278,44 @@ function ProjectSpecForm({
                 onClick={() => setSaved(true)}
                 style={{
                   flex: isMobile ? 1 : "unset",
+
                   padding: "10px 22px",
+
                   borderRadius: 8,
+
                   background: saved ? "#F0FDF4" : "#fff",
+
                   color: saved ? "#16A34A" : "#475569",
+
                   border: `1.5px solid ${saved ? "#BBF7D0" : "#E2E8F0"}`,
+
                   fontSize: 13.5,
+
                   fontWeight: 700,
+
                   cursor: "pointer",
+
                   fontFamily: "Inter, sans-serif",
+
                   transition: "all 0.15s",
+
                   whiteSpace: "nowrap",
+
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 6,
                 }}
                 onMouseEnter={(e) => {
                   if (!saved)
                     (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      "#CBD5E1";
+                      "#CBD5E1"
                 }}
                 onMouseLeave={(e) => {
                   if (!saved)
                     (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      "#E2E8F0";
+                      "#E2E8F0"
                 }}
               >
                 {saved ? (
@@ -8522,20 +11330,35 @@ function ProjectSpecForm({
                 onClick={handlePublish}
                 style={{
                   flex: isMobile ? 1 : "unset",
+
                   padding: "10px 24px",
+
                   borderRadius: 8,
+
                   background: "#2563EB",
+
                   color: "#fff",
+
                   border: "none",
+
                   fontSize: 13.5,
+
                   fontWeight: 700,
+
                   cursor: "pointer",
+
                   fontFamily: "Inter, sans-serif",
+
                   transition: "background 0.15s",
+
                   whiteSpace: "nowrap",
+
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 7,
+
                   boxShadow: "0 2px 8px rgba(37,99,235,0.28)",
                 }}
                 onMouseEnter={(e) =>
@@ -8561,104 +11384,163 @@ function ProjectSpecForm({
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 // ─── Milestone Tracking Dashboard ────────────────────────────────────────────
 
 const clientNavItems = [
   { icon: IconDashboard, label: "Overview", id: "overview" },
+
   { icon: IconBids, label: "Milestone Tracking", id: "milestones" },
+
   { icon: IconLogs, label: "Project Contracts", id: "contracts" },
+
   { icon: IconMessages, label: "Messages", id: "messages" },
+
   { icon: IconSettings, label: "Settings", id: "settings" },
-];
+]
 
 const phaseCfg = {
   completed: {
     border: "#16A34A",
+
     bg: "#F0FDF4",
+
     badgeBg: "#F0FDF4",
+
     badgeColor: "#16A34A",
+
     badgeBorder: "#BBF7D0",
+
     label: "Completed",
+
     dot: "#16A34A",
   },
+
   review: {
     border: "#2563EB",
+
     bg: "#EFF6FF",
+
     badgeBg: "#EFF6FF",
+
     badgeColor: "#2563EB",
+
     badgeBorder: "#BFDBFE",
+
     label: "Ready for Review",
+
     dot: "#2563EB",
   },
+
   disputed: {
     border: "#DC2626",
+
     bg: "#FEF2F2",
+
     badgeBg: "#FFF7ED",
+
     badgeColor: "#D97706",
+
     badgeBorder: "#FDE68A",
+
     label: "Delayed / Disputed",
+
     dot: "#DC2626",
   },
+
   upcoming: {
     border: "#E2E8F0",
+
     bg: "#F8FAFC",
+
     badgeBg: "#F8FAFC",
+
     badgeColor: "#94A3B8",
+
     badgeBorder: "#E2E8F0",
+
     label: "Upcoming",
+
     dot: "#CBD5E1",
   },
-};
+}
 
 function ClientSidebar({
   active,
+
   onNav,
+
   collapsed,
 }: {
-  active: string;
-  onNav: (id: string) => void;
-  collapsed: boolean;
+  active: string
+
+  onNav: (id: string) => void
+
+  collapsed: boolean
 }) {
   return (
     <aside
       style={{
         width: collapsed ? 72 : 260,
+
         minHeight: "100vh",
+
         background: "#fff",
+
         borderRight: "1px solid #E2E8F0",
+
         display: "flex",
+
         flexDirection: "column",
+
         flexShrink: 0,
+
         transition: "width 0.2s ease",
+
         position: "sticky",
+
         top: 0,
+
         height: "100vh",
+
         overflow: "hidden",
       }}
     >
       <div
         style={{
           padding: collapsed ? "20px 0" : "20px 22px",
+
           display: "flex",
+
           alignItems: "center",
+
           gap: 10,
+
           borderBottom: "1px solid #F1F5F9",
         }}
       >
         <div
           style={{
             width: 36,
+
             height: 36,
+
             borderRadius: 8,
+
             flexShrink: 0,
+
             background: "linear-gradient(135deg, #2563EB, #1D4ED8)",
+
             display: "flex",
+
             alignItems: "center",
+
             justifyContent: "center",
+
             marginLeft: collapsed ? "auto" : 0,
+
             marginRight: collapsed ? "auto" : 0,
           }}
         >
@@ -8677,8 +11559,11 @@ function ClientSidebar({
             <div
               style={{
                 fontWeight: 700,
+
                 fontSize: 14,
+
                 color: "#0F172A",
+
                 letterSpacing: "-0.02em",
               }}
             >
@@ -8695,19 +11580,28 @@ function ClientSidebar({
         <div
           style={{
             margin: "12px 14px 4px",
+
             padding: "10px 12px",
+
             background: "#FFFBEB",
+
             border: "1px solid #FDE68A",
+
             borderRadius: 10,
           }}
         >
           <div
             style={{
               fontSize: 10,
+
               fontWeight: 700,
+
               color: "#D97706",
+
               textTransform: "uppercase",
+
               letterSpacing: "0.06em",
+
               marginBottom: 3,
             }}
           >
@@ -8716,8 +11610,11 @@ function ClientSidebar({
           <div
             style={{
               fontSize: 12,
+
               fontWeight: 700,
+
               color: "#0F172A",
+
               lineHeight: 1.3,
             }}
           >
@@ -8731,47 +11628,64 @@ function ClientSidebar({
 
       <nav style={{ padding: "8px 0", flex: 1 }}>
         {clientNavItems.map(({ icon: Icon, label, id }) => {
-          const isActive = active === id;
+          const isActive = active === id
+
           return (
             <button
               key={id}
               onClick={() => onNav(id)}
               style={{
                 width: "100%",
+
                 display: "flex",
+
                 alignItems: "center",
+
                 gap: 11,
+
                 padding: collapsed ? "10px 0" : "10px 18px",
+
                 justifyContent: collapsed ? "center" : "flex-start",
+
                 border: "none",
+
                 background: isActive ? "#EFF6FF" : "transparent",
+
                 color: isActive ? "#2563EB" : "#475569",
+
                 borderLeft: isActive
                   ? "3px solid #2563EB"
                   : "3px solid transparent",
+
                 cursor: "pointer",
+
                 fontFamily: "Inter, sans-serif",
+
                 fontSize: 13.5,
+
                 fontWeight: isActive ? 600 : 500,
+
                 transition: "all 0.12s",
+
                 borderRadius: collapsed ? 0 : "0 8px 8px 0",
+
                 marginRight: collapsed ? 0 : 10,
               }}
               onMouseEnter={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "#F8FAFC";
+                    "#F8FAFC"
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "transparent";
+                    "transparent"
               }}
             >
               <Icon size={18} />
               {!collapsed && label}
             </button>
-          );
+          )
         })}
       </nav>
 
@@ -8781,16 +11695,27 @@ function ClientSidebar({
             <div
               style={{
                 width: 32,
+
                 height: 32,
+
                 borderRadius: "50%",
+
                 flexShrink: 0,
+
                 background: "linear-gradient(135deg, #ECFDF5, #6EE7B7)",
+
                 border: "1.5px solid #A7F3D0",
+
                 display: "flex",
+
                 alignItems: "center",
+
                 justifyContent: "center",
+
                 fontSize: 11,
+
                 fontWeight: 700,
+
                 color: "#065F46",
               }}
             >
@@ -8808,79 +11733,115 @@ function ClientSidebar({
         </div>
       )}
     </aside>
-  );
+  )
 }
 
 function MilestoneTrackingPage({
   isMobile,
+
   isTablet,
+
   collapsed,
+
   sidebarOpen,
+
   setSidebarOpen,
 }: {
-  isMobile: boolean;
-  isTablet: boolean;
-  collapsed: boolean;
-  sidebarOpen: boolean;
-  setSidebarOpen: (v: boolean) => void;
-}) {
-  const [clientNav, setClientNav] = useState("milestones");
-  const [disputeOpen, setDisputeOpen] = useState<number | null>(null);
-  const [disputeNote, setDisputeNote] = useState("");
-  const [feedbackMsg, setFeedbackMsg] = useState("");
-  const [panelOpen, setPanelOpen] = useState(false);
-  const feedEndRef = useRef<HTMLDivElement>(null);
+  isMobile: boolean
 
-  const project = useProjectStore();
+  isTablet: boolean
+
+  collapsed: boolean
+
+  sidebarOpen: boolean
+
+  setSidebarOpen: (v: boolean) => void
+}) {
+  const [clientNav, setClientNav] = useState("milestones")
+
+  const [disputeOpen, setDisputeOpen] = useState<number | null>(null)
+
+  const [disputeNote, setDisputeNote] = useState("")
+
+  const [feedbackMsg, setFeedbackMsg] = useState("")
+
+  const [panelOpen, setPanelOpen] = useState(false)
+
+  const feedEndRef = useRef<HTMLDivElement>(null)
+
+  const project = useProjectStore()
 
   const clientStatus = (
     s: SprintPhaseStatus,
   ): "review" | "completed" | "disputed" | "upcoming" => {
-    if (s === "completed") return "completed";
-    if (s === "disputed" || s === "revision") return "disputed";
-    if (s === "in_review" || s === "active") return "review";
-    return "upcoming";
-  };
+    if (s === "completed") return "completed"
+
+    if (s === "disputed" || s === "revision") return "disputed"
+
+    if (s === "in_review" || s === "active") return "review"
+
+    return "upcoming"
+  }
 
   const clientPhases = project.phases.map((p) => ({
     num: p.number,
-    title: p.client.title,
-    deadline: p.client.deadline,
-    status: clientStatus(p.status),
-    repoLink: p.client.repoLink,
-    prototypeLink: p.client.prototypeLink,
-    devNotes: p.client.updates,
-    submittedAt: p.submittedAt,
-    approvedAt: p.approvedAt,
-    daysOverdue: p.client.daysLeft < 0 ? Math.abs(p.client.daysLeft) : 2,
-  }));
 
-  const messages = project.phases.find((p) => p.number === 2)?.comments ?? [];
+    title: p.client.title,
+
+    deadline: p.client.deadline,
+
+    status: clientStatus(p.status),
+
+    repoLink: p.client.repoLink,
+
+    prototypeLink: p.client.prototypeLink,
+
+    devNotes: p.client.updates,
+
+    submittedAt: p.submittedAt,
+
+    approvedAt: p.approvedAt,
+
+    daysOverdue: p.client.daysLeft < 0 ? Math.abs(p.client.daysLeft) : 2,
+  }))
+
+  const messages = project.phases.find((p) => p.number === 2)?.comments ?? []
 
   function handleApprove(number: number) {
-    approvePhase(number);
+    approvePhase(number)
   }
+
   function handleDispute(number: number) {
-    disputePhase(number, disputeNote);
-    setDisputeOpen(null);
-    setDisputeNote("");
+    disputePhase(number, disputeNote)
+
+    setDisputeOpen(null)
+
+    setDisputeNote("")
   }
+
   function sendMessage() {
-    if (!feedbackMsg.trim()) return;
-    addComment(2, feedbackMsg, "client");
-    setFeedbackMsg("");
+    if (!feedbackMsg.trim()) return
+
+    addComment(2, feedbackMsg, "client")
+
+    setFeedbackMsg("")
+
     setTimeout(
       () => feedEndRef.current?.scrollIntoView({ behavior: "smooth" }),
+
       80,
-    );
+    )
   }
 
-  const verified = clientPhases.filter((p) => p.status === "completed").length;
-  const total = clientPhases.length;
-  const activePhase = clientPhases.find((p) => p.status === "review");
-  const hasDispute = clientPhases.some((p) => p.status === "disputed");
+  const verified = clientPhases.filter((p) => p.status === "completed").length
 
-  const stacked = isMobile || isTablet;
+  const total = clientPhases.length
+
+  const activePhase = clientPhases.find((p) => p.status === "review")
+
+  const hasDispute = clientPhases.some((p) => p.status === "disputed")
+
+  const stacked = isMobile || isTablet
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F8FAFC" }}>
@@ -8890,8 +11851,11 @@ function MilestoneTrackingPage({
           onClick={() => setSidebarOpen(false)}
           style={{
             position: "fixed",
+
             inset: 0,
+
             background: "rgba(0,0,0,0.35)",
+
             zIndex: 40,
           }}
         />
@@ -8907,8 +11871,9 @@ function MilestoneTrackingPage({
           <ClientSidebar
             active={clientNav}
             onNav={(id) => {
-              setClientNav(id);
-              setSidebarOpen(false);
+              setClientNav(id)
+
+              setSidebarOpen(false)
             }}
             collapsed={collapsed}
           />
@@ -8919,8 +11884,11 @@ function MilestoneTrackingPage({
       <div
         style={{
           flex: 1,
+
           minWidth: 0,
+
           display: "flex",
+
           flexDirection: "column",
         }}
       >
@@ -8928,13 +11896,21 @@ function MilestoneTrackingPage({
         <div
           style={{
             background: "#fff",
+
             borderBottom: "1px solid #E2E8F0",
+
             padding: isMobile ? "12px 16px" : "13px 28px",
+
             display: "flex",
+
             alignItems: "center",
+
             justifyContent: "space-between",
+
             position: "sticky",
+
             top: 0,
+
             zIndex: 30,
           }}
         >
@@ -8944,10 +11920,15 @@ function MilestoneTrackingPage({
                 onClick={() => setSidebarOpen(true)}
                 style={{
                   background: "none",
+
                   border: "none",
+
                   cursor: "pointer",
+
                   color: "#94A3B8",
+
                   lineHeight: 0,
+
                   padding: 4,
                 }}
               >
@@ -8958,9 +11939,13 @@ function MilestoneTrackingPage({
               <div
                 style={{
                   fontSize: 11,
+
                   color: "#94A3B8",
+
                   fontWeight: 600,
+
                   textTransform: "uppercase",
+
                   letterSpacing: "0.05em",
                 }}
               >
@@ -8976,14 +11961,23 @@ function MilestoneTrackingPage({
               <span
                 style={{
                   display: "inline-flex",
+
                   alignItems: "center",
+
                   gap: 5,
+
                   padding: "4px 12px",
+
                   borderRadius: 99,
+
                   background: "#FEF2F2",
+
                   border: "1px solid #FECACA",
+
                   color: "#DC2626",
+
                   fontSize: 12,
+
                   fontWeight: 700,
                 }}
               >
@@ -8994,17 +11988,29 @@ function MilestoneTrackingPage({
               onClick={() => setPanelOpen((v) => !v)}
               style={{
                 display: "flex",
+
                 alignItems: "center",
+
                 gap: 6,
+
                 padding: "7px 14px",
+
                 borderRadius: 8,
+
                 background: panelOpen ? "#EFF6FF" : "#fff",
+
                 border: `1px solid ${panelOpen ? "#BFDBFE" : "#E2E8F0"}`,
+
                 color: panelOpen ? "#2563EB" : "#475569",
+
                 fontSize: 12.5,
+
                 fontWeight: 600,
+
                 cursor: "pointer",
+
                 fontFamily: "Inter, sans-serif",
+
                 transition: "all 0.12s",
               }}
             >
@@ -9013,12 +12019,19 @@ function MilestoneTrackingPage({
               <span
                 style={{
                   background: "#DC2626",
+
                   color: "#fff",
+
                   borderRadius: 99,
+
                   fontSize: 10,
+
                   fontWeight: 700,
+
                   padding: "1px 5px",
+
                   minWidth: 16,
+
                   textAlign: "center",
                 }}
               >
@@ -9028,12 +12041,19 @@ function MilestoneTrackingPage({
             <button
               style={{
                 background: "none",
+
                 border: "1px solid #E2E8F0",
+
                 borderRadius: 8,
+
                 padding: "6px 8px",
+
                 cursor: "pointer",
+
                 color: "#64748B",
+
                 lineHeight: 0,
+
                 position: "relative",
               }}
             >
@@ -9041,12 +12061,19 @@ function MilestoneTrackingPage({
               <span
                 style={{
                   position: "absolute",
+
                   top: 5,
+
                   right: 5,
+
                   width: 7,
+
                   height: 7,
+
                   borderRadius: "50%",
+
                   background: "#DC2626",
+
                   border: "1.5px solid #fff",
                 }}
               />
@@ -9057,18 +12084,26 @@ function MilestoneTrackingPage({
         <main
           style={{
             flex: 1,
+
             padding: isMobile ? "20px 14px 100px" : "28px 28px 100px",
+
             display: "flex",
+
             gap: 20,
+
             alignItems: "flex-start",
           }}
         >
           <div
             style={{
               flex: 1,
+
               minWidth: 0,
+
               display: "flex",
+
               flexDirection: "column",
+
               gap: 20,
             }}
           >
@@ -9076,9 +12111,13 @@ function MilestoneTrackingPage({
             <div
               style={{
                 display: "flex",
+
                 alignItems: "flex-start",
+
                 justifyContent: "space-between",
+
                 gap: 16,
+
                 flexWrap: "wrap",
               }}
             >
@@ -9086,9 +12125,13 @@ function MilestoneTrackingPage({
                 <h1
                   style={{
                     margin: "0 0 6px",
+
                     fontSize: isMobile ? 20 : 24,
+
                     fontWeight: 800,
+
                     color: "#0F172A",
+
                     letterSpacing: "-0.03em",
                   }}
                 >
@@ -9097,8 +12140,11 @@ function MilestoneTrackingPage({
                 <div
                   style={{
                     display: "flex",
+
                     alignItems: "center",
+
                     gap: 10,
+
                     flexWrap: "wrap",
                   }}
                 >
@@ -9107,12 +12153,17 @@ function MilestoneTrackingPage({
                     {[
                       {
                         initials: "MR",
+
                         bg: ["#DBEAFE", "#1D4ED8"],
+
                         name: "Marco Ramirez",
                       },
+
                       {
                         initials: "TL",
+
                         bg: ["#F5F3FF", "#6D28D9"],
+
                         name: "Tricia Lim",
                       },
                     ].map((dev, i) => (
@@ -9121,19 +12172,33 @@ function MilestoneTrackingPage({
                         title={dev.name}
                         style={{
                           width: 28,
+
                           height: 28,
+
                           borderRadius: "50%",
+
                           flexShrink: 0,
+
                           background: `linear-gradient(135deg, ${dev.bg[0]}, ${dev.bg[0]})`,
+
                           border: `2px solid #fff`,
+
                           boxShadow: "0 0 0 1px #E2E8F0",
+
                           display: "flex",
+
                           alignItems: "center",
+
                           justifyContent: "center",
+
                           fontSize: 10,
+
                           fontWeight: 700,
+
                           color: dev.bg[1],
+
                           marginLeft: i > 0 ? -8 : 0,
+
                           zIndex: 2 - i,
                         }}
                       >
@@ -9149,14 +12214,23 @@ function MilestoneTrackingPage({
                   <span
                     style={{
                       display: "inline-flex",
+
                       alignItems: "center",
+
                       gap: 4,
+
                       padding: "2px 8px",
+
                       borderRadius: 99,
+
                       background: "#F0FDF4",
+
                       border: "1px solid #BBF7D0",
+
                       color: "#16A34A",
+
                       fontSize: 11,
+
                       fontWeight: 700,
                     }}
                   >
@@ -9165,14 +12239,23 @@ function MilestoneTrackingPage({
                   <span
                     style={{
                       display: "inline-flex",
+
                       alignItems: "center",
+
                       gap: 4,
+
                       padding: "2px 10px",
+
                       borderRadius: 99,
+
                       background: "#EFF6FF",
+
                       border: "1px solid #BFDBFE",
+
                       color: "#2563EB",
+
                       fontSize: 11,
+
                       fontWeight: 700,
                     }}
                   >
@@ -9185,16 +12268,27 @@ function MilestoneTrackingPage({
                   <button
                     style={{
                       padding: "8px 16px",
+
                       borderRadius: 8,
+
                       border: "1px solid #E2E8F0",
+
                       background: "#fff",
+
                       color: "#475569",
+
                       fontSize: 13,
+
                       fontWeight: 600,
+
                       cursor: "pointer",
+
                       fontFamily: "Inter, sans-serif",
+
                       display: "flex",
+
                       alignItems: "center",
+
                       gap: 6,
                     }}
                   >
@@ -9203,16 +12297,27 @@ function MilestoneTrackingPage({
                   <button
                     style={{
                       padding: "8px 16px",
+
                       borderRadius: 8,
+
                       border: "none",
+
                       background: "#2563EB",
+
                       color: "#fff",
+
                       fontSize: 13,
+
                       fontWeight: 600,
+
                       cursor: "pointer",
+
                       fontFamily: "Inter, sans-serif",
+
                       display: "flex",
+
                       alignItems: "center",
+
                       gap: 6,
                     }}
                   >
@@ -9226,41 +12331,62 @@ function MilestoneTrackingPage({
             <div
               style={{
                 background: "#fff",
+
                 border: "1px solid #E2E8F0",
+
                 borderRadius: 12,
+
                 boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+
                 display: "grid",
+
                 gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)",
+
                 overflow: "hidden",
               }}
             >
               {[
                 {
                   label: "Current Sprint Phase",
+
                   value: `Phase ${Math.min(verified + 1, total)} of ${total}`,
+
                   icon: "🔄",
+
                   accent: "#2563EB",
                 },
+
                 {
                   label: "Next Deadline",
+
                   value: activePhase?.deadline ?? "Aug 28, 2026",
+
                   icon: "📅",
+
                   accent: "#D97706",
                 },
+
                 {
                   label: "Milestones Verified",
+
                   value: `${verified} / ${total}`,
+
                   icon: "✅",
+
                   accent: "#16A34A",
                 },
+
                 {
                   label: "System Health",
+
                   value: hasDispute
                     ? "Dispute Active"
                     : verified === total
                       ? "Delivered"
                       : "On Schedule",
+
                   icon: hasDispute ? "⚠️" : "🟢",
+
                   accent: hasDispute ? "#DC2626" : "#16A34A",
                 },
               ].map((m, i) => (
@@ -9268,7 +12394,9 @@ function MilestoneTrackingPage({
                   key={m.label}
                   style={{
                     padding: "18px 20px",
+
                     borderRight: i < 3 ? "1px solid #F1F5F9" : "none",
+
                     borderBottom:
                       isMobile && i < 2 ? "1px solid #F1F5F9" : "none",
                   }}
@@ -9276,13 +12404,21 @@ function MilestoneTrackingPage({
                   <div
                     style={{
                       fontSize: 11.5,
+
                       fontWeight: 600,
+
                       color: "#94A3B8",
+
                       textTransform: "uppercase",
+
                       letterSpacing: "0.06em",
+
                       marginBottom: 6,
+
                       display: "flex",
+
                       alignItems: "center",
+
                       gap: 6,
                     }}
                   >
@@ -9291,8 +12427,11 @@ function MilestoneTrackingPage({
                   <div
                     style={{
                       fontSize: isMobile ? 16 : 18,
+
                       fontWeight: 800,
+
                       color: m.accent,
+
                       letterSpacing: "-0.02em",
                     }}
                   >
@@ -9306,19 +12445,28 @@ function MilestoneTrackingPage({
             <div
               style={{
                 background: "#fff",
+
                 border: "1px solid #E2E8F0",
+
                 borderRadius: 12,
+
                 padding: "16px 20px",
+
                 boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
               }}
             >
               <div
                 style={{
                   display: "flex",
+
                   justifyContent: "space-between",
+
                   marginBottom: 10,
+
                   alignItems: "center",
+
                   flexWrap: "wrap",
+
                   gap: 8,
                 }}
               >
@@ -9330,8 +12478,11 @@ function MilestoneTrackingPage({
                 <span
                   style={{
                     fontSize: 15,
+
                     fontWeight: 800,
+
                     color: "#2563EB",
+
                     letterSpacing: "-0.02em",
                   }}
                 >
@@ -9341,18 +12492,26 @@ function MilestoneTrackingPage({
               <div
                 style={{
                   height: 10,
+
                   background: "#F1F5F9",
+
                   borderRadius: 99,
+
                   overflow: "hidden",
+
                   position: "relative",
                 }}
               >
                 <div
                   style={{
                     width: `${(verified / total) * 100}%`,
+
                     height: "100%",
+
                     background: "linear-gradient(90deg, #2563EB, #3B82F6)",
+
                     borderRadius: 99,
+
                     transition: "width 0.5s ease",
                   }}
                 />
@@ -9360,27 +12519,36 @@ function MilestoneTrackingPage({
               <div
                 style={{
                   display: "flex",
+
                   justifyContent: "space-between",
+
                   marginTop: 8,
                 }}
               >
                 {clientPhases.map((p) => {
-                  const s = p.status;
+                  const s = p.status
+
                   return (
                     <div
                       key={p.num}
                       style={{
                         display: "flex",
+
                         flexDirection: "column",
+
                         alignItems: "center",
+
                         gap: 4,
                       }}
                     >
                       <div
                         style={{
                           width: 22,
+
                           height: 22,
+
                           borderRadius: "50%",
+
                           background:
                             s === "completed"
                               ? "#16A34A"
@@ -9389,9 +12557,21 @@ function MilestoneTrackingPage({
                                 : s === "disputed"
                                   ? "#DC2626"
                                   : "#F1F5F9",
-                          border: `2px solid ${s === "completed" ? "#16A34A" : s === "review" ? "#2563EB" : s === "disputed" ? "#DC2626" : "#E2E8F0"}`,
+
+                          border: `2px solid ${
+                            s === "completed"
+                              ? "#16A34A"
+                              : s === "review"
+                                ? "#2563EB"
+                                : s === "disputed"
+                                  ? "#DC2626"
+                                  : "#E2E8F0"
+                          }`,
+
                           display: "flex",
+
                           alignItems: "center",
+
                           justifyContent: "center",
                         }}
                       >
@@ -9402,7 +12582,9 @@ function MilestoneTrackingPage({
                           <span
                             style={{
                               fontSize: 9,
+
                               fontWeight: 800,
+
                               color: s === "upcoming" ? "#CBD5E1" : "#fff",
                             }}
                           >
@@ -9414,8 +12596,11 @@ function MilestoneTrackingPage({
                         <span
                           style={{
                             fontSize: 10,
+
                             color: "#94A3B8",
+
                             fontWeight: 600,
+
                             whiteSpace: "nowrap",
                           }}
                         >
@@ -9423,7 +12608,7 @@ function MilestoneTrackingPage({
                         </span>
                       )}
                     </div>
-                  );
+                  )
                 })}
               </div>
             </div>
@@ -9431,24 +12616,36 @@ function MilestoneTrackingPage({
             {/* ── Phase cards ──────────────────────────────────── */}
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {clientPhases.map((phase) => {
-                const status = phase.status;
-                const cfg = phaseCfg[status];
-                const isReview = status === "review";
-                const isCompleted = status === "completed";
-                const isDisputed = status === "disputed";
-                const isUpcoming = status === "upcoming";
+                const status = phase.status
+
+                const cfg = phaseCfg[status]
+
+                const isReview = status === "review"
+
+                const isCompleted = status === "completed"
+
+                const isDisputed = status === "disputed"
+
+                const isUpcoming = status === "upcoming"
 
                 return (
                   <div
                     key={phase.num}
                     style={{
                       background: "#fff",
+
                       border: "1px solid #E2E8F0",
+
                       borderLeft: `4px solid ${cfg.border}`,
+
                       borderRadius: 12,
+
                       overflow: "hidden",
+
                       boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+
                       opacity: isUpcoming ? 0.7 : 1,
+
                       transition: "opacity 0.15s",
                     }}
                   >
@@ -9456,21 +12653,32 @@ function MilestoneTrackingPage({
                     <div
                       style={{
                         padding: "18px 22px",
+
                         display: "flex",
+
                         alignItems: "flex-start",
+
                         justifyContent: "space-between",
+
                         gap: 12,
+
                         flexWrap: "wrap",
+
                         borderBottom: isUpcoming ? "none" : "1px solid #F1F5F9",
+
                         background: cfg.bg,
                       }}
                     >
                       <div
                         style={{
                           display: "flex",
+
                           alignItems: "center",
+
                           gap: 12,
+
                           flex: 1,
+
                           minWidth: 0,
                         }}
                       >
@@ -9478,9 +12686,13 @@ function MilestoneTrackingPage({
                         <div
                           style={{
                             width: 38,
+
                             height: 38,
+
                             borderRadius: "50%",
+
                             flexShrink: 0,
+
                             background: isCompleted
                               ? "#F0FDF4"
                               : isReview
@@ -9488,9 +12700,13 @@ function MilestoneTrackingPage({
                                 : isDisputed
                                   ? "#FEF2F2"
                                   : "#F8FAFC",
+
                             border: `2px solid ${cfg.border}`,
+
                             display: "flex",
+
                             alignItems: "center",
+
                             justifyContent: "center",
                           }}
                         >
@@ -9504,7 +12720,9 @@ function MilestoneTrackingPage({
                             <span
                               style={{
                                 fontSize: 13,
+
                                 fontWeight: 800,
+
                                 color: cfg.border,
                               }}
                             >
@@ -9516,16 +12734,22 @@ function MilestoneTrackingPage({
                           <div
                             style={{
                               display: "flex",
+
                               alignItems: "center",
+
                               gap: 8,
+
                               flexWrap: "wrap",
+
                               marginBottom: 3,
                             }}
                           >
                             <span
                               style={{
                                 fontSize: 14,
+
                                 fontWeight: 700,
+
                                 color: "#0F172A",
                               }}
                             >
@@ -9534,24 +12758,38 @@ function MilestoneTrackingPage({
                             <span
                               style={{
                                 display: "inline-flex",
+
                                 alignItems: "center",
+
                                 gap: 4,
+
                                 padding: "2px 9px",
+
                                 borderRadius: 99,
+
                                 background: cfg.badgeBg,
+
                                 border: `1px solid ${cfg.badgeBorder}`,
+
                                 color: cfg.badgeColor,
+
                                 fontSize: 11,
+
                                 fontWeight: 700,
+
                                 whiteSpace: "nowrap",
                               }}
                             >
                               <span
                                 style={{
                                   width: 5,
+
                                   height: 5,
+
                                   borderRadius: "50%",
+
                                   background: cfg.dot,
+
                                   flexShrink: 0,
                                 }}
                               />
@@ -9575,8 +12813,11 @@ function MilestoneTrackingPage({
                       <div
                         style={{
                           padding: "18px 22px",
+
                           display: "flex",
+
                           flexDirection: "column",
+
                           gap: 14,
                         }}
                       >
@@ -9586,8 +12827,11 @@ function MilestoneTrackingPage({
                             <div
                               style={{
                                 display: "flex",
+
                                 gap: 10,
+
                                 flexWrap: "wrap",
+
                                 alignItems: "flex-start",
                               }}
                             >
@@ -9595,10 +12839,15 @@ function MilestoneTrackingPage({
                                 <div
                                   style={{
                                     fontSize: 11,
+
                                     fontWeight: 700,
+
                                     color: "#94A3B8",
+
                                     textTransform: "uppercase",
+
                                     letterSpacing: "0.06em",
+
                                     marginBottom: 6,
                                   }}
                                 >
@@ -9610,19 +12859,33 @@ function MilestoneTrackingPage({
                                   rel="noreferrer"
                                   style={{
                                     display: "inline-flex",
+
                                     alignItems: "center",
+
                                     gap: 7,
+
                                     padding: "8px 12px",
+
                                     background: "#F8FAFC",
+
                                     border: "1px solid #E2E8F0",
+
                                     borderRadius: 8,
+
                                     color: "#2563EB",
+
                                     fontSize: 13,
+
                                     fontWeight: 600,
+
                                     textDecoration: "none",
+
                                     maxWidth: "100%",
+
                                     overflow: "hidden",
+
                                     textOverflow: "ellipsis",
+
                                     whiteSpace: "nowrap",
                                   }}
                                 >
@@ -9630,6 +12893,7 @@ function MilestoneTrackingPage({
                                   <span
                                     style={{
                                       overflow: "hidden",
+
                                       textOverflow: "ellipsis",
                                     }}
                                   >
@@ -9640,7 +12904,9 @@ function MilestoneTrackingPage({
                                 <div
                                   style={{
                                     fontSize: 11.5,
+
                                     color: "#94A3B8",
+
                                     marginTop: 5,
                                   }}
                                 >
@@ -9651,18 +12917,26 @@ function MilestoneTrackingPage({
                             <div
                               style={{
                                 display: "flex",
+
                                 alignItems: "center",
+
                                 gap: 8,
+
                                 padding: "10px 14px",
+
                                 background: "#F0FDF4",
+
                                 border: "1px solid #BBF7D0",
+
                                 borderRadius: 8,
                               }}
                             >
                               <span
                                 style={{
                                   color: "#16A34A",
+
                                   lineHeight: 0,
+
                                   flexShrink: 0,
                                 }}
                               >
@@ -9672,7 +12946,9 @@ function MilestoneTrackingPage({
                                 <span
                                   style={{
                                     fontSize: 13,
+
                                     fontWeight: 700,
+
                                     color: "#16A34A",
                                   }}
                                 >
@@ -9681,7 +12957,9 @@ function MilestoneTrackingPage({
                                 <span
                                   style={{
                                     fontSize: 12,
+
                                     color: "#64748B",
+
                                     marginLeft: 8,
                                   }}
                                 >
@@ -9694,10 +12972,15 @@ function MilestoneTrackingPage({
                                 <div
                                   style={{
                                     fontSize: 11,
+
                                     fontWeight: 700,
+
                                     color: "#94A3B8",
+
                                     textTransform: "uppercase",
+
                                     letterSpacing: "0.06em",
+
                                     marginBottom: 6,
                                   }}
                                 >
@@ -9706,12 +12989,19 @@ function MilestoneTrackingPage({
                                 <p
                                   style={{
                                     margin: 0,
+
                                     fontSize: 13,
+
                                     color: "#475569",
+
                                     lineHeight: 1.6,
+
                                     background: "#F8FAFC",
+
                                     border: "1px solid #E2E8F0",
+
                                     borderRadius: 8,
+
                                     padding: "12px 14px",
                                   }}
                                 >
@@ -9729,10 +13019,15 @@ function MilestoneTrackingPage({
                               <div
                                 style={{
                                   fontSize: 11,
+
                                   fontWeight: 700,
+
                                   color: "#94A3B8",
+
                                   textTransform: "uppercase",
+
                                   letterSpacing: "0.06em",
+
                                   marginBottom: 6,
                                 }}
                               >
@@ -9741,16 +13036,22 @@ function MilestoneTrackingPage({
                               <div
                                 style={{
                                   background: "#F8FAFC",
+
                                   border: "1.5px solid #BFDBFE",
+
                                   borderRadius: 10,
+
                                   padding: "14px 16px",
                                 }}
                               >
                                 <p
                                   style={{
                                     margin: "0 0 10px",
+
                                     fontSize: 13.5,
+
                                     color: "#334155",
+
                                     lineHeight: 1.65,
                                   }}
                                 >
@@ -9759,7 +13060,9 @@ function MilestoneTrackingPage({
                                 <div
                                   style={{
                                     display: "flex",
+
                                     gap: 10,
+
                                     flexWrap: "wrap",
                                   }}
                                 >
@@ -9769,15 +13072,25 @@ function MilestoneTrackingPage({
                                     rel="noreferrer"
                                     style={{
                                       display: "inline-flex",
+
                                       alignItems: "center",
+
                                       gap: 6,
+
                                       padding: "7px 12px",
+
                                       background: "#fff",
+
                                       border: "1px solid #E2E8F0",
+
                                       borderRadius: 7,
+
                                       color: "#334155",
+
                                       fontSize: 12.5,
+
                                       fontWeight: 600,
+
                                       textDecoration: "none",
                                     }}
                                   >
@@ -9792,15 +13105,25 @@ function MilestoneTrackingPage({
                                         rel="noreferrer"
                                         style={{
                                           display: "inline-flex",
+
                                           alignItems: "center",
+
                                           gap: 6,
+
                                           padding: "7px 12px",
+
                                           background: "#EFF6FF",
+
                                           border: "1px solid #BFDBFE",
+
                                           borderRadius: 7,
+
                                           color: "#2563EB",
+
                                           fontSize: 12.5,
+
                                           fontWeight: 600,
+
                                           textDecoration: "none",
                                         }}
                                       >
@@ -9817,16 +13140,22 @@ function MilestoneTrackingPage({
                               <div
                                 style={{
                                   background: "#FFFBEB",
+
                                   border: "1.5px solid #FDE68A",
+
                                   borderRadius: 10,
+
                                   padding: "16px",
                                 }}
                               >
                                 <div
                                   style={{
                                     fontSize: 13,
+
                                     fontWeight: 700,
+
                                     color: "#D97706",
+
                                     marginBottom: 10,
                                   }}
                                 >
@@ -9841,16 +13170,27 @@ function MilestoneTrackingPage({
                                   rows={3}
                                   style={{
                                     width: "100%",
+
                                     padding: "10px 12px",
+
                                     border: "1.5px solid #FDE68A",
+
                                     borderRadius: 8,
+
                                     fontFamily: "Inter, sans-serif",
+
                                     fontSize: 13,
+
                                     outline: "none",
+
                                     resize: "vertical",
+
                                     boxSizing: "border-box",
+
                                     background: "#fff",
+
                                     color: "#0F172A",
+
                                     lineHeight: 1.55,
                                   }}
                                   onFocus={(e) =>
@@ -9865,8 +13205,11 @@ function MilestoneTrackingPage({
                                 <div
                                   style={{
                                     display: "flex",
+
                                     gap: 8,
+
                                     marginTop: 10,
+
                                     justifyContent: "flex-end",
                                   }}
                                 >
@@ -9874,13 +13217,21 @@ function MilestoneTrackingPage({
                                     onClick={() => setDisputeOpen(null)}
                                     style={{
                                       padding: "7px 14px",
+
                                       borderRadius: 7,
+
                                       border: "1px solid #E2E8F0",
+
                                       background: "#fff",
+
                                       color: "#475569",
+
                                       fontSize: 13,
+
                                       fontWeight: 600,
+
                                       cursor: "pointer",
+
                                       fontFamily: "Inter, sans-serif",
                                     }}
                                   >
@@ -9890,13 +13241,21 @@ function MilestoneTrackingPage({
                                     onClick={() => handleDispute(phase.num)}
                                     style={{
                                       padding: "7px 14px",
+
                                       borderRadius: 7,
+
                                       border: "none",
+
                                       background: "#D97706",
+
                                       color: "#fff",
+
                                       fontSize: 13,
+
                                       fontWeight: 700,
+
                                       cursor: "pointer",
+
                                       fontFamily: "Inter, sans-serif",
                                     }}
                                   >
@@ -9911,8 +13270,11 @@ function MilestoneTrackingPage({
                               <div
                                 style={{
                                   display: "flex",
+
                                   gap: 10,
+
                                   flexWrap: stacked ? "wrap" : "nowrap",
+
                                   paddingTop: 4,
                                 }}
                               >
@@ -9920,20 +13282,35 @@ function MilestoneTrackingPage({
                                   onClick={() => handleApprove(phase.num)}
                                   style={{
                                     flex: stacked ? "1 1 100%" : "unset",
+
                                     display: "flex",
+
                                     alignItems: "center",
+
                                     justifyContent: "center",
+
                                     gap: 8,
+
                                     padding: "11px 24px",
+
                                     borderRadius: 8,
+
                                     border: "none",
+
                                     background: "#16A34A",
+
                                     color: "#fff",
+
                                     fontSize: 14,
+
                                     fontWeight: 700,
+
                                     cursor: "pointer",
+
                                     fontFamily: "Inter, sans-serif",
+
                                     transition: "background 0.15s",
+
                                     boxShadow: "0 2px 8px rgba(22,163,74,0.3)",
                                   }}
                                   onMouseEnter={(e) =>
@@ -9952,30 +13329,42 @@ function MilestoneTrackingPage({
                                   onClick={() => setDisputeOpen(phase.num)}
                                   style={{
                                     flex: stacked ? "1 1 100%" : "unset",
+
                                     display: "flex",
+
                                     alignItems: "center",
+
                                     justifyContent: "center",
+
                                     gap: 8,
+
                                     padding: "11px 20px",
+
                                     borderRadius: 8,
+
                                     background: "transparent",
+
                                     color: "#D97706",
+
                                     border: "1.5px solid #D97706",
+
                                     fontSize: 14,
+
                                     fontWeight: 700,
+
                                     cursor: "pointer",
+
                                     fontFamily: "Inter, sans-serif",
+
                                     transition: "all 0.15s",
                                   }}
                                   onMouseEnter={(e) => {
-                                    (
-                                      e.currentTarget as HTMLButtonElement
-                                    ).style.background = "#FFFBEB";
+                                    ;(e.currentTarget as HTMLButtonElement).style.background =
+                                      "#FFFBEB"
                                   }}
                                   onMouseLeave={(e) => {
-                                    (
-                                      e.currentTarget as HTMLButtonElement
-                                    ).style.background = "transparent";
+                                    ;(e.currentTarget as HTMLButtonElement).style.background =
+                                      "transparent"
                                   }}
                                 >
                                   <svg
@@ -10011,18 +13400,26 @@ function MilestoneTrackingPage({
                             <div
                               style={{
                                 display: "flex",
+
                                 gap: 10,
+
                                 alignItems: "flex-start",
+
                                 padding: "14px 16px",
+
                                 background: "#FEF2F2",
+
                                 border: "1.5px solid #FECACA",
+
                                 borderRadius: 10,
                               }}
                             >
                               <span
                                 style={{
                                   fontSize: 20,
+
                                   flexShrink: 0,
+
                                   marginTop: -1,
                                 }}
                               >
@@ -10032,8 +13429,11 @@ function MilestoneTrackingPage({
                                 <div
                                   style={{
                                     fontSize: 13.5,
+
                                     fontWeight: 700,
+
                                     color: "#DC2626",
+
                                     marginBottom: 4,
                                   }}
                                 >
@@ -10042,8 +13442,11 @@ function MilestoneTrackingPage({
                                 <p
                                   style={{
                                     margin: 0,
+
                                     fontSize: 13,
+
                                     color: "#7F1D1D",
+
                                     lineHeight: 1.55,
                                   }}
                                 >
@@ -10062,20 +13465,30 @@ function MilestoneTrackingPage({
                             <div
                               style={{
                                 display: "flex",
+
                                 gap: 10,
+
                                 flexWrap: "wrap",
+
                                 alignItems: "center",
+
                                 padding: "10px 14px",
+
                                 background: "#FFFBEB",
+
                                 border: "1px solid #FDE68A",
+
                                 borderRadius: 8,
                               }}
                             >
                               <span
                                 style={{
                                   fontSize: 12,
+
                                   color: "#92400E",
+
                                   fontWeight: 600,
+
                                   flex: 1,
                                 }}
                               >
@@ -10086,12 +13499,19 @@ function MilestoneTrackingPage({
                                 href="#"
                                 style={{
                                   fontSize: 12.5,
+
                                   fontWeight: 700,
+
                                   color: "#D97706",
+
                                   textDecoration: "none",
+
                                   whiteSpace: "nowrap",
+
                                   display: "flex",
+
                                   alignItems: "center",
+
                                   gap: 4,
                                 }}
                               >
@@ -10108,7 +13528,9 @@ function MilestoneTrackingPage({
                         <span
                           style={{
                             fontSize: 12.5,
+
                             color: "#94A3B8",
+
                             fontWeight: 500,
                           }}
                         >
@@ -10118,7 +13540,7 @@ function MilestoneTrackingPage({
                       </div>
                     )}
                   </div>
-                );
+                )
               })}
             </div>
           </div>
@@ -10128,25 +13550,40 @@ function MilestoneTrackingPage({
             <div
               style={{
                 width: stacked ? "100%" : 320,
+
                 flexShrink: 0,
+
                 position: stacked ? "relative" : "sticky",
+
                 top: stacked ? "auto" : 80,
+
                 background: "#fff",
+
                 border: "1px solid #E2E8F0",
+
                 borderRadius: 12,
+
                 boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+
                 display: "flex",
+
                 flexDirection: "column",
+
                 maxHeight: stacked ? "none" : "calc(100vh - 120px)",
+
                 overflow: "hidden",
               }}
             >
               <div
                 style={{
                   padding: "16px 18px 12px",
+
                   borderBottom: "1px solid #F1F5F9",
+
                   display: "flex",
+
                   alignItems: "center",
+
                   justifyContent: "space-between",
                 }}
               >
@@ -10167,9 +13604,13 @@ function MilestoneTrackingPage({
                     onClick={() => setPanelOpen(false)}
                     style={{
                       background: "none",
+
                       border: "none",
+
                       cursor: "pointer",
+
                       color: "#94A3B8",
+
                       lineHeight: 0,
                     }}
                   >
@@ -10182,39 +13623,60 @@ function MilestoneTrackingPage({
               <div
                 style={{
                   flex: 1,
+
                   overflowY: "auto",
+
                   padding: "12px 16px",
+
                   display: "flex",
+
                   flexDirection: "column",
+
                   gap: 12,
+
                   minHeight: 200,
                 }}
               >
                 {messages.map((msg) => {
-                  const isClient = msg.role === "client";
+                  const isClient = msg.role === "client"
+
                   return (
                     <div
                       key={msg.id}
                       style={{
                         display: "flex",
+
                         flexDirection: isClient ? "row-reverse" : "row",
+
                         gap: 8,
+
                         alignItems: "flex-start",
                       }}
                     >
                       <div
                         style={{
                           width: 30,
+
                           height: 30,
+
                           borderRadius: "50%",
+
                           flexShrink: 0,
+
                           background: `linear-gradient(135deg, ${msg.avatarBg[0]}, ${msg.avatarBg[0]})`,
+
                           border: `1.5px solid ${msg.avatarBg[1]}30`,
+
                           display: "flex",
+
                           alignItems: "center",
+
                           justifyContent: "center",
+
                           fontSize: 10,
+
                           fontWeight: 700,
+
                           color: msg.avatarBg[1],
                         }}
                       >
@@ -10224,16 +13686,22 @@ function MilestoneTrackingPage({
                         <div
                           style={{
                             display: "flex",
+
                             gap: 6,
+
                             alignItems: "baseline",
+
                             flexDirection: isClient ? "row-reverse" : "row",
+
                             marginBottom: 3,
                           }}
                         >
                           <span
                             style={{
                               fontSize: 11.5,
+
                               fontWeight: 700,
+
                               color: "#334155",
                             }}
                           >
@@ -10246,13 +13714,21 @@ function MilestoneTrackingPage({
                         <div
                           style={{
                             padding: "9px 12px",
+
                             borderRadius: isClient
                               ? "12px 4px 12px 12px"
                               : "4px 12px 12px 12px",
+
                             background: isClient ? "#EFF6FF" : "#F8FAFC",
-                            border: `1px solid ${isClient ? "#BFDBFE" : "#E2E8F0"}`,
+
+                            border: `1px solid ${
+                              isClient ? "#BFDBFE" : "#E2E8F0"
+                            }`,
+
                             fontSize: 13,
+
                             color: "#334155",
+
                             lineHeight: 1.55,
                           }}
                         >
@@ -10260,7 +13736,7 @@ function MilestoneTrackingPage({
                         </div>
                       </div>
                     </div>
-                  );
+                  )
                 })}
                 <div ref={feedEndRef} />
               </div>
@@ -10269,8 +13745,11 @@ function MilestoneTrackingPage({
               <div
                 style={{
                   padding: "12px 14px",
+
                   borderTop: "1px solid #F1F5F9",
+
                   display: "flex",
+
                   gap: 8,
                 }}
               >
@@ -10280,20 +13759,29 @@ function MilestoneTrackingPage({
                   onChange={(e) => setFeedbackMsg(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      sendMessage();
+                      e.preventDefault()
+
+                      sendMessage()
                     }
                   }}
                   placeholder="Leave structured feedback…"
                   style={{
                     flex: 1,
+
                     padding: "9px 12px",
+
                     border: "1.5px solid #E2E8F0",
+
                     borderRadius: 8,
+
                     fontFamily: "Inter, sans-serif",
+
                     fontSize: 13,
+
                     outline: "none",
+
                     color: "#0F172A",
+
                     background: "#fff",
                   }}
                   onFocus={(e) =>
@@ -10307,16 +13795,27 @@ function MilestoneTrackingPage({
                   onClick={sendMessage}
                   style={{
                     width: 38,
+
                     height: 38,
+
                     borderRadius: 8,
+
                     border: "none",
+
                     background: feedbackMsg.trim() ? "#2563EB" : "#F1F5F9",
+
                     color: feedbackMsg.trim() ? "#fff" : "#94A3B8",
+
                     cursor: feedbackMsg.trim() ? "pointer" : "default",
+
                     display: "flex",
+
                     alignItems: "center",
+
                     justifyContent: "center",
+
                     transition: "all 0.15s",
+
                     flexShrink: 0,
                   }}
                 >
@@ -10330,143 +13829,218 @@ function MilestoneTrackingPage({
         </main>
       </div>
     </div>
-  );
+  )
 }
 
 // ─── Enterprise Analytics ─────────────────────────────────────────────────────
 
 // Categorical palette — 5 hues, fixed order, validated for CVD separation
-const CAT5 = ["#2563EB", "#16A34A", "#D97706", "#7C3AED", "#0891B2"];
+
+const CAT5 = ["#2563EB", "#16A34A", "#D97706", "#7C3AED", "#0891B2"]
 
 const techStackData = [
   { name: "Next.js", pct: 35, fill: CAT5[0] },
+
   { name: "Firebase", pct: 25, fill: CAT5[1] },
+
   { name: "Tailwind CSS", pct: 20, fill: CAT5[2] },
+
   { name: "Android/Kotlin", pct: 15, fill: CAT5[3] },
+
   { name: "PostgreSQL", pct: 5, fill: CAT5[4] },
-];
+]
 
 const barangayData = [
   { name: "Apokon", projects: 45, fill: CAT5[0] },
+
   { name: "Mankilam", projects: 30, fill: CAT5[1] },
+
   { name: "Magugpo West", projects: 25, fill: CAT5[2] },
+
   { name: "Canocotan", projects: 18, fill: CAT5[3] },
+
   { name: "Visayan Vill.", projects: 12, fill: CAT5[4] },
-];
+]
 
 const trajectoryData = [
   { month: "Mar", bids: 8, completions: 3 },
+
   { month: "Apr", bids: 14, completions: 7 },
+
   { month: "May", bids: 19, completions: 11 },
+
   { month: "Jun", bids: 26, completions: 18 },
+
   { month: "Jul", bids: 31, completions: 24 },
+
   { month: "Aug", bids: 38, completions: 29 },
-];
+]
 
 const auditRows = [
   {
     ts: "Aug 10, 2026 · 11:42 AM",
+
     event: "Milestone Verified",
+
     role: "Enterprise Client",
+
     user: "Ernesto Dela Vega",
+
     status: "success",
   },
+
   {
     ts: "Aug 10, 2026 · 09:15 AM",
+
     event: "Automated Delay Alert Flagged",
+
     role: "System / Scheduler",
+
     user: "StartupMatch Bot",
+
     status: "warning",
   },
+
   {
     ts: "Aug 9, 2026 · 04:30 PM",
+
     event: "New Developer Verified",
+
     role: "Platform Admin",
+
     user: "Juanita Arceo",
+
     status: "success",
   },
+
   {
     ts: "Aug 9, 2026 · 01:05 PM",
+
     event: "Dispute Escalation Filed",
+
     role: "Enterprise Client",
+
     user: "Vivian Soriano",
+
     status: "danger",
   },
+
   {
     ts: "Aug 8, 2026 · 10:00 AM",
+
     event: "Project Bid Published",
+
     role: "Enterprise Client",
+
     user: "Ramon Villanueva",
+
     status: "info",
   },
-];
+]
 
 const auditStatusCfg = {
   success: {
     bg: "#F0FDF4",
+
     color: "#16A34A",
+
     border: "#BBF7D0",
+
     label: "Verified",
   },
+
   warning: {
     bg: "#FFFBEB",
+
     color: "#D97706",
+
     border: "#FDE68A",
+
     label: "Alert",
   },
+
   danger: {
     bg: "#FEF2F2",
+
     color: "#DC2626",
+
     border: "#FECACA",
+
     label: "Escalated",
   },
+
   info: {
     bg: "#EFF6FF",
+
     color: "#2563EB",
+
     border: "#BFDBFE",
+
     label: "Published",
   },
-};
+}
 
 // Shared recharts tooltip style
+
 const tooltipStyle: React.CSSProperties = {
   background: "#fff",
+
   border: "1px solid #E2E8F0",
+
   borderRadius: 8,
+
   padding: "8px 12px",
+
   fontSize: 12,
+
   fontFamily: "Inter, sans-serif",
+
   boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-};
+}
 
 function ChartCard({
   title,
+
   subtitle,
+
   children,
+
   action,
 }: {
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-  action?: React.ReactNode;
+  title: string
+
+  subtitle?: string
+
+  children: React.ReactNode
+
+  action?: React.ReactNode
 }) {
   return (
     <div
       style={{
         background: "#fff",
+
         border: "1px solid #E2E8F0",
+
         borderRadius: 12,
+
         boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+
         overflow: "hidden",
       }}
     >
       <div
         style={{
           padding: "18px 22px 14px",
+
           borderBottom: "1px solid #F1F5F9",
+
           display: "flex",
+
           alignItems: "flex-start",
+
           justifyContent: "space-between",
+
           gap: 12,
         }}
       >
@@ -10474,8 +14048,11 @@ function ChartCard({
           <div
             style={{
               fontSize: 14,
+
               fontWeight: 700,
+
               color: "#0F172A",
+
               letterSpacing: "-0.01em",
             }}
           >
@@ -10491,53 +14068,79 @@ function ChartCard({
       </div>
       <div style={{ padding: "16px 22px 20px" }}>{children}</div>
     </div>
-  );
+  )
 }
 
 function AnalyticsAdminSidebar({
   active,
+
   onNav,
+
   collapsed,
 }: {
-  active: string;
-  onNav: (id: string) => void;
-  collapsed: boolean;
+  active: string
+
+  onNav: (id: string) => void
+
+  collapsed: boolean
 }) {
   return (
     <aside
       style={{
         width: collapsed ? 72 : 260,
+
         minHeight: "100vh",
+
         background: "#0F172A",
+
         display: "flex",
+
         flexDirection: "column",
+
         flexShrink: 0,
+
         transition: "width 0.2s ease",
+
         position: "sticky",
+
         top: 0,
+
         height: "100vh",
       }}
     >
       <div
         style={{
           padding: collapsed ? "20px 0" : "20px 22px",
+
           display: "flex",
+
           alignItems: "center",
+
           gap: 10,
+
           borderBottom: "1px solid rgba(255,255,255,0.07)",
         }}
       >
         <div
           style={{
             width: 36,
+
             height: 36,
+
             borderRadius: 8,
+
             flexShrink: 0,
+
             background: "linear-gradient(135deg, #2563EB, #1D4ED8)",
+
             display: "flex",
+
             alignItems: "center",
+
             justifyContent: "center",
+
             marginLeft: collapsed ? "auto" : 0,
+
             marginRight: collapsed ? "auto" : 0,
           }}
         >
@@ -10556,8 +14159,11 @@ function AnalyticsAdminSidebar({
             <div
               style={{
                 fontWeight: 700,
+
                 fontSize: 14,
+
                 color: "#fff",
+
                 letterSpacing: "-0.02em",
               }}
             >
@@ -10571,51 +14177,67 @@ function AnalyticsAdminSidebar({
       </div>
       <nav style={{ padding: "10px 0", flex: 1 }}>
         {adminNavItems.map(({ icon: Icon, label, id }) => {
-          const isActive = active === id;
+          const isActive = active === id
+
           return (
             <button
               key={id}
               onClick={() => onNav(id)}
               style={{
                 width: "100%",
+
                 display: "flex",
+
                 alignItems: "center",
+
                 gap: 11,
+
                 padding: collapsed ? "11px 0" : "11px 20px",
+
                 justifyContent: collapsed ? "center" : "flex-start",
+
                 border: "none",
+
                 background: isActive ? "rgba(37,99,235,0.18)" : "transparent",
+
                 color: isActive ? "#60A5FA" : "#94A3B8",
+
                 borderLeft: isActive
                   ? "3px solid #2563EB"
                   : "3px solid transparent",
+
                 cursor: "pointer",
+
                 fontFamily: "Inter, sans-serif",
+
                 fontSize: 13.5,
+
                 fontWeight: isActive ? 600 : 400,
+
                 transition: "all 0.12s ease",
               }}
               onMouseEnter={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "rgba(255,255,255,0.05)";
+                    "rgba(255,255,255,0.05)"
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "transparent";
+                    "transparent"
               }}
             >
               <Icon size={18} />
               {!collapsed && label}
             </button>
-          );
+          )
         })}
       </nav>
       {!collapsed && (
         <div
           style={{
             padding: "14px 18px",
+
             borderTop: "1px solid rgba(255,255,255,0.07)",
           }}
         >
@@ -10623,15 +14245,25 @@ function AnalyticsAdminSidebar({
             <div
               style={{
                 width: 32,
+
                 height: 32,
+
                 borderRadius: "50%",
+
                 flexShrink: 0,
+
                 background: "linear-gradient(135deg, #1E3A5F, #2563EB)",
+
                 display: "flex",
+
                 alignItems: "center",
+
                 justifyContent: "center",
+
                 fontSize: 11,
+
                 fontWeight: 700,
+
                 color: "#fff",
               }}
             >
@@ -10649,60 +14281,93 @@ function AnalyticsAdminSidebar({
         </div>
       )}
     </aside>
-  );
+  )
 }
 
 function EnterpriseAnalyticsPage({
   isMobile,
+
   isTablet,
+
   collapsed,
+
   sidebarOpen,
+
   setSidebarOpen,
 }: {
-  isMobile: boolean;
-  isTablet: boolean;
-  collapsed: boolean;
-  sidebarOpen: boolean;
-  setSidebarOpen: (v: boolean) => void;
+  isMobile: boolean
+
+  isTablet: boolean
+
+  collapsed: boolean
+
+  sidebarOpen: boolean
+
+  setSidebarOpen: (v: boolean) => void
 }) {
-  const [analyticsNav, setAnalyticsNav] = useState("analytics");
-  const [dateRange, setDateRange] = useState("Academic Year 2026");
-  const isNarrow = isMobile || isTablet;
+  const [analyticsNav, setAnalyticsNav] = useState("analytics")
+
+  const [dateRange, setDateRange] = useState("Academic Year 2026")
+
+  const isNarrow = isMobile || isTablet
 
   const kpis = [
     {
       label: "Active Matching Agreements",
+
       value: "38",
+
       sub: "+12% this month",
+
       subColor: "#16A34A",
+
       icon: "🤝",
+
       trend: "up",
     },
+
     {
       label: "Milestone Fulfillment Rate",
+
       value: "94.2%",
+
       sub: "Above 90% target",
+
       subColor: "#16A34A",
+
       icon: "✅",
+
       trend: "up",
     },
+
     {
       label: "Verified PSITS Developers",
+
       value: "142",
+
       sub: "Across Tagum campuses",
+
       subColor: "#64748B",
+
       icon: "👩‍💻",
+
       trend: "neutral",
     },
+
     {
       label: "On-Time Sprint Delivery",
+
       value: "88.5%",
+
       sub: "Based on automated tracking",
+
       subColor: "#D97706",
+
       icon: "⏱",
+
       trend: "warning",
     },
-  ];
+  ]
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#F8FAFC" }}>
@@ -10711,8 +14376,11 @@ function EnterpriseAnalyticsPage({
           onClick={() => setSidebarOpen(false)}
           style={{
             position: "fixed",
+
             inset: 0,
+
             background: "rgba(0,0,0,0.5)",
+
             zIndex: 40,
           }}
         />
@@ -10728,8 +14396,9 @@ function EnterpriseAnalyticsPage({
           <AnalyticsAdminSidebar
             active={analyticsNav}
             onNav={(id) => {
-              setAnalyticsNav(id);
-              setSidebarOpen(false);
+              setAnalyticsNav(id)
+
+              setSidebarOpen(false)
             }}
             collapsed={collapsed}
           />
@@ -10739,8 +14408,11 @@ function EnterpriseAnalyticsPage({
       <div
         style={{
           flex: 1,
+
           minWidth: 0,
+
           display: "flex",
+
           flexDirection: "column",
         }}
       >
@@ -10748,13 +14420,21 @@ function EnterpriseAnalyticsPage({
         <div
           style={{
             background: "#fff",
+
             borderBottom: "1px solid #E2E8F0",
+
             padding: isMobile ? "12px 16px" : "13px 28px",
+
             display: "flex",
+
             alignItems: "center",
+
             justifyContent: "space-between",
+
             position: "sticky",
+
             top: 0,
+
             zIndex: 30,
           }}
         >
@@ -10764,10 +14444,15 @@ function EnterpriseAnalyticsPage({
                 onClick={() => setSidebarOpen(true)}
                 style={{
                   background: "none",
+
                   border: "none",
+
                   cursor: "pointer",
+
                   color: "#94A3B8",
+
                   lineHeight: 0,
+
                   padding: 4,
                 }}
               >
@@ -10778,9 +14463,13 @@ function EnterpriseAnalyticsPage({
               <div
                 style={{
                   fontSize: 11,
+
                   color: "#94A3B8",
+
                   fontWeight: 600,
+
                   textTransform: "uppercase",
+
                   letterSpacing: "0.05em",
                 }}
               >
@@ -10795,12 +14484,19 @@ function EnterpriseAnalyticsPage({
             <button
               style={{
                 background: "none",
+
                 border: "1px solid #E2E8F0",
+
                 borderRadius: 8,
+
                 padding: "6px 8px",
+
                 cursor: "pointer",
+
                 color: "#64748B",
+
                 lineHeight: 0,
+
                 position: "relative",
               }}
             >
@@ -10808,12 +14504,19 @@ function EnterpriseAnalyticsPage({
               <span
                 style={{
                   position: "absolute",
+
                   top: 5,
+
                   right: 5,
+
                   width: 7,
+
                   height: 7,
+
                   borderRadius: "50%",
+
                   background: "#DC2626",
+
                   border: "1.5px solid #fff",
                 }}
               />
@@ -10822,24 +14525,38 @@ function EnterpriseAnalyticsPage({
               <div
                 style={{
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 8,
+
                   padding: "5px 12px 5px 5px",
+
                   border: "1px solid #E2E8F0",
+
                   borderRadius: 8,
                 }}
               >
                 <div
                   style={{
                     width: 28,
+
                     height: 28,
+
                     borderRadius: "50%",
+
                     background: "linear-gradient(135deg, #1E3A5F, #2563EB)",
+
                     display: "flex",
+
                     alignItems: "center",
+
                     justifyContent: "center",
+
                     fontSize: 11,
+
                     fontWeight: 700,
+
                     color: "#fff",
                   }}
                 >
@@ -10859,9 +14576,13 @@ function EnterpriseAnalyticsPage({
         <main
           style={{
             flex: 1,
+
             padding: isMobile ? "18px 14px 80px" : "28px 28px 80px",
+
             display: "flex",
+
             flexDirection: "column",
+
             gap: 22,
           }}
         >
@@ -10869,9 +14590,13 @@ function EnterpriseAnalyticsPage({
           <div
             style={{
               display: "flex",
+
               alignItems: "flex-start",
+
               justifyContent: "space-between",
+
               gap: 16,
+
               flexWrap: "wrap",
             }}
           >
@@ -10879,9 +14604,13 @@ function EnterpriseAnalyticsPage({
               <h1
                 style={{
                   margin: "0 0 4px",
+
                   fontSize: isMobile ? 20 : 24,
+
                   fontWeight: 800,
+
                   color: "#0F172A",
+
                   letterSpacing: "-0.03em",
                 }}
               >
@@ -10895,8 +14624,11 @@ function EnterpriseAnalyticsPage({
             <div
               style={{
                 display: "flex",
+
                 gap: 8,
+
                 flexWrap: "wrap",
+
                 alignItems: "center",
               }}
             >
@@ -10907,15 +14639,25 @@ function EnterpriseAnalyticsPage({
                   onChange={(e) => setDateRange(e.target.value)}
                   style={{
                     padding: "8px 32px 8px 12px",
+
                     border: "1px solid #E2E8F0",
+
                     borderRadius: 8,
+
                     background: "#fff",
+
                     fontSize: 13,
+
                     fontFamily: "Inter, sans-serif",
+
                     color: "#334155",
+
                     fontWeight: 600,
+
                     outline: "none",
+
                     cursor: "pointer",
+
                     appearance: "none",
                   }}
                 >
@@ -10928,11 +14670,17 @@ function EnterpriseAnalyticsPage({
                 <span
                   style={{
                     position: "absolute",
+
                     right: 10,
+
                     top: "50%",
+
                     transform: "translateY(-50%)",
+
                     color: "#94A3B8",
+
                     pointerEvents: "none",
+
                     lineHeight: 0,
                   }}
                 >
@@ -10943,17 +14691,29 @@ function EnterpriseAnalyticsPage({
               <button
                 style={{
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 6,
+
                   padding: "8px 16px",
+
                   borderRadius: 8,
+
                   border: "none",
+
                   background: "#2563EB",
+
                   color: "#fff",
+
                   fontSize: 13,
+
                   fontWeight: 700,
+
                   cursor: "pointer",
+
                   fontFamily: "Inter, sans-serif",
+
                   whiteSpace: "nowrap",
                 }}
               >
@@ -10975,11 +14735,13 @@ function EnterpriseAnalyticsPage({
           <div
             style={{
               display: "grid",
+
               gridTemplateColumns: isMobile
                 ? "1fr"
                 : isTablet
                   ? "1fr 1fr"
                   : "repeat(4, 1fr)",
+
               gap: 14,
             }}
           >
@@ -10988,11 +14750,17 @@ function EnterpriseAnalyticsPage({
                 key={i}
                 style={{
                   background: "#fff",
+
                   border: "1px solid #E2E8F0",
+
                   borderRadius: 12,
+
                   padding: "20px 22px",
+
                   boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+
                   position: "relative",
+
                   overflow: "hidden",
                 }}
               >
@@ -11000,30 +14768,45 @@ function EnterpriseAnalyticsPage({
                 <div
                   style={{
                     position: "absolute",
+
                     top: 0,
+
                     left: 0,
+
                     right: 0,
+
                     height: 3,
+
                     background: CAT5[i],
+
                     borderRadius: "12px 12px 0 0",
                   }}
                 />
                 <div
                   style={{
                     display: "flex",
+
                     alignItems: "flex-start",
+
                     justifyContent: "space-between",
+
                     marginBottom: 10,
                   }}
                 >
                   <span
                     style={{
                       fontSize: 11,
+
                       fontWeight: 700,
+
                       color: "#94A3B8",
+
                       textTransform: "uppercase",
+
                       letterSpacing: "0.07em",
+
                       lineHeight: 1.4,
+
                       maxWidth: 140,
                     }}
                   >
@@ -11034,10 +14817,15 @@ function EnterpriseAnalyticsPage({
                 <div
                   style={{
                     fontSize: isMobile ? 28 : 32,
+
                     fontWeight: 900,
+
                     color: "#0F172A",
+
                     letterSpacing: "-0.04em",
+
                     lineHeight: 1,
+
                     marginBottom: 6,
                   }}
                 >
@@ -11068,7 +14856,9 @@ function EnterpriseAnalyticsPage({
                   <span
                     style={{
                       fontSize: 12,
+
                       fontWeight: 600,
+
                       color: kpi.subColor,
                     }}
                   >
@@ -11083,7 +14873,9 @@ function EnterpriseAnalyticsPage({
           <div
             style={{
               display: "grid",
+
               gridTemplateColumns: isNarrow ? "1fr" : "1fr 1fr",
+
               gap: 20,
             }}
           >
@@ -11110,7 +14902,9 @@ function EnterpriseAnalyticsPage({
                     tickFormatter={(v) => `${v}%`}
                     tick={{
                       fontSize: 11,
+
                       fill: "#94A3B8",
+
                       fontFamily: "Inter, sans-serif",
                     }}
                     axisLine={false}
@@ -11122,8 +14916,11 @@ function EnterpriseAnalyticsPage({
                     width={104}
                     tick={{
                       fontSize: 12,
+
                       fill: "#475569",
+
                       fontFamily: "Inter, sans-serif",
+
                       fontWeight: 600,
                     }}
                     axisLine={false}
@@ -11132,7 +14929,11 @@ function EnterpriseAnalyticsPage({
                   <Tooltip
                     cursor={{ fill: "#F8FAFC" }}
                     contentStyle={tooltipStyle}
-                    formatter={(v: number) => [`${v}%`, "Share"]}
+                    formatter={(value: unknown) => {
+                      const v = typeof value === "number" ? value : 0
+
+                      return [`${v}%`, "Share"] as const
+                    }}
                   />
                   <Bar dataKey="pct" radius={[0, 4, 4, 0]}>
                     {techStackData.map((entry, i) => (
@@ -11145,8 +14946,11 @@ function EnterpriseAnalyticsPage({
               <div
                 style={{
                   display: "flex",
+
                   flexWrap: "wrap",
+
                   gap: "6px 14px",
+
                   marginTop: 10,
                 }}
               >
@@ -11155,19 +14959,28 @@ function EnterpriseAnalyticsPage({
                     key={d.name}
                     style={{
                       display: "inline-flex",
+
                       alignItems: "center",
+
                       gap: 5,
+
                       fontSize: 11.5,
+
                       color: "#475569",
+
                       fontWeight: 500,
                     }}
                   >
                     <span
                       style={{
                         width: 8,
+
                         height: 8,
+
                         borderRadius: 2,
+
                         background: d.fill,
+
                         flexShrink: 0,
                       }}
                     />
@@ -11197,7 +15010,9 @@ function EnterpriseAnalyticsPage({
                     dataKey="name"
                     tick={{
                       fontSize: 11,
+
                       fill: "#94A3B8",
+
                       fontFamily: "Inter, sans-serif",
                     }}
                     axisLine={false}
@@ -11206,7 +15021,9 @@ function EnterpriseAnalyticsPage({
                   <YAxis
                     tick={{
                       fontSize: 11,
+
                       fill: "#94A3B8",
+
                       fontFamily: "Inter, sans-serif",
                     }}
                     axisLine={false}
@@ -11215,7 +15032,11 @@ function EnterpriseAnalyticsPage({
                   <Tooltip
                     cursor={{ fill: "#F8FAFC" }}
                     contentStyle={tooltipStyle}
-                    formatter={(v: number) => [v, "Projects"]}
+                    formatter={(value: unknown) => {
+                      const v = typeof value === "number" ? value : 0
+
+                      return [v, "Projects"] as const
+                    }}
                   />
                   <Bar dataKey="projects" radius={[4, 4, 0, 0]}>
                     {barangayData.map((entry, i) => (
@@ -11227,8 +15048,11 @@ function EnterpriseAnalyticsPage({
               <div
                 style={{
                   display: "flex",
+
                   flexWrap: "wrap",
+
                   gap: "6px 14px",
+
                   marginTop: 10,
                 }}
               >
@@ -11237,19 +15061,28 @@ function EnterpriseAnalyticsPage({
                     key={d.name}
                     style={{
                       display: "inline-flex",
+
                       alignItems: "center",
+
                       gap: 5,
+
                       fontSize: 11.5,
+
                       color: "#475569",
+
                       fontWeight: 500,
                     }}
                   >
                     <span
                       style={{
                         width: 8,
+
                         height: 8,
+
                         borderRadius: 2,
+
                         background: d.fill,
+
                         flexShrink: 0,
                       }}
                     />
@@ -11269,25 +15102,35 @@ function EnterpriseAnalyticsPage({
               <div style={{ display: "flex", gap: 14 }}>
                 {[
                   { label: "Bids Initiated", color: CAT5[0] },
+
                   { label: "Milestones Completed", color: CAT5[1] },
                 ].map((l) => (
                   <span
                     key={l.label}
                     style={{
                       display: "inline-flex",
+
                       alignItems: "center",
+
                       gap: 5,
+
                       fontSize: 12,
+
                       color: "#475569",
+
                       fontWeight: 600,
                     }}
                   >
                     <span
                       style={{
                         width: 24,
+
                         height: 3,
+
                         borderRadius: 2,
+
                         background: l.color,
+
                         display: "inline-block",
                       }}
                     />
@@ -11327,7 +15170,9 @@ function EnterpriseAnalyticsPage({
                   dataKey="month"
                   tick={{
                     fontSize: 12,
+
                     fill: "#94A3B8",
+
                     fontFamily: "Inter, sans-serif",
                   }}
                   axisLine={false}
@@ -11336,7 +15181,9 @@ function EnterpriseAnalyticsPage({
                 <YAxis
                   tick={{
                     fontSize: 11,
+
                     fill: "#94A3B8",
+
                     fontFamily: "Inter, sans-serif",
                   }}
                   axisLine={false}
@@ -11344,10 +15191,17 @@ function EnterpriseAnalyticsPage({
                 />
                 <Tooltip
                   contentStyle={tooltipStyle}
-                  formatter={(v: number, name: string) => [
-                    v,
-                    name === "bids" ? "Bids Initiated" : "Milestones Completed",
-                  ]}
+                  formatter={(value: unknown, name: unknown) => {
+                    const v = typeof value === "number" ? value : 0
+
+                    const n = typeof name === "string" ? name : String(name)
+
+                    return [
+                      v,
+
+                      n === "bids" ? "Bids Initiated" : "Milestones Completed",
+                    ] as const
+                  }}
                 />
                 <Area
                   type="monotone"
@@ -11358,8 +15212,11 @@ function EnterpriseAnalyticsPage({
                   dot={{ r: 4, fill: CAT5[0], strokeWidth: 2, stroke: "#fff" }}
                   activeDot={{
                     r: 6,
+
                     fill: CAT5[0],
+
                     stroke: "#fff",
+
                     strokeWidth: 2,
                   }}
                 />
@@ -11372,8 +15229,11 @@ function EnterpriseAnalyticsPage({
                   dot={{ r: 4, fill: CAT5[1], strokeWidth: 2, stroke: "#fff" }}
                   activeDot={{
                     r: 6,
+
                     fill: CAT5[1],
+
                     stroke: "#fff",
+
                     strokeWidth: 2,
                   }}
                 />
@@ -11385,20 +15245,30 @@ function EnterpriseAnalyticsPage({
           <div
             style={{
               background: "#fff",
+
               border: "1px solid #E2E8F0",
+
               borderRadius: 12,
+
               overflow: "hidden",
+
               boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
             }}
           >
             <div
               style={{
                 padding: "18px 22px 14px",
+
                 borderBottom: "1px solid #F1F5F9",
+
                 display: "flex",
+
                 alignItems: "center",
+
                 justifyContent: "space-between",
+
                 flexWrap: "wrap",
+
                 gap: 10,
               }}
             >
@@ -11416,11 +15286,17 @@ function EnterpriseAnalyticsPage({
                 href="#"
                 style={{
                   fontSize: 12.5,
+
                   fontWeight: 700,
+
                   color: "#2563EB",
+
                   textDecoration: "none",
+
                   display: "flex",
+
                   alignItems: "center",
+
                   gap: 4,
                 }}
               >
@@ -11431,7 +15307,9 @@ function EnterpriseAnalyticsPage({
               <table
                 style={{
                   width: "100%",
+
                   borderCollapse: "collapse",
+
                   fontSize: 13,
                 }}
               >
@@ -11439,22 +15317,34 @@ function EnterpriseAnalyticsPage({
                   <tr style={{ background: "#F8FAFC" }}>
                     {[
                       "Timestamp",
+
                       "Event",
+
                       "User Role",
+
                       "Triggered By",
+
                       "Status",
                     ].map((h) => (
                       <th
                         key={h}
                         style={{
                           padding: "10px 18px",
+
                           textAlign: "left",
+
                           fontSize: 11,
+
                           fontWeight: 700,
+
                           color: "#94A3B8",
+
                           textTransform: "uppercase",
+
                           letterSpacing: "0.06em",
+
                           borderBottom: "1px solid #E2E8F0",
+
                           whiteSpace: "nowrap",
                         }}
                       >
@@ -11466,7 +15356,10 @@ function EnterpriseAnalyticsPage({
                 <tbody>
                   {auditRows.map((row, i) => {
                     const s =
-                      auditStatusCfg[row.status as keyof typeof auditStatusCfg];
+                      auditStatusCfg[
+                        (row.status as keyof typeof auditStatusCfg)
+                      ]
+
                     return (
                       <tr
                         key={i}
@@ -11475,6 +15368,7 @@ function EnterpriseAnalyticsPage({
                             i < auditRows.length - 1
                               ? "1px solid #F8FAFC"
                               : "none",
+
                           transition: "background 0.1s",
                         }}
                         onMouseEnter={(e) =>
@@ -11487,9 +15381,13 @@ function EnterpriseAnalyticsPage({
                         <td
                           style={{
                             padding: "13px 18px",
+
                             color: "#64748B",
+
                             fontSize: 12,
+
                             whiteSpace: "nowrap",
+
                             fontFamily: "monospace",
                           }}
                         >
@@ -11498,7 +15396,9 @@ function EnterpriseAnalyticsPage({
                         <td
                           style={{
                             padding: "13px 18px",
+
                             fontWeight: 600,
+
                             color: "#0F172A",
                           }}
                         >
@@ -11508,10 +15408,15 @@ function EnterpriseAnalyticsPage({
                           <span
                             style={{
                               background: "#F1F5F9",
+
                               color: "#475569",
+
                               fontSize: 11.5,
+
                               fontWeight: 600,
+
                               padding: "2px 8px",
+
                               borderRadius: 99,
                             }}
                           >
@@ -11525,23 +15430,36 @@ function EnterpriseAnalyticsPage({
                           <span
                             style={{
                               display: "inline-flex",
+
                               alignItems: "center",
+
                               gap: 4,
+
                               padding: "3px 9px",
+
                               borderRadius: 99,
+
                               background: s.bg,
+
                               border: `1px solid ${s.border}`,
+
                               color: s.color,
+
                               fontSize: 11.5,
+
                               fontWeight: 700,
                             }}
                           >
                             <span
                               style={{
                                 width: 5,
+
                                 height: 5,
+
                                 borderRadius: "50%",
+
                                 background: s.color,
+
                                 flexShrink: 0,
                               }}
                             />
@@ -11549,7 +15467,7 @@ function EnterpriseAnalyticsPage({
                           </span>
                         </td>
                       </tr>
-                    );
+                    )
                   })}
                 </tbody>
               </table>
@@ -11558,58 +15476,84 @@ function EnterpriseAnalyticsPage({
         </main>
       </div>
     </div>
-  );
+  )
 }
 
 // ─── PendingVerification placeholder (for unverified roles) ──────────────────
+
 // Shown when a non-admin user is authenticated but not 'Verified'.
+
 // Per clarification #2: displays a centered status card instead of feature UI.
+
 function PendingVerification({
   role,
+
   verification,
+
   onLogout,
 }: {
-  role: AppRole;
-  verification: string;
-  onLogout: () => void;
+  role: AppRole
+
+  verification: string
+
+  onLogout: () => void
 }) {
   // Determine human-readable role label
+
   const roleLabel =
     role === "student"
       ? "Student Developer"
       : role === "enterprise"
         ? "Enterprise Client"
-        : role;
-  const isRejected = verification === "Rejected";
+        : role
+
+  const isRejected = verification === "Rejected"
+
   return (
     <div
       style={{
         minHeight: "60vh",
+
         display: "flex",
+
         alignItems: "center",
+
         justifyContent: "center",
+
         padding: "40px 20px",
       }}
     >
       <Card
         style={{
           maxWidth: 560,
+
           width: "100%",
+
           padding: 32,
+
           textAlign: "center" as const,
         }}
       >
         <div
           style={{
             width: 56,
+
             height: 56,
+
             borderRadius: "50%",
+
             margin: "0 auto 16px",
+
             background: isRejected ? "#FEF2F2" : "#FFFBEB",
+
             border: `1.5px solid ${isRejected ? "#FECACA" : "#FDE68A"}`,
+
             display: "flex",
+
             alignItems: "center",
+
             justifyContent: "center",
+
             fontSize: 24,
           }}
         >
@@ -11618,9 +15562,13 @@ function PendingVerification({
         <h2
           style={{
             margin: "0 0 8px",
+
             fontSize: 20,
+
             fontWeight: 800,
+
             color: "#0F172A",
+
             letterSpacing: "-0.02em",
           }}
         >
@@ -11629,8 +15577,11 @@ function PendingVerification({
         <p
           style={{
             margin: "0 0 12px",
+
             fontSize: 13.5,
+
             color: "#64748B",
+
             lineHeight: 1.6,
           }}
         >
@@ -11643,9 +15594,13 @@ function PendingVerification({
         <div
           style={{
             display: "flex",
+
             gap: 10,
+
             justifyContent: "center",
+
             marginTop: 20,
+
             flexWrap: "wrap",
           }}
         >
@@ -11653,13 +15608,21 @@ function PendingVerification({
             onClick={onLogout}
             style={{
               padding: "10px 18px",
+
               borderRadius: 8,
+
               border: "1.5px solid #E2E8F0",
+
               background: "#fff",
+
               color: "#475569",
+
               fontSize: 13,
+
               fontWeight: 600,
+
               cursor: "pointer",
+
               fontFamily: "Inter, sans-serif",
             }}
           >
@@ -11669,14 +15632,23 @@ function PendingVerification({
             <span
               style={{
                 display: "inline-flex",
+
                 alignItems: "center",
+
                 gap: 6,
+
                 padding: "10px 14px",
+
                 borderRadius: 8,
+
                 background: "#EFF6FF",
+
                 border: "1px solid #BFDBFE",
+
                 color: "#2563EB",
+
                 fontSize: 12.5,
+
                 fontWeight: 600,
               }}
             >
@@ -11686,109 +15658,170 @@ function PendingVerification({
         </div>
       </Card>
     </div>
-  );
+  )
 }
 
 // ─── Root App ─────────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [page, setPage] = useState<AppPage>("auth");
-  const project = useProjectStore();
-  const profile = useDevProfile();
-  const clientProfile = useClientProfile();
-  const [devNav, setDevNav] = useState("dashboard");
-  const [adminNav, setAdminNav] = useState("verification");
-  const [sprintNav, setSprintNav] = useState("sprint");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [page, setPage] = useState<AppPage>("auth")
+
+  const project = useProjectStore()
+
+  const profile = useDevProfile()
+
+  const clientProfile = useClientProfile()
+
+  const [devNav, setDevNav] = useState("dashboard")
+
+  const [adminNav, setAdminNav] = useState("verification")
+
+  const [sprintNav, setSprintNav] = useState("sprint")
+
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+
   // ─── Role-based access (Option B: Strict Separation) ────────────────────
+
   // Resolved on sign-in from AuthPage email+role; drives switcher visibility & guards.
+
   // Best practice: single source of truth (roleAccess.ts) + memoization to avoid re-renders.
-  const [appRole, setAppRole] = useState<AppRole>("guest");
-  // Track raw auth verification string for PendingVerification UI (null = guest)
-  const [authVerification, setAuthVerification] = useState<string | null>(null);
+
+  const [appRole, setAppRole] = useState<AppRole>("guest")
 
   useEffect(() => {
-    const handler = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
+    const handler = () => setWindowWidth(window.innerWidth)
 
-  const isMobile = windowWidth < 768;
-  const isTablet = windowWidth >= 768 && windowWidth < 1024;
-  const collapsed = isTablet;
+    window.addEventListener("resize", handler)
+
+    return () => window.removeEventListener("resize", handler)
+  }, [])
+
+  const isMobile = windowWidth < 768
+
+  const isTablet = windowWidth >= 768 && windowWidth < 1024
+
+  const collapsed = isTablet
 
   // ─── Derived auth & gating ─────────────────────────────────────────────
+
   // isAuthenticated: only true after successful sign-in (page !== 'auth' + role !== guest)
-  const isAuthenticated = page !== "auth" && appRole !== "guest";
+
+  const isAuthenticated = page !== "auth" && appRole !== "guest"
+
   // isPending: non-admin unverified users see placeholder instead of feature pages
+
   const activeVerification =
     appRole === "enterprise"
       ? clientProfile.verificationStatus
-      : profile.verificationStatus;
+      : profile.verificationStatus
+
   const showPending =
-    isAuthenticated && isPendingVerification(appRole, activeVerification);
+    isAuthenticated && isPendingVerification(appRole, activeVerification)
 
   // Memoized visible pages for switcher — filters out 'auth' always (per spec: Hide Login & Registration)
-  // Performance: O(7) small array — cheap, but memoized to avoid new array identity per render.
-  const visiblePages = (() => {
+
+  // Performance: O(7) small array — useMemo avoids new identity per render and prevents effect loops
+
+  const visiblePages = useMemo<AppPage[]>(() => {
     try {
-      if (!isAuthenticated) return [] as AppPage[];
-      const allowed = getAllowedPages(appRole);
+      if (!isAuthenticated) return [] as AppPage[]
+
+      const allowed = getAllowedPages(appRole)
+
       // Filter out 'auth' (hidden per spec) and keep order from ALL_SWITCHER_PAGES
+
       return (ALL_SWITCHER_PAGES as readonly AppPage[]).filter(
         (p) => p !== "auth" && allowed.includes(p),
-      );
+      )
     } catch {
-      return [] as AppPage[];
+      return [] as AppPage[]
     }
-  })();
+  }, [isAuthenticated, appRole])
 
   // ─── Route guard: prevent deep navigation to unauthorized page ──────────
+
   // Edge case: user manually calls setPage('analytics') as student → redirect to first allowed.
-  // Also handles corrupted page state on hot-reload.
+
+  // Also handles corrupted page state on hot-reload. Uses timeout with cleanup to avoid setState after unmount.
+
   useEffect(() => {
+    let cancelled = false
+
+    let timer: ReturnType<typeof setTimeout> | null = null
+
     try {
-      if (!isAuthenticated) return;
-      if (showPending) return; // pending users stay on current page but see placeholder
+      if (!isAuthenticated) return
+
+      if (showPending) return // pending users stay on current page but see placeholder
+
       if (!isPageAllowed(page, appRole)) {
-        const fallback = ROLE_PAGE_MAP[appRole]?.[0];
+        const fallback =
+          ROLE_PAGE_MAP[(appRole as Exclude<AppRole, "guest">)]?.[0]
+
         if (fallback && fallback !== page) {
-          // Use queueMicrotask to avoid setState during render
-          queueMicrotask(() => setPage(fallback));
+          timer = setTimeout(() => {
+            if (!cancelled) setPage(fallback)
+          }, 0)
         }
       }
     } catch {
       // Error handling: fail closed — reset to auth on unexpected exception
-      queueMicrotask(() => {
-        setAppRole("guest");
-        setAuthVerification(null);
-        setPage("auth");
-      });
+
+      timer = setTimeout(() => {
+        if (!cancelled) {
+          setAppRole("guest")
+
+          setPage("auth")
+        }
+      }, 0)
     }
-  }, [page, appRole, isAuthenticated, showPending]);
+
+    return () => {
+      cancelled = true
+
+      if (timer) clearTimeout(timer)
+    }
+  }, [page, appRole, isAuthenticated, showPending])
 
   // ─── Logout handler ─────────────────────────────────────────────────────
+
   // Resets role & verification and returns to auth; switcher automatically hides via isAuthenticated.
+
   const handleLogout = () => {
     try {
       // Reset to default profiles (clears verification override if any)
-      signInAs(undefined);
-      signInAsClient(undefined);
+
+      signInAs(undefined)
+
+      signInAsClient(undefined)
     } catch {
       /* ignore store reset errors */
     }
-    setAppRole("guest");
-    setAuthVerification(null);
-    setPage("auth");
-    setSidebarOpen(false);
-  };
+
+    setAppRole("guest")
+
+    setPage("auth")
+
+    // Reset nav state to avoid stale tab on next login (best practice)
+
+    setDevNav("dashboard")
+
+    setSprintNav("sprint")
+
+    setAdminNav("verification")
+
+    setSidebarOpen(false)
+  }
 
   return (
     <div
       style={{
         fontFamily: "Inter, sans-serif",
+
         background: "#F8FAFC",
+
         minHeight: "100vh",
       }}
     >
@@ -11798,23 +15831,37 @@ export default function App() {
         <div
           style={{
             position: "fixed",
+
             bottom: 20,
+
             left: "50%",
+
             transform: "translateX(-50%)",
+
             background: "#0F172A",
+
             borderRadius: 99,
+
             padding: "5px 6px",
+
             display: "flex",
+
             gap: 4,
+
             zIndex: 200,
+
             boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
+
             maxWidth: "90vw",
+
             overflowX: "auto",
           }}
         >
           {visiblePages.map((pid) => {
-            const meta = PAGE_META[pid];
-            const isActive = page === pid;
+            const meta = PAGE_META[pid]
+
+            const isActive = page === pid
+
             return (
               <button
                 key={pid}
@@ -11822,22 +15869,33 @@ export default function App() {
                 aria-selected={isActive}
                 style={{
                   padding: "7px 16px",
+
                   borderRadius: 99,
+
                   border: "none",
+
                   background: isActive ? "#2563EB" : "transparent",
+
                   color: isActive ? "#fff" : "#94A3B8",
+
                   fontSize: 12,
+
                   fontWeight: 600,
+
                   cursor: "pointer",
+
                   fontFamily: "Inter, sans-serif",
+
                   transition: "all 0.15s",
+
                   whiteSpace: "nowrap",
+
                   flexShrink: 0,
                 }}
               >
                 {meta.label}
               </button>
-            );
+            )
           })}
         </div>
       )}
@@ -11846,41 +15904,45 @@ export default function App() {
         <AuthPage
           onSignedIn={(email, role) => {
             // ─── Resolve role via centralized helper (handles edge cases: trimming, case, unknown email) ──
+
             // Best practice: single source of truth in roleAccess.ts; never duplicate heuristics.
-            let resolved: AppRole;
+
+            let resolved: AppRole
+
             try {
-              resolved = resolveRole(email, role);
+              resolved = resolveRole(email, role)
             } catch {
-              resolved = "student"; // fail closed to least privilege
+              resolved = "student" // fail closed to least privilege
             }
-            setAppRole(resolved);
-            // Track verification for Pending UI (derived later from store as well)
+
+            setAppRole(resolved)
+
             try {
               // Update stores first so profile.verificationStatus reflects signed-in identity
+
+              // Note: activeVerification is derived from profile/clientProfile — no need for separate state
+
               if (resolved === "enterprise") {
-                signInAsClient(email);
-                // After store update, verification is available via useClientProfile -> activeVerification
-                const v =
-                  email.trim().toLowerCase() ===
-                  "rvillanueva@davaofrutis.com.ph"
-                    ? "Pending Review"
-                    : undefined;
-                setAuthVerification(v ?? null);
-                setPage("specform"); // Verified Business Owner → Post a Project (specform) per spec; pending shows placeholder
+                signInAsClient(email)
+
+                setPage("specform") // Verified Business Owner → Post a Project (specform) per spec; pending shows placeholder
               } else if (resolved === "admin") {
                 // PSITS Moderator: also populate dev profile so own Developer Profile is editable (clarification #4)
-                signInAs(email);
-                setAuthVerification(null);
-                setPage("admin");
+
+                signInAs(email)
+
+                setPage("admin")
               } else {
-                signInAs(email);
-                setAuthVerification(null);
-                setPage("developer");
-                setDevNav("dashboard");
+                signInAs(email)
+
+                setPage("developer")
+
+                setDevNav("dashboard")
               }
             } catch {
               // Error handling: store update failed — stay on auth with role set for retry
-              setPage("auth");
+
+              setPage("auth")
             }
           }}
         />
@@ -11899,8 +15961,11 @@ export default function App() {
                 onClick={() => setSidebarOpen(false)}
                 style={{
                   position: "fixed",
+
                   inset: 0,
+
                   background: "rgba(0,0,0,0.35)",
+
                   zIndex: 40,
                 }}
               />
@@ -11911,9 +15976,13 @@ export default function App() {
                   isMobile
                     ? {
                         position: "fixed",
+
                         left: 0,
+
                         top: 0,
+
                         bottom: 0,
+
                         zIndex: 50,
                       }
                     : {}
@@ -11922,8 +15991,9 @@ export default function App() {
                 <DevSidebar
                   active={devNav}
                   onNav={(id) => {
-                    setDevNav(id);
-                    setSidebarOpen(false);
+                    setDevNav(id)
+
+                    setSidebarOpen(false)
                   }}
                   collapsed={collapsed}
                 />
@@ -11934,13 +16004,21 @@ export default function App() {
                 <div
                   style={{
                     background: "#fff",
+
                     borderBottom: "1px solid #E2E8F0",
+
                     padding: "12px 20px",
+
                     display: "flex",
+
                     alignItems: "center",
+
                     gap: 12,
+
                     position: "sticky",
+
                     top: 0,
+
                     zIndex: 30,
                   }}
                 >
@@ -11948,10 +16026,15 @@ export default function App() {
                     onClick={() => setSidebarOpen(true)}
                     style={{
                       background: "none",
+
                       border: "none",
+
                       cursor: "pointer",
+
                       color: "#475569",
+
                       padding: 4,
+
                       lineHeight: 0,
                     }}
                   >
@@ -11966,14 +16049,23 @@ export default function App() {
                     onClick={handleLogout}
                     style={{
                       marginLeft: "auto",
+
                       padding: "6px 12px",
+
                       borderRadius: 6,
+
                       border: "1px solid #E2E8F0",
+
                       background: "#fff",
+
                       color: "#64748B",
+
                       fontSize: 12,
+
                       fontWeight: 600,
+
                       cursor: "pointer",
+
                       fontFamily: "Inter, sans-serif",
                     }}
                   >
@@ -11985,7 +16077,9 @@ export default function App() {
                 <div
                   style={{
                     display: "flex",
+
                     justifyContent: "flex-end",
+
                     padding: "12px 32px 0 32px",
                   }}
                 >
@@ -11993,13 +16087,21 @@ export default function App() {
                     onClick={handleLogout}
                     style={{
                       padding: "6px 12px",
+
                       borderRadius: 6,
+
                       border: "1px solid #E2E8F0",
+
                       background: "#fff",
+
                       color: "#64748B",
+
                       fontSize: 12,
+
                       fontWeight: 600,
+
                       cursor: "pointer",
+
                       fontFamily: "Inter, sans-serif",
                     }}
                   >
@@ -12042,8 +16144,11 @@ export default function App() {
               onClick={() => setSidebarOpen(false)}
               style={{
                 position: "fixed",
+
                 inset: 0,
+
                 background: "rgba(0,0,0,0.5)",
+
                 zIndex: 40,
               }}
             />
@@ -12054,9 +16159,13 @@ export default function App() {
                 isMobile
                   ? {
                       position: "fixed",
+
                       left: 0,
+
                       top: 0,
+
                       bottom: 0,
+
                       zIndex: 50,
                     }
                   : {}
@@ -12065,8 +16174,9 @@ export default function App() {
               <AdminSidebar
                 active={adminNav}
                 onNav={(id) => {
-                  setAdminNav(id);
-                  setSidebarOpen(false);
+                  setAdminNav(id)
+
+                  setSidebarOpen(false)
                 }}
                 collapsed={collapsed}
               />
@@ -12075,8 +16185,11 @@ export default function App() {
           <div
             style={{
               flex: 1,
+
               minWidth: 0,
+
               display: "flex",
+
               flexDirection: "column",
             }}
           >
@@ -12084,13 +16197,21 @@ export default function App() {
             <div
               style={{
                 background: "#fff",
+
                 borderBottom: "1px solid #E2E8F0",
+
                 padding: isMobile ? "12px 16px" : "14px 32px",
+
                 display: "flex",
+
                 alignItems: "center",
+
                 justifyContent: "space-between",
+
                 position: "sticky",
+
                 top: 0,
+
                 zIndex: 30,
               }}
             >
@@ -12100,10 +16221,15 @@ export default function App() {
                     onClick={() => setSidebarOpen(true)}
                     style={{
                       background: "none",
+
                       border: "none",
+
                       cursor: "pointer",
+
                       color: "#94A3B8",
+
                       lineHeight: 0,
+
                       padding: 4,
                     }}
                   >
@@ -12114,9 +16240,13 @@ export default function App() {
                   <div
                     style={{
                       fontSize: 11,
+
                       color: "#94A3B8",
+
                       fontWeight: 600,
+
                       textTransform: "uppercase",
+
                       letterSpacing: "0.05em",
                     }}
                   >
@@ -12133,12 +16263,19 @@ export default function App() {
                 <button
                   style={{
                     background: "none",
+
                     border: "1px solid #E2E8F0",
+
                     borderRadius: 8,
+
                     padding: "6px 8px",
+
                     cursor: "pointer",
+
                     color: "#64748B",
+
                     position: "relative",
+
                     lineHeight: 0,
                   }}
                 >
@@ -12146,12 +16283,19 @@ export default function App() {
                   <span
                     style={{
                       position: "absolute",
+
                       top: 5,
+
                       right: 5,
+
                       width: 7,
+
                       height: 7,
+
                       borderRadius: "50%",
+
                       background: "#DC2626",
+
                       border: "1.5px solid #fff",
                     }}
                   />
@@ -12160,24 +16304,38 @@ export default function App() {
                   <div
                     style={{
                       display: "flex",
+
                       alignItems: "center",
+
                       gap: 8,
+
                       padding: "5px 12px 5px 5px",
+
                       border: "1px solid #E2E8F0",
+
                       borderRadius: 8,
                     }}
                   >
                     <div
                       style={{
                         width: 28,
+
                         height: 28,
+
                         borderRadius: "50%",
+
                         background: "linear-gradient(135deg, #1E3A5F, #2563EB)",
+
                         display: "flex",
+
                         alignItems: "center",
+
                         justifyContent: "center",
+
                         fontSize: 11,
+
                         fontWeight: 700,
+
                         color: "#fff",
                       }}
                     >
@@ -12186,7 +16344,9 @@ export default function App() {
                     <span
                       style={{
                         fontSize: 13,
+
                         fontWeight: 600,
+
                         color: "#334155",
                       }}
                     >
@@ -12200,13 +16360,21 @@ export default function App() {
                   onClick={handleLogout}
                   style={{
                     padding: "6px 12px",
+
                     borderRadius: 6,
+
                     border: "1px solid #E2E8F0",
+
                     background: "#fff",
+
                     color: "#64748B",
+
                     fontSize: 12,
+
                     fontWeight: 600,
+
                     cursor: "pointer",
+
                     fontFamily: "Inter, sans-serif",
                   }}
                 >
@@ -12218,7 +16386,9 @@ export default function App() {
             <main
               style={{
                 flex: 1,
+
                 padding: isMobile ? "20px 16px 80px" : "28px 32px 80px",
+
                 overflowY: "auto",
               }}
             >
@@ -12235,14 +16405,18 @@ export default function App() {
           />
         ) : (
           /* ── Sprint Dashboard ────────────────────────────────────────── */
+
           <div style={{ display: "flex" }}>
             {isMobile && sidebarOpen && (
               <div
                 onClick={() => setSidebarOpen(false)}
                 style={{
                   position: "fixed",
+
                   inset: 0,
+
                   background: "rgba(0,0,0,0.35)",
+
                   zIndex: 40,
                 }}
               />
@@ -12253,9 +16427,13 @@ export default function App() {
                   isMobile
                     ? {
                         position: "fixed",
+
                         left: 0,
+
                         top: 0,
+
                         bottom: 0,
+
                         zIndex: 50,
                       }
                     : {}
@@ -12264,8 +16442,9 @@ export default function App() {
                 <SprintSidebar
                   active={sprintNav}
                   onNav={(id) => {
-                    setSprintNav(id);
-                    setSidebarOpen(false);
+                    setSprintNav(id)
+
+                    setSidebarOpen(false)
                   }}
                   collapsed={collapsed}
                 />
@@ -12274,8 +16453,11 @@ export default function App() {
             <div
               style={{
                 flex: 1,
+
                 minWidth: 0,
+
                 display: "flex",
+
                 flexDirection: "column",
               }}
             >
@@ -12283,13 +16465,21 @@ export default function App() {
               <div
                 style={{
                   background: "#fff",
+
                   borderBottom: "1px solid #E2E8F0",
+
                   padding: isMobile ? "12px 16px" : "13px 32px",
+
                   display: "flex",
+
                   alignItems: "center",
+
                   justifyContent: "space-between",
+
                   position: "sticky",
+
                   top: 0,
+
                   zIndex: 30,
                 }}
               >
@@ -12299,10 +16489,15 @@ export default function App() {
                       onClick={() => setSidebarOpen(true)}
                       style={{
                         background: "none",
+
                         border: "none",
+
                         cursor: "pointer",
+
                         color: "#94A3B8",
+
                         lineHeight: 0,
+
                         padding: 4,
                       }}
                     >
@@ -12313,9 +16508,13 @@ export default function App() {
                     <div
                       style={{
                         fontSize: 11,
+
                         color: "#94A3B8",
+
                         fontWeight: 600,
+
                         textTransform: "uppercase",
+
                         letterSpacing: "0.05em",
                       }}
                     >
@@ -12324,7 +16523,9 @@ export default function App() {
                     <div
                       style={{
                         fontSize: 15,
+
                         fontWeight: 700,
+
                         color: "#0F172A",
                       }}
                     >
@@ -12339,27 +16540,40 @@ export default function App() {
                       const due = project.phases.find(
                         (p) =>
                           p.status === "active" || p.status === "in_review",
-                      );
+                      )
+
                       return (
                         <span
                           style={{
                             display: "inline-flex",
+
                             alignItems: "center",
+
                             gap: 5,
+
                             padding: "5px 12px",
+
                             borderRadius: 99,
+
                             background: "#FEF2F2",
+
                             border: "1px solid #FECACA",
+
                             color: "#DC2626",
+
                             fontSize: 12,
+
                             fontWeight: 700,
                           }}
                         >
                           <span
                             style={{
                               width: 6,
+
                               height: 6,
+
                               borderRadius: "50%",
+
                               background: "#DC2626",
                             }}
                           />
@@ -12367,17 +16581,24 @@ export default function App() {
                             ? `Sprint ${due.number} due ${due.dev.deadline.split(",")[0]}`
                             : `Due ${project.deadline}`}
                         </span>
-                      );
+                      )
                     })()}
                   <button
                     style={{
                       background: "none",
+
                       border: "1px solid #E2E8F0",
+
                       borderRadius: 8,
+
                       padding: "6px 8px",
+
                       cursor: "pointer",
+
                       color: "#64748B",
+
                       position: "relative",
+
                       lineHeight: 0,
                     }}
                   >
@@ -12385,12 +16606,19 @@ export default function App() {
                     <span
                       style={{
                         position: "absolute",
+
                         top: 5,
+
                         right: 5,
+
                         width: 7,
+
                         height: 7,
+
                         borderRadius: "50%",
+
                         background: "#DC2626",
+
                         border: "1.5px solid #fff",
                       }}
                     />
@@ -12399,24 +16627,38 @@ export default function App() {
                     <div
                       style={{
                         display: "flex",
+
                         alignItems: "center",
+
                         gap: 8,
+
                         padding: "5px 12px 5px 5px",
+
                         border: "1px solid #E2E8F0",
+
                         borderRadius: 8,
                       }}
                     >
                       <div
                         style={{
                           width: 28,
+
                           height: 28,
+
                           borderRadius: "50%",
+
                           background: `linear-gradient(135deg, ${profile.avatarColors[0]}, ${profile.avatarColors[0]})`,
+
                           display: "flex",
+
                           alignItems: "center",
+
                           justifyContent: "center",
+
                           fontSize: 11,
+
                           fontWeight: 700,
+
                           color: profile.avatarColors[1],
                         }}
                       >
@@ -12425,7 +16667,9 @@ export default function App() {
                       <span
                         style={{
                           fontSize: 13,
+
                           fontWeight: 600,
+
                           color: "#334155",
                         }}
                       >
@@ -12439,13 +16683,21 @@ export default function App() {
                     onClick={handleLogout}
                     style={{
                       padding: "6px 12px",
+
                       borderRadius: 6,
+
                       border: "1px solid #E2E8F0",
+
                       background: "#fff",
+
                       color: "#64748B",
+
                       fontSize: 12,
+
                       fontWeight: 600,
+
                       cursor: "pointer",
+
                       fontFamily: "Inter, sans-serif",
                     }}
                   >
@@ -12457,7 +16709,9 @@ export default function App() {
               <main
                 style={{
                   flex: 1,
+
                   padding: isMobile ? "20px 16px 80px" : "28px 32px 80px",
+
                   overflowY: "auto",
                 }}
               >
@@ -12498,18 +16752,33 @@ export default function App() {
           />
         ) : (
           /* ── Project Spec Form ───────────────────────────────────────── */
+
           <ProjectSpecForm
             isMobile={isMobile}
             onBack={() => {
               // Role-aware back: enterprise → milestone, student/admin → developer, fallback to first allowed
+
               try {
-                const allowed = ROLE_PAGE_MAP[appRole];
-                if (appRole === "enterprise") setPage("milestone");
-                else if (allowed?.includes("developer")) setPage("developer");
-                else if (allowed?.[0]) setPage(allowed[0] as AppPage);
-                else setPage("auth");
+                if (appRole === "guest") {
+                  setPage("auth")
+
+                  return
+                }
+
+                if (appRole === "enterprise") {
+                  setPage("milestone")
+
+                  return
+                }
+
+                const allowed =
+                  ROLE_PAGE_MAP[(appRole as Exclude<AppRole, "guest">)]
+
+                if (allowed?.includes("developer")) setPage("developer")
+                else if (allowed?.[0]) setPage(allowed[0] as AppPage)
+                else setPage("auth")
               } catch {
-                setPage("auth");
+                setPage("auth")
               }
             }}
           />
@@ -12523,6 +16792,7 @@ export default function App() {
           />
         ) : (
           /* ── Client Milestone Tracking ──────────────────────────────── */
+
           <MilestoneTrackingPage
             isMobile={isMobile}
             isTablet={isTablet}
@@ -12533,6 +16803,7 @@ export default function App() {
         )
       ) : (
         /* ── Enterprise Analytics ────────────────────────────────────── */
+
         <EnterpriseAnalyticsPage
           isMobile={isMobile}
           isTablet={isTablet}
@@ -12542,5 +16813,5 @@ export default function App() {
         />
       )}
     </div>
-  );
+  )
 }
