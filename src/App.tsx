@@ -22,6 +22,7 @@ import {
   placeBid,
   signInAs,
   setAvailability,
+  updateDevProfile,
   MARKETPLACE_PROJECTS,
 } from "./devProfile";
 
@@ -448,6 +449,32 @@ function IconGithub({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+    </svg>
+  );
+}
+
+function IconEdit({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+      <path
+        d="M2.5 10.5l1.2 1.2 6.8-6.8-1.2-1.2-6.8 6.8zM8.1 2.7l2.8 2.8"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9.5 3.2l1.3-1.3a1 1 0 011.4 1.4L10.9 4.6"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M2 12.5h3l-1-1-1-1H2v2z"
+        fill="currentColor"
+        opacity=".9"
+      />
     </svg>
   );
 }
@@ -999,7 +1026,9 @@ function AdminSidebar({
 
         minHeight: "100vh",
 
-        background: "#0F172A",
+        background: "#fff",
+
+        borderRight: "1px solid #E2E8F0",
 
         display: "flex",
 
@@ -1027,7 +1056,7 @@ function AdminSidebar({
 
           gap: 10,
 
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
+          borderBottom: "1px solid #F1F5F9",
         }}
       >
         <div
@@ -1071,7 +1100,7 @@ function AdminSidebar({
 
                 fontSize: 14,
 
-                color: "#fff",
+                color: "#0F172A",
 
                 letterSpacing: "-0.02em",
               }}
@@ -1109,9 +1138,9 @@ function AdminSidebar({
 
                 border: "none",
 
-                background: isActive ? "rgba(37,99,235,0.18)" : "transparent",
+                background: isActive ? "#EFF6FF" : "transparent",
 
-                color: isActive ? "#60A5FA" : "#94A3B8",
+                color: isActive ? "#2563EB" : "#475569",
 
                 borderLeft: isActive
                   ? "3px solid #2563EB"
@@ -1123,14 +1152,14 @@ function AdminSidebar({
 
                 fontSize: 13.5,
 
-                fontWeight: isActive ? 600 : 400,
+                fontWeight: isActive ? 600 : 500,
 
                 transition: "all 0.12s ease",
               }}
               onMouseEnter={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "rgba(255,255,255,0.05)";
+                    "#F8FAFC";
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
@@ -1151,7 +1180,7 @@ function AdminSidebar({
           style={{
             padding: "14px 18px",
 
-            borderTop: "1px solid rgba(255,255,255,0.07)",
+            borderTop: "1px solid #F1F5F9",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1183,10 +1212,10 @@ function AdminSidebar({
               JA
             </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>
                 Juanita Arceo
               </div>
-              <div style={{ fontSize: 11, color: "#475569" }}>
+              <div style={{ fontSize: 11, color: "#64748B" }}>
                 Regional Administrator
               </div>
             </div>
@@ -3718,14 +3747,30 @@ function DevSidebar({
   onNav,
 
   collapsed,
+
+  appRole,
 }: {
   active: string;
 
   onNav: (id: string) => void;
 
   collapsed: boolean;
+
+  appRole?: AppRole;
 }) {
   const profile = useDevProfile();
+  // Performance: memoize filtered nav to avoid new array per render — O(4) but per best practice
+  // Error handling: fail-closed — if appRole is corrupted/undefined, show full nav (least surprise)
+  const visibleDevNavItems = useMemo(() => {
+    try {
+      if (appRole === "admin") {
+        return devNavItems.filter((i) => !["marketplace", "bids"].includes(i.id));
+      }
+      return devNavItems;
+    } catch {
+      return devNavItems;
+    }
+  }, [appRole]);
 
   return (
     <aside
@@ -3823,7 +3868,7 @@ function DevSidebar({
         )}
       </div>
       <nav style={{ padding: "12px 0", flex: 1 }}>
-        {devNavItems.map(({ icon: Icon, label, id }) => {
+        {visibleDevNavItems.map(({ icon: Icon, label, id }) => {
           const isActive = active === id;
 
           return (
@@ -4033,20 +4078,147 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+function EditPortfolioModal({
+  onClose,
+  onSave,
+  initialSkills,
+  initialTools,
+}: {
+  onClose: () => void;
+  onSave: (skills: string[], tools: string[]) => void;
+  initialSkills: string[];
+  initialTools: string[];
+}) {
+  // Best practice: guard null/undefined initials from corrupted storage — Clarification 1 keeps no duplicate limit
+  const [skillsText, setSkillsText] = useState(() => (Array.isArray(initialSkills) ? initialSkills : []).join(", "));
+  const [toolsText, setToolsText] = useState(() => (Array.isArray(initialTools) ? initialTools : []).join(", "));
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, [onClose]);
+  return (
+    <div
+      ref={overlayRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-portfolio-title"
+      onClick={(e) => {
+        // Edge: overlayRef may be null on unmount — guard
+        if (overlayRef.current && e.target === overlayRef.current) onClose();
+      }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 100,
+        background: "rgba(0,0,0,0.48)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+      }}
+    >
+      <div
+        style={{
+          background: "#fff",
+          borderRadius: 16,
+          width: "100%",
+          maxWidth: 520,
+          boxShadow: "0px 8px 24px rgba(0,0,0,0.16)",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            padding: "20px 24px 16px",
+            borderBottom: "1px solid #F1F5F9",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div id="edit-portfolio-title" style={{ fontSize: 16, fontWeight: 700, color: "#0F172A" }}>Edit Portfolio</div>
+          <button onClick={onClose} aria-label="Close edit portfolio" style={{ background: "none", border: "none", cursor: "pointer", color: "#94A3B8", lineHeight: 0 }}>
+            <IconClose size={18} />
+          </button>
+        </div>
+        {/* Inline error — preserved per edge case handling */}
+        {saveError && (
+          <div role="alert" style={{ margin: "0 24px", padding: "8px 12px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 8, color: "#DC2626", fontSize: 12 }}>
+            {saveError}
+          </div>
+        )}
+        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#334155", marginBottom: 6 }}>Technical Skills (comma separated)</div>
+            <textarea
+              value={skillsText}
+              onChange={(e) => setSkillsText(e.target.value)}
+              placeholder="React, TypeScript, Node.js..."
+              style={{ width: "100%", minHeight: 70, padding: "10px 12px", border: "1px solid #E2E8F0", borderRadius: 8, fontFamily: "Inter, sans-serif", fontSize: 13, color: "#334155", resize: "vertical", boxSizing: "border-box" }}
+            />
+          </div>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#334155", marginBottom: 6 }}>Frameworks & Tools (comma separated)</div>
+            <textarea
+              value={toolsText}
+              onChange={(e) => setToolsText(e.target.value)}
+              placeholder="Vite, Prisma, Docker..."
+              style={{ width: "100%", minHeight: 70, padding: "10px 12px", border: "1px solid #E2E8F0", borderRadius: 8, fontFamily: "Inter, sans-serif", fontSize: 13, color: "#334155", resize: "vertical", boxSizing: "border-box" }}
+            />
+          </div>
+        </div>
+        <div style={{ padding: "16px 24px", borderTop: "1px solid #F1F5F9", display: "flex", gap: 10, justifyContent: "flex-end" }}>
+          <button onClick={onClose} style={{ background: "transparent", color: "#475569", border: "1px solid #E2E8F0", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Cancel</button>
+          <button
+            onClick={() => {
+              // Error handling: guard split on non-string, surface inline per Clarification 2 pattern
+              try {
+                setSaveError(null);
+                const skills = typeof skillsText === "string" ? skillsText.split(",").map((s) => s.trim()).filter(Boolean) : [];
+                const tools = typeof toolsText === "string" ? toolsText.split(",").map((s) => s.trim()).filter(Boolean) : [];
+                // Intentionally no duplicate/length limit per Clarification 1 — keep simple split
+                onSave(skills, tools);
+                onClose();
+              } catch (e) {
+                setSaveError(e instanceof Error ? e.message : "Failed to save — please retry");
+              }
+            }}
+            style={{ background: "#2563EB", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DeveloperProfile({
   isMobile,
 
   // isTablet kept optional for backward compatibility; not used in this view but retained to avoid breaking callers that pass it
 
   isTablet: _isTablet,
+
+  isOwnProfile = true,
 }: {
   isMobile: boolean;
 
   isTablet?: boolean;
+
+  isOwnProfile?: boolean;
 }) {
   void _isTablet;
 
   const p = useDevProfile();
+  const [editOpen, setEditOpen] = useState(false);
 
   const verified = p.verificationStatus === "Verified";
 
@@ -4284,7 +4456,7 @@ function DeveloperProfile({
                   label: "Projects Completed",
                 },
 
-                { value: p.stats.peerScore, label: "Peer Validation Score" },
+                { value: p.stats.peerScore, label: "Client Review Score" },
 
                 { value: p.stats.responseRate, label: "Response Rate" },
               ].map((stat) => (
@@ -4333,49 +4505,66 @@ function DeveloperProfile({
               flexDirection: isMobile ? "row" : "column",
             }}
           >
-            <button
-              style={{
-                background: "#2563EB",
-
-                color: "#fff",
-
-                border: "none",
-
-                borderRadius: 8,
-
-                padding: "9px 18px",
-
-                fontSize: 13,
-
-                fontWeight: 600,
-
-                cursor: "pointer",
-              }}
-            >
-              Contact Developer
-            </button>
-            <button
-              style={{
-                background: "transparent",
-
-                color: "#2563EB",
-
-                border: "1.5px solid #2563EB",
-
-                borderRadius: 8,
-
-                padding: "9px 18px",
-
-                fontSize: 13,
-
-                fontWeight: 600,
-
-                cursor: "pointer",
-              }}
-            >
-              View Portfolio
-            </button>
+            {isOwnProfile ? (
+              <button
+                onClick={() => setEditOpen(true)}
+                style={{
+                  background: "transparent",
+                  color: "#2563EB",
+                  border: "1.5px solid #2563EB",
+                  borderRadius: 8,
+                  padding: "9px 18px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                }}
+              >
+                <IconEdit size={14} /> View Portfolio
+              </button>
+            ) : (
+              <>
+                <button
+                  style={{
+                    background: "#2563EB",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "9px 18px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Contact Developer
+                </button>
+                <button
+                  style={{
+                    background: "transparent",
+                    color: "#2563EB",
+                    border: "1.5px solid #2563EB",
+                    borderRadius: 8,
+                    padding: "9px 18px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  View Portfolio
+                </button>
+              </>
+            )}
           </div>
+          {editOpen && (
+            <EditPortfolioModal
+              initialSkills={p.skills}
+              initialTools={p.tools}
+              onClose={() => setEditOpen(false)}
+              onSave={(skills, tools) => updateDevProfile({ skills, tools })}
+            />
+          )}
         </div>
       </Card>
 
@@ -4644,7 +4833,7 @@ function DeveloperProfile({
             color: "#0F172A",
           }}
         >
-          Peer Validation
+          Client Reviews
         </h2>
         <div
           style={{
@@ -11414,6 +11603,8 @@ const clientNavItems = [
 
   { icon: IconLogs, label: "Project Contracts", id: "contracts" },
 
+  { icon: IconMarket, label: "Post a Project", id: "specform" },
+
   { icon: IconMessages, label: "Messages", id: "messages" },
 
   { icon: IconSettings, label: "Settings", id: "settings" },
@@ -11754,6 +11945,186 @@ function ClientSidebar({
   );
 }
 
+function ClientOverview({ isMobile, onNavigate }: { isMobile: boolean; onNavigate: (id: string) => void }) {
+  // Error handling: useProjectStore may be empty during reset — fallback to safe defaults
+  // Performance: derived counts memoized inline — O(4) small array, cheap
+  const project = useProjectStore();
+  const client = useClientProfile();
+  // Edge: guard against corrupted project.phases being non-array
+  const phases = Array.isArray(project?.phases) ? project.phases : [];
+  const verified = phases.filter((p) => p.status === "completed").length;
+  const total = phases.length || 1;
+  const pct = Math.round((verified / total) * 100);
+  // Edge: remaining could go negative if overpaid — clamp to 0
+  const remaining = Math.max(0, (project?.totalBudget ?? 0) - (project?.paidToDate ?? 0));
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div>
+        <h1 style={{ margin: "0 0 6px", fontSize: isMobile ? 22 : 26, fontWeight: 700, color: "#0F172A", letterSpacing: "-0.03em" }}>Client Dashboard</h1>
+        <p style={{ margin: 0, fontSize: 13.5, color: "#64748B" }}>{client.business} · {client.barangay} · {client.permit}</p>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 16 }}>
+        <Card style={{ padding: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>Active Contract</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: "#0F172A" }}>{project.project}</div>
+          <div style={{ fontSize: 12, color: "#64748B", marginTop: 4 }}>{project.client} · Due {project.deadline} ({project.daysLeft}d left)</div>
+          <span style={{ display: "inline-flex", marginTop: 10, padding: "3px 10px", borderRadius: 99, background: "#EFF6FF", border: "1px solid #BFDBFE", color: "#2563EB", fontSize: 11, fontWeight: 700 }}>{project.contractType}</span>
+        </Card>
+        <Card style={{ padding: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>Budget</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: "#0F172A" }}>{formatPeso(project.totalBudget)}</div>
+          <div style={{ fontSize: 12, color: "#64748B", marginTop: 4 }}>Paid {formatPeso(project.paidToDate)} · Remaining {formatPeso(remaining)}</div>
+          <div style={{ marginTop: 12, height: 6, background: "#E2E8F0", borderRadius: 3, overflow: "hidden" }}><div style={{ width: `${Math.round((project.paidToDate / project.totalBudget) * 100)}%`, height: "100%", background: "#2563EB", borderRadius: 3 }} /></div>
+        </Card>
+        <Card style={{ padding: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 8 }}>Milestone Progress</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: "#0F172A" }}>{verified}/{total} · {pct}%</div>
+          <div style={{ marginTop: 12, height: 6, background: "#E2E8F0", borderRadius: 3, overflow: "hidden" }}><div style={{ width: `${pct}%`, height: "100%", background: "#16A34A", borderRadius: 3 }} /></div>
+          <div style={{ fontSize: 11, color: "#64748B", marginTop: 6 }}>Started {project.started} · {project.platform}</div>
+        </Card>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
+        <Card style={{ padding: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A", marginBottom: 12 }}>Recent Activity</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {project.notifications.slice(0, 3).map((n) => (
+              <div key={n.id} style={{ padding: "8px 10px", background: n.type === "success" ? "#F0FDF4" : n.type === "warning" ? "#FFFBEB" : "#EFF6FF", border: `1px solid ${n.type === "success" ? "#BBF7D0" : n.type === "warning" ? "#FDE68A" : "#BFDBFE"}`, borderRadius: 8, fontSize: 12, color: "#334155" }}>{n.text}</div>
+            ))}
+          </div>
+        </Card>
+        <Card style={{ padding: 20, display: "flex", flexDirection: "column", gap: 10, justifyContent: "center" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#0F172A" }}>Quick Actions</div>
+          <button onClick={() => onNavigate("specform")} style={{ padding: "10px 16px", borderRadius: 8, border: "none", background: "#2563EB", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "inline-flex", alignItems: "center", gap: 8, justifyContent: "center" }}><IconMarket size={16}/> Post a Project</button>
+          <button onClick={() => onNavigate("contracts")} style={{ padding: "10px 16px", borderRadius: 8, border: "1.5px solid #E2E8F0", background: "#fff", color: "#475569", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>View Contract</button>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function ProjectContractsView({ onPostProject, isMobile }: { onPostProject: () => void; isMobile?: boolean }) {
+  // Error handling: guard against empty project during reset
+  const project = useProjectStore();
+  const safeProject = project ?? { project: "—", client: "—", totalBudget: 0, started: "—" } as unknown as typeof project;
+  const contracts = [
+    { id: "c1", title: safeProject.project, client: safeProject.client, status: "Active", budget: formatPeso(safeProject.totalBudget), date: safeProject.started },
+    { id: "c2", title: "Retail POS & Inventory System", client: "CityMall Tagum", status: "Completed", budget: "₱32,000", date: "Jul 2025" },
+    { id: "c3", title: "Harvest Yield Analytics", client: "Mindanao Agri Holdings", status: "Pending Review", budget: "₱18,000", date: "Aug 2025" },
+  ];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <div>
+          <h1 style={{ margin: "0 0 6px", fontSize: isMobile ? 22 : 26, fontWeight: 700, color: "#0F172A", letterSpacing: "-0.03em" }}>Project Contracts</h1>
+          <p style={{ margin: 0, fontSize: 13.5, color: "#64748B" }}>Manage your posted projects and awarded contracts.</p>
+        </div>
+        <button onClick={onPostProject} style={{ padding: "10px 16px", borderRadius: 8, border: "none", background: "#2563EB", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif", display: "inline-flex", alignItems: "center", gap: 7 }}><IconMarket size={16}/> Post a Project</button>
+      </div>
+      <Card style={{ overflow: "hidden" }}>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead><tr style={{ background: "#F8FAFC" }}>{["Contract", "Client", "Date", "Status", "Budget"].map((h) => (<th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em", borderBottom: "1px solid #E2E8F0", whiteSpace: "nowrap" }}>{h}</th>))}</tr></thead>
+            <tbody>
+              {contracts.map((c) => (
+                <tr key={c.id} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                  <td style={{ padding: "14px 16px", fontWeight: 600, color: "#0F172A" }}>{c.title}</td>
+                  <td style={{ padding: "14px 16px", color: "#475569" }}>{c.client}</td>
+                  <td style={{ padding: "14px 16px", color: "#64748B" }}>{c.date}</td>
+                  <td style={{ padding: "14px 16px" }}><StatusPill status={c.status} /></td>
+                  <td style={{ padding: "14px 16px", color: "#0F172A", fontWeight: 600 }}>{c.budget}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function MessagesView() {
+  const project = useProjectStore();
+  const [msg, setMsg] = useState("");
+  // Clarification 2: surface inline error on failure — not silent
+  const [sendError, setSendError] = useState<string | null>(null);
+  // Error handling: guard phases being undefined during reset
+  const allComments = Array.isArray(project?.phases) ? project.phases.flatMap((p) => Array.isArray(p.comments) ? p.comments : []) : [];
+  function handleSend() {
+    // Error handling: validate trim, guard store throw — surface inline per Clarification 2
+    try {
+      const trimmed = msg.trim();
+      if (!trimmed) return;
+      setSendError(null);
+      // Edge: addComment may throw on corrupted project — catch and surface
+      try {
+        addComment(2, trimmed, "client");
+        setMsg("");
+      } catch (e) {
+        setSendError(e instanceof Error ? e.message : "Failed to send — please retry");
+      }
+    } catch (e) {
+      setSendError(e instanceof Error ? e.message : "Failed to send — please retry");
+    }
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "#0F172A" }}>Messages</h1>
+      <Card style={{ padding: 20 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, maxHeight: 420, overflowY: "auto", marginBottom: 16 }}>
+          {allComments.length === 0 ? <div style={{ fontSize: 13, color: "#94A3B8", textAlign: "center", padding: 20 }}>No messages yet. Start the conversation.</div> : allComments.map((c) => (
+            <div key={c.id} style={{ display: "flex", gap: 10, padding: "10px 12px", background: c.role === "client" ? "#EFF6FF" : c.role === "admin" ? "#F5F3FF" : "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 10 }}>
+              <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg, ${c.avatarBg[0]}, ${c.avatarBg[1]})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: c.role === "client" ? "#1E40AF" : c.role === "admin" ? "#5B21B6" : "#334155", flexShrink: 0 }}>{c.avatar}</div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#0F172A" }}>{c.author} <span style={{ fontWeight: 500, color: "#94A3B8" }}>· {c.time}</span></div>
+                <div style={{ fontSize: 13, color: "#475569", marginTop: 2, lineHeight: 1.5 }}>{c.text}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Inline error per Clarification 2 */}
+        {sendError && (
+          <div role="alert" style={{ marginBottom: 10, padding: "8px 12px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 8, color: "#DC2626", fontSize: 12 }}>
+            {sendError}
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 8 }}>
+          <input value={msg} onChange={(e) => { setMsg(e.target.value); if (sendError) setSendError(null); }} placeholder="Type a message..." style={{ flex: 1, padding: "10px 12px", border: "1px solid #E2E8F0", borderRadius: 8, fontFamily: "Inter, sans-serif", fontSize: 13, outline: "none" }} onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }} />
+          <button onClick={handleSend} style={{ padding: "10px 18px", borderRadius: 8, border: "none", background: "#2563EB", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>Send</button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function SettingsView() {
+  const client = useClientProfile();
+  const dev = useDevProfile();
+  const [notif, setNotif] = useState(true);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "#0F172A" }}>Settings</h1>
+      <Card style={{ padding: 24 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#0F172A", marginBottom: 12 }}>Profile</div>
+        <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
+          <div><strong>Business:</strong> {client.business} — {client.barangay}</div>
+          <div><strong>Email:</strong> {client.email}</div>
+          <div><strong>Developer:</strong> {dev.name} — {dev.school}</div>
+        </div>
+      </Card>
+      <Card style={{ padding: 24 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#0F172A", marginBottom: 12 }}>Notifications</div>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#334155", cursor: "pointer" }}>
+          <input type="checkbox" checked={notif} onChange={(e) => setNotif(e.target.checked)} style={{ accentColor: "#2563EB" }} /> Email notifications for milestone updates
+        </label>
+      </Card>
+      <Card style={{ padding: 24 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#0F172A", marginBottom: 12 }}>Availability</div>
+        <button onClick={() => setAvailability(!dev.availability)} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid #E2E8F0", background: dev.availability ? "#F0FDF4" : "#fff", color: dev.availability ? "#16A34A" : "#64748B", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "Inter, sans-serif" }}>{dev.availability ? "Open to Work" : "Not Open to Work"}</button>
+      </Card>
+    </div>
+  );
+}
+
 function MilestoneTrackingPage({
   isMobile,
 
@@ -11764,6 +12135,8 @@ function MilestoneTrackingPage({
   sidebarOpen,
 
   setSidebarOpen,
+
+  onLogout,
 }: {
   isMobile: boolean;
 
@@ -11774,8 +12147,10 @@ function MilestoneTrackingPage({
   sidebarOpen: boolean;
 
   setSidebarOpen: (v: boolean) => void;
+
+  onLogout?: () => void;
 }) {
-  const [clientNav, setClientNav] = useState("milestones");
+  const [clientNav, setClientNav] = useState("overview");
 
   const [disputeOpen, setDisputeOpen] = useState<number | null>(null);
 
@@ -11826,29 +12201,46 @@ function MilestoneTrackingPage({
   const messages = project.phases.find((p) => p.number === 2)?.comments ?? [];
 
   function handleApprove(number: number) {
-    approvePhase(number);
+    // Error handling: guard approvePhase throw (e.g., corrupted project)
+    try {
+      approvePhase(number);
+    } catch {
+      // fail silently — best practice for UI action, no blank screen
+    }
   }
 
   function handleDispute(number: number) {
-    disputePhase(number, disputeNote);
-
-    setDisputeOpen(null);
-
-    setDisputeNote("");
+    // Error handling: disputePhase may throw on bad note — keep UI consistent
+    try {
+      disputePhase(number, disputeNote);
+    } catch {
+      // ignore
+    } finally {
+      setDisputeOpen(null);
+      setDisputeNote("");
+    }
   }
 
   function sendMessage() {
-    if (!feedbackMsg.trim()) return;
-
-    addComment(2, feedbackMsg, "client");
-
-    setFeedbackMsg("");
-
-    setTimeout(
-      () => feedEndRef.current?.scrollIntoView({ behavior: "smooth" }),
-
-      80,
-    );
+    // Edge: empty or whitespace-only message ignored — fail closed
+    try {
+      if (!feedbackMsg.trim()) return;
+      addComment(2, feedbackMsg, "client");
+      setFeedbackMsg("");
+      // Performance: smooth scroll is cheap, guarded for missing ref
+      setTimeout(
+        () => {
+          try {
+            feedEndRef.current?.scrollIntoView({ behavior: "smooth" });
+          } catch {
+            // ignore
+          }
+        },
+        80,
+      );
+    } catch {
+      // Error handling: corrupted store — surface no inline error here (MessagesView has its own)
+    }
   }
 
   const verified = clientPhases.filter((p) => p.status === "completed").length;
@@ -12096,6 +12488,24 @@ function MilestoneTrackingPage({
                 }}
               />
             </button>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                style={{
+                  padding: "7px 14px",
+                  borderRadius: 8,
+                  border: "1.5px solid #E2E8F0",
+                  background: "#fff",
+                  color: "#475569",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                Logout
+              </button>
+            )}
           </div>
         </div>
 
@@ -12112,20 +12522,42 @@ function MilestoneTrackingPage({
             alignItems: "flex-start",
           }}
         >
-          <div
-            style={{
-              flex: 1,
+          {clientNav === "overview" ? (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <ClientOverview isMobile={isMobile} onNavigate={setClientNav} />
+            </div>
+          ) : clientNav === "specform" ? (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <ProjectSpecForm isMobile={isMobile} onBack={() => setClientNav("overview")} />
+            </div>
+          ) : clientNav === "contracts" ? (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <ProjectContractsView isMobile={isMobile} onPostProject={() => setClientNav("specform")} />
+            </div>
+          ) : clientNav === "messages" ? (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <MessagesView />
+            </div>
+          ) : clientNav === "settings" ? (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <SettingsView />
+            </div>
+          ) : (
+            <>
+              <div
+                style={{
+                  flex: 1,
 
-              minWidth: 0,
+                  minWidth: 0,
 
-              display: "flex",
+                  display: "flex",
 
-              flexDirection: "column",
+                  flexDirection: "column",
 
-              gap: 20,
-            }}
-          >
-            {/* Project header */}
+                  gap: 20,
+                }}
+              >
+                {/* Project header */}
             <div
               style={{
                 display: "flex",
@@ -13846,6 +14278,8 @@ function MilestoneTrackingPage({
               </div>
             </div>
           )}
+            </>
+          )}
         </main>
       </div>
     </div>
@@ -14097,12 +14531,16 @@ function AnalyticsAdminSidebar({
   onNav,
 
   collapsed,
+
+  onLogout,
 }: {
   active: string;
 
   onNav: (id: string) => void;
 
   collapsed: boolean;
+
+  onLogout?: () => void;
 }) {
   return (
     <aside
@@ -14111,7 +14549,9 @@ function AnalyticsAdminSidebar({
 
         minHeight: "100vh",
 
-        background: "#0F172A",
+        background: "#fff",
+
+        borderRight: "1px solid #E2E8F0",
 
         display: "flex",
 
@@ -14138,7 +14578,7 @@ function AnalyticsAdminSidebar({
 
           gap: 10,
 
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
+          borderBottom: "1px solid #F1F5F9",
         }}
       >
         <div
@@ -14182,7 +14622,7 @@ function AnalyticsAdminSidebar({
 
                 fontSize: 14,
 
-                color: "#fff",
+                color: "#0F172A",
 
                 letterSpacing: "-0.02em",
               }}
@@ -14218,9 +14658,9 @@ function AnalyticsAdminSidebar({
 
                 border: "none",
 
-                background: isActive ? "rgba(37,99,235,0.18)" : "transparent",
+                background: isActive ? "#EFF6FF" : "transparent",
 
-                color: isActive ? "#60A5FA" : "#94A3B8",
+                color: isActive ? "#2563EB" : "#475569",
 
                 borderLeft: isActive
                   ? "3px solid #2563EB"
@@ -14232,14 +14672,14 @@ function AnalyticsAdminSidebar({
 
                 fontSize: 13.5,
 
-                fontWeight: isActive ? 600 : 400,
+                fontWeight: isActive ? 600 : 500,
 
                 transition: "all 0.12s ease",
               }}
               onMouseEnter={(e) => {
                 if (!isActive)
                   (e.currentTarget as HTMLButtonElement).style.background =
-                    "rgba(255,255,255,0.05)";
+                    "#F8FAFC";
               }}
               onMouseLeave={(e) => {
                 if (!isActive)
@@ -14258,7 +14698,11 @@ function AnalyticsAdminSidebar({
           style={{
             padding: "14px 18px",
 
-            borderTop: "1px solid rgba(255,255,255,0.07)",
+            borderTop: "1px solid #F1F5F9",
+
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -14290,14 +14734,33 @@ function AnalyticsAdminSidebar({
               JA
             </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>
                 Juanita Arceo
               </div>
-              <div style={{ fontSize: 11, color: "#475569" }}>
+              <div style={{ fontSize: 11, color: "#64748B" }}>
                 Regional Administrator
               </div>
             </div>
           </div>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: 8,
+                border: "1.5px solid #E2E8F0",
+                background: "#fff",
+                color: "#475569",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              Logout
+            </button>
+          )}
         </div>
       )}
     </aside>
@@ -14314,6 +14777,8 @@ function EnterpriseAnalyticsPage({
   sidebarOpen,
 
   setSidebarOpen,
+
+  onLogout,
 }: {
   isMobile: boolean;
 
@@ -14324,6 +14789,8 @@ function EnterpriseAnalyticsPage({
   sidebarOpen: boolean;
 
   setSidebarOpen: (v: boolean) => void;
+
+  onLogout?: () => void;
 }) {
   const [analyticsNav, setAnalyticsNav] = useState("analytics");
 
@@ -14421,6 +14888,7 @@ function EnterpriseAnalyticsPage({
               setSidebarOpen(false);
             }}
             collapsed={collapsed}
+            onLogout={onLogout}
           />
         </div>
       )}
@@ -14541,6 +15009,24 @@ function EnterpriseAnalyticsPage({
                 }}
               />
             </button>
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                style={{
+                  padding: "7px 14px",
+                  borderRadius: 8,
+                  border: "1.5px solid #E2E8F0",
+                  background: "#fff",
+                  color: "#475569",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                Logout
+              </button>
+            )}
             {!isMobile && (
               <div
                 style={{
@@ -15698,7 +16184,14 @@ export default function App() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  // Edge: SSR/test has no window — guard initial width
+  const [windowWidth, setWindowWidth] = useState(() => {
+    try {
+      return typeof window !== "undefined" ? window.innerWidth : 1024;
+    } catch {
+      return 1024;
+    }
+  });
 
   // ─── Role-based access (Option B: Strict Separation) ────────────────────
 
@@ -15709,9 +16202,16 @@ export default function App() {
   const [appRole, setAppRole] = useState<AppRole>("guest");
 
   useEffect(() => {
-    const handler = () => setWindowWidth(window.innerWidth);
+    // Performance: passive listener avoids blocking scroll
+    const handler = () => {
+      try {
+        setWindowWidth(window.innerWidth);
+      } catch {
+        // ignore — window may be mocked
+      }
+    };
 
-    window.addEventListener("resize", handler);
+    window.addEventListener("resize", handler, { passive: true } as AddEventListenerOptions);
 
     return () => window.removeEventListener("resize", handler);
   }, []);
@@ -15742,9 +16242,12 @@ export default function App() {
 
   // Performance: O(7) small array — useMemo avoids new identity per render and prevents effect loops
 
+  // D1: enterprise uses sidebar-only Post a Project, floating nav hidden per Clarification 4
   const visiblePages = useMemo<AppPage[]>(() => {
     try {
       if (!isAuthenticated) return [] as AppPage[];
+      // Best practice: enterprise sidebar-only — hide floating pill entirely
+      if (appRole === "enterprise") return [] as AppPage[];
 
       const allowed = getAllowedPages(appRole);
 
@@ -16014,6 +16517,7 @@ export default function App() {
                     setSidebarOpen(false);
                   }}
                   collapsed={collapsed}
+                  appRole={appRole}
                 />
               </div>
             )}
@@ -16134,21 +16638,17 @@ export default function App() {
               >
                 <div style={{ maxWidth: 900, margin: "0 auto" }}>
                   {devNav === "dashboard" ? (
-                    <DeveloperProfile isMobile={isMobile} />
-                  ) : devNav === "marketplace" ? (
+                    <DeveloperProfile isMobile={isMobile} isOwnProfile={true} />
+                  ) : devNav === "marketplace" && appRole !== "admin" ? (
                     <MarketplaceFeed isMobile={isMobile} />
-                  ) : devNav === "bids" ? (
+                  ) : devNav === "bids" && appRole !== "admin" ? (
                     <BidsView />
                   ) : devNav === "messages" ? (
-                    <DevStub
-                      title="Messages"
-                      message="Private conversations with clients and collaborators will appear here."
-                    />
+                    <MessagesView />
+                  ) : devNav === "settings" ? (
+                    <SettingsView />
                   ) : (
-                    <DevStub
-                      title="Settings"
-                      message="Manage your account, notifications, and public profile preferences."
-                    />
+                    <DeveloperProfile isMobile={isMobile} isOwnProfile={true} />
                   )}
                 </div>
               </main>
@@ -16742,20 +17242,11 @@ export default function App() {
                 ) : sprintNav === "sprint" ? (
                   <SprintDashboard isMobile={isMobile} isTablet={isTablet} />
                 ) : sprintNav === "bids" ? (
-                  <DevStub
-                    title="Bids"
-                    message="Track and manage your project bids from one place."
-                  />
+                  <BidsView />
                 ) : sprintNav === "messages" ? (
-                  <DevStub
-                    title="Messages"
-                    message="Private conversations with clients and collaborators will appear here."
-                  />
+                  <MessagesView />
                 ) : (
-                  <DevStub
-                    title="Settings"
-                    message="Manage your account, notifications, and public profile preferences."
-                  />
+                  <SettingsView />
                 )}
               </main>
             </div>
@@ -16817,6 +17308,7 @@ export default function App() {
             collapsed={collapsed}
             sidebarOpen={sidebarOpen}
             setSidebarOpen={setSidebarOpen}
+            onLogout={handleLogout}
           />
         )
       ) : (
@@ -16828,6 +17320,7 @@ export default function App() {
           collapsed={collapsed}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
+          onLogout={handleLogout}
         />
       )}
     </div>

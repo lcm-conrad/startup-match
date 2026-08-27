@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -735,6 +735,45 @@ export default function AuthPage({ onSignedIn }: {
     idNumber: "",
   })
 
+  // Persistence: remember ToS checkbox per Clarification 3 — versioned, fail silently on private mode/SSR
+  // Best practice: lazy initializer reads localStorage once, guards window existence
+  const [agreed, setAgreed] = useState(() => {
+    try {
+      if (typeof window === "undefined" || !window.localStorage) return false
+      return window.localStorage.getItem("tosAgreed_v1") === "1"
+    } catch {
+      return false
+    }
+  })
+  const [tosOpen, setTosOpen] = useState(false)
+  const [eulaOpen, setEulaOpen] = useState(false)
+
+  // Persistence: write agreed to localStorage — fail silently on quota/security
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem("tosAgreed_v1", agreed ? "1" : "0")
+      }
+    } catch {
+      // ignore
+    }
+  }, [agreed])
+
+  // Edge: Esc closes legal modals — mirrors CredentialsModal pattern, preserves comments
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setTosOpen(false)
+        setEulaOpen(false)
+      }
+    }
+    // Only listen when a modal is open — performance: avoid global listener otherwise
+    if (tosOpen || eulaOpen) {
+      document.addEventListener("keydown", handler)
+      return () => document.removeEventListener("keydown", handler)
+    }
+  }, [tosOpen, eulaOpen])
+
   function switchMode(next: "signin" | "register") {
     setMode(next)
 
@@ -744,49 +783,79 @@ export default function AuthPage({ onSignedIn }: {
   }
 
   function handleSignIn(e: React.FormEvent) {
-    e.preventDefault()
+    // Error handling: validate inputs, fail-closed, preserve comments
+    try {
+      e.preventDefault()
 
-    const ok =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signIn.email) &&
-      signIn.password.length >= 8
+      const ok =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signIn.email) &&
+        signIn.password.length >= 8
 
-    if (!ok) {
+      if (!ok) {
+        setNotice(null)
+
+        setError("Authentication Failed")
+
+        return
+      }
+
+      setError(null)
+
+      setNotice("Sign in successful — redirecting to your dashboard…")
+
+      // Edge: onSignedIn may throw (store failure) — guard to avoid blank screen
+      try {
+        onSignedIn?.(signIn.email, role)
+      } catch {
+        setNotice(null)
+        setError("Authentication Failed")
+      }
+    } catch {
       setNotice(null)
-
       setError("Authentication Failed")
-
-      return
     }
-
-    setError(null)
-
-    setNotice("Sign in successful — redirecting to your dashboard…")
-
-    onSignedIn?.(signIn.email, role)
   }
 
   function handleRegister(e: React.FormEvent) {
-    e.preventDefault()
+    // Error handling: checkbox is source of truth (keyboard Enter edge), then field validation
+    // Performance: early return on !agreed avoids regex work — best practice for hot path
+    try {
+      e.preventDefault()
 
-    const ok =
-      register.fullName.trim().length > 0 &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(register.email) &&
-      register.password.length >= 8 &&
-      register.idNumber.trim().length > 0
+      if (!agreed) {
+        setNotice(null)
+        setError("Please agree to the Terms of Service & EULA")
+        return
+      }
 
-    if (!ok) {
+      // Edge: trim fullName, guard non-string idNumber from corrupted state
+      const ok =
+        typeof register.fullName === "string" &&
+        register.fullName.trim().length > 0 &&
+        typeof register.email === "string" &&
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(register.email) &&
+        typeof register.password === "string" &&
+        register.password.length >= 8 &&
+        typeof register.idNumber === "string" &&
+        register.idNumber.trim().length > 0
+
+      if (!ok) {
+        setNotice(null)
+
+        setError("Registration Failed")
+
+        return
+      }
+
+      setError(null)
+
+      setNotice(
+        "Verification request submitted — check your inbox to confirm your account.",
+      )
+    } catch {
       setNotice(null)
-
       setError("Registration Failed")
-
-      return
     }
-
-    setError(null)
-
-    setNotice(
-      "Verification request submitted — check your inbox to confirm your account.",
-    )
   }
 
   const roleField = roleConfig[role]
@@ -1706,42 +1775,83 @@ export default function AuthPage({ onSignedIn }: {
                   </Field>
                 </div>
 
+                {/* ToS checkbox */}
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 8,
+                    marginBottom: 16,
+                    cursor: "pointer",
+                    fontSize: 12.5,
+                    color: "#475569",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={(e) => setAgreed(e.target.checked)}
+                    style={{ marginTop: 2, accentColor: "#2563EB", width: 15, height: 15, cursor: "pointer", flexShrink: 0 }}
+                  />
+                  <span>
+                    I agree to the{" "}
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setTosOpen(true)
+                      }}
+                      style={{ color: "#2563EB", fontWeight: 600, textDecoration: "underline" }}
+                    >
+                      Terms of Service
+                    </a>{" "}
+                    &amp;{" "}
+                    <a
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        setEulaOpen(true)
+                      }}
+                      style={{ color: "#2563EB", fontWeight: 600, textDecoration: "underline" }}
+                    >
+                      End User License Agreement
+                    </a>
+                  </span>
+                </label>
+
                 {/* CTA */}
                 <button
                   type="submit"
+                  disabled={!agreed}
                   style={{
                     width: "100%",
                     height: 48,
                     borderRadius: 8,
                     border: "none",
-
-                    background: "#2563EB",
+                    background: agreed ? "#2563EB" : "#94A3B8",
                     color: "#fff",
-
                     fontSize: 14,
                     fontWeight: 700,
                     fontFamily: "Inter, sans-serif",
-
-                    cursor: "pointer",
+                    cursor: agreed ? "pointer" : "not-allowed",
+                    opacity: agreed ? 1 : 0.7,
                     display: "flex",
                     alignItems: "center",
-
                     justifyContent: "center",
                     gap: 8,
-
                     transition: "background 0.15s, box-shadow 0.15s",
-
-                    boxShadow: "0px 2px 6px rgba(37,99,235,0.3)",
+                    boxShadow: agreed ? "0px 2px 6px rgba(37,99,235,0.3)" : "none",
                   }}
                   onMouseEnter={(e) => {
+                    if (!agreed) return
                     e.currentTarget.style.background = "#1D4ED8"
-                    e.currentTarget.style.boxShadow =
-                      "0px 3px 8px rgba(37,99,235,0.35)"
+                    e.currentTarget.style.boxShadow = "0px 3px 8px rgba(37,99,235,0.35)"
                   }}
                   onMouseLeave={(e) => {
+                    if (!agreed) return
                     e.currentTarget.style.background = "#2563EB"
-                    e.currentTarget.style.boxShadow =
-                      "0px 2px 6px rgba(37,99,235,0.3)"
+                    e.currentTarget.style.boxShadow = "0px 2px 6px rgba(37,99,235,0.3)"
                   }}
                 >
                   Register &amp; Request Verification{" "}
@@ -1810,6 +1920,62 @@ export default function AuthPage({ onSignedIn }: {
           </div>
         </div>
       </div>
+      {tosOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tos-title"
+          onClick={() => setTosOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.48)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 560, maxHeight: "80vh", overflow: "auto", boxShadow: "0px 8px 24px rgba(0,0,0,0.16)", padding: 24 }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div id="tos-title" style={{ fontSize: 16, fontWeight: 700, color: "#0F172A" }}>Terms of Service</div>
+              <button onClick={() => setTosOpen(false)} aria-label="Close Terms of Service" style={{ background: "none", border: "none", cursor: "pointer", color: "#94A3B8", fontSize: 18 }}>×</button>
+            </div>
+            <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
+              <p><strong>Startup-Match Terms of Service</strong></p>
+              <p>By creating an account, you agree to use the platform solely for legitimate project collaboration within the PSITS Tagum ecosystem. Verified PSITS membership, accurate business permits, and honest milestone submissions are required.</p>
+              <p>Milestone escrow, verification vetting, and admin audit logs are provided as decision-support tools. The platform reserves the right to suspend unverified or disputed accounts pending PSITS Moderator review.</p>
+              <p>For full terms contact your PSITS chapter administrator.</p>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
+              <button onClick={() => setTosOpen(false)} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#2563EB", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {eulaOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="eula-title"
+          onClick={() => setEulaOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.48)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: 560, maxHeight: "80vh", overflow: "auto", boxShadow: "0px 8px 24px rgba(0,0,0,0.16)", padding: 24 }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div id="eula-title" style={{ fontSize: 16, fontWeight: 700, color: "#0F172A" }}>End User License Agreement</div>
+              <button onClick={() => setEulaOpen(false)} aria-label="Close EULA" style={{ background: "none", border: "none", cursor: "pointer", color: "#94A3B8", fontSize: 18 }}>×</button>
+            </div>
+            <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
+              <p><strong>Startup-Match EULA</strong></p>
+              <p>Startup-Match is licensed, not sold. You may use the software to post projects, bid, track milestones, and manage contracts per your verified role (Student, Enterprise, PSITS Moderator).</p>
+              <p>Do not reverse engineer, resell, or use automated scraping against the milestone API. Intellectual property of submitted wireframes and code remains with the author; enterprise clients receive usage rights per awarded contract budget.</p>
+              <p>By agreeing, you consent to PSITS verification logging and milestone telemetry collection for regional analytics.</p>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
+              <button onClick={() => setEulaOpen(false)} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#2563EB", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -43,7 +43,7 @@ export const ALL_SWITCHER_PAGES: readonly AppPage[] = [
 export const ROLE_PAGE_MAP: Record<Exclude<AppRole, "guest">, AppPage[]> = {
   student: ["developer", "sprint"],
   enterprise: ["specform", "milestone"],
-  admin: ["developer", "admin", "sprint", "milestone", "analytics"],
+  admin: ["developer", "admin", "sprint", "specform", "milestone", "analytics"],
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

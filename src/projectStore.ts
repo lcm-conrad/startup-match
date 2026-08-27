@@ -491,7 +491,14 @@ let project: SprintProject = JSON.parse(
 const listeners = new Set<() => void>()
 
 function emit() {
-  listeners.forEach((listener) => listener())
+  // Error handling: one bad listener should not break others — best practice for external store
+  listeners.forEach((listener) => {
+    try {
+      listener()
+    } catch {
+      // ignore
+    }
+  })
 }
 
 export function subscribeProjectStore(listener: () => void) {
@@ -516,28 +523,43 @@ function patchPhase(
   number: number,
   updater: (phase: ProjectPhase) => ProjectPhase,
 ) {
-  project = {
-    ...project,
+  // Error handling: guard against corrupted project.phases being non-array
+  try {
+    if (!Array.isArray(project?.phases)) return
+    if (typeof number !== "number" || !Number.isFinite(number)) return
+    project = {
+      ...project,
 
-    phases: project.phases.map((p) => (p.number === number ? updater(p) : p)),
+      phases: project.phases.map((p) => (p.number === number ? updater(p) : p)),
+    }
+
+    emit()
+  } catch {
+    // fail silently — best practice for store mutation
   }
-
-  emit()
 }
 
 function pushNotification(type: SprintNotifType, text: string) {
-  const n: SprintNotification = {
-    id: `n${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+  // Error handling: guard against empty text or corrupted project
+  try {
+    if (!text || typeof text !== "string") return
+    const n: SprintNotification = {
+      id: `n${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
 
-    type,
-    text,
-    time: "Just now",
-    read: false,
+      type,
+      text,
+      time: "Just now",
+      read: false,
+    }
+
+    // Edge: notifications may be non-array after corrupted load
+    const existing = Array.isArray(project?.notifications) ? project.notifications : []
+    project = { ...project, notifications: [n, ...existing] }
+
+    emit()
+  } catch {
+    // ignore
   }
-
-  project = { ...project, notifications: [n, ...project.notifications] }
-
-  emit()
 }
 
 const DEV_NOW = "Just now"
@@ -567,7 +589,13 @@ const ADMIN_IDENTITY = {
 }
 
 export function formatPeso(n: number) {
-  return `₱${n.toLocaleString("en-US")}`
+  // Error handling: guard non-number input (e.g., NaN from corrupted budget)
+  try {
+    const val = typeof n === "number" && Number.isFinite(n) ? n : 0
+    return `₱${val.toLocaleString("en-US")}`
+  } catch {
+    return "₱0"
+  }
 }
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
@@ -677,6 +705,14 @@ export function completeTask(number: number, taskId: string) {
 }
 
 export function addComment(number: number, text: string, role: CommentRole) {
+  // Error handling: validate inputs — throw so caller can surface inline error per Clarification 2
+  // Edge: empty or whitespace-only text should throw
+  if (typeof text !== "string" || text.trim().length === 0) {
+    throw new Error("Message cannot be empty")
+  }
+  if (typeof number !== "number" || !Number.isFinite(number)) {
+    throw new Error("Invalid phase number")
+  }
   const identity =
     role === "developer"
       ? devIdentity()
@@ -698,7 +734,7 @@ export function addComment(number: number, text: string, role: CommentRole) {
 
   patchPhase(number, (phase) => ({
     ...phase,
-    comments: [...phase.comments, comment],
+    comments: [...(Array.isArray(phase.comments) ? phase.comments : []), comment],
   }))
 
   if (role !== "developer") {

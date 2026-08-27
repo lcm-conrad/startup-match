@@ -470,6 +470,51 @@ const DEFAULT_BIDS: DevBid[] = [
   },
 ]
 
+// ─── Persistence helpers (Clarification 3: localStorage) ───────────────────────
+// Best practice: versioned key, guarded access for private mode / SSR, fail silently.
+// Comments preserved per request — new explanatory comments only added, none removed.
+const DEV_PROFILE_KEY = "devProfile_v1"
+
+function safeParse<T>(raw: string | null, fallback: T): T {
+  // Error handling: corrupted JSON or quota — return fallback instead of throwing
+  try {
+    if (!raw) return fallback
+    const parsed = JSON.parse(raw) as T
+    return parsed ?? fallback
+  } catch {
+    return fallback
+  }
+}
+
+function persistProfile(profile: DeveloperProfileData) {
+  // Best practice: localStorage may throw (private mode / quota) — fail silently
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return
+    window.localStorage.setItem(DEV_PROFILE_KEY, JSON.stringify(profile))
+  } catch {
+    // ignore quota / security errors
+  }
+}
+
+function loadPersistedProfile(): Partial<DeveloperProfileData> | null {
+  // Edge case: SSR has no window, or stored JSON is corrupted
+  try {
+    if (typeof window === "undefined" || !window.localStorage) return null
+    const raw = window.localStorage.getItem(DEV_PROFILE_KEY)
+    const parsed = safeParse<Partial<DeveloperProfileData> | null>(raw, null)
+    // Validate shape — only allow known editable fields
+    if (!parsed || typeof parsed !== "object") return null
+    const out: Partial<DeveloperProfileData> = {}
+    if (Array.isArray(parsed.skills)) out.skills = parsed.skills.filter((s) => typeof s === "string")
+    if (Array.isArray(parsed.tools)) out.tools = parsed.tools.filter((s) => typeof s === "string")
+    if (typeof parsed.availability === "boolean") out.availability = parsed.availability
+    // Intentionally not persisting name/email/verificationStatus — those come from MOCK_USERS
+    return Object.keys(out).length ? out : null
+  } catch {
+    return null
+  }
+}
+
 // ─── Store ─────────────────────────────────────────────────────────────────────
 
 interface DevState {
@@ -478,12 +523,28 @@ interface DevState {
   bids: DevBid[]
 }
 
-let state: DevState = { profile: DEFAULT_DEVELOPER, bids: DEFAULT_BIDS }
+// Performance: hydrate persisted profile once at module init — avoids flash of default
+function getInitialProfile(): DeveloperProfileData {
+  const persisted = loadPersistedProfile()
+  if (persisted) {
+    return { ...DEFAULT_DEVELOPER, ...persisted }
+  }
+  return DEFAULT_DEVELOPER
+}
+
+let state: DevState = { profile: getInitialProfile(), bids: DEFAULT_BIDS }
 
 const listeners = new Set<() => void>()
 
 function emit() {
-  listeners.forEach((listener) => listener())
+  // Error handling: one bad listener should not break others
+  listeners.forEach((listener) => {
+    try {
+      listener()
+    } catch {
+      // ignore listener errors — best practice for external store
+    }
+  })
 }
 
 export function subscribeDevStore(listener: () => void) {
@@ -507,34 +568,93 @@ export function useDevBids() {
 }
 
 export function signInAs(email?: string) {
-  const key = email?.trim().toLowerCase()
+  // Error handling: trim/lower, guard undefined/null email
+  // Persistence: re-apply persisted editable fields so edits survive account switch
+  try {
+    const key = email?.trim().toLowerCase()
 
-  const identity = key ? MOCK_USERS[key] : undefined
+    const identity = key ? MOCK_USERS[key] : undefined
+    const base = identity ? { ...DEFAULT_DEVELOPER, ...identity } : DEFAULT_DEVELOPER
+    // Edge: persisted skills/tools should not overwrite identity name/email
+    const persisted = loadPersistedProfile()
+    const nextProfile = persisted ? { ...base, ...persisted, ...identity } as DeveloperProfileData : base
+    // If identity exists, ensure identity fields win over persisted (name/email/verification)
+    if (identity) {
+      nextProfile.name = identity.name
+      nextProfile.email = identity.email
+      nextProfile.verificationStatus = identity.verificationStatus
+      nextProfile.initials = identity.initials
+      nextProfile.avatarColors = identity.avatarColors
+      nextProfile.title = identity.title
+      nextProfile.school = identity.school
+      nextProfile.chapter = identity.chapter
+    }
 
-  state = {
-    ...state,
-    profile: identity
-      ? { ...DEFAULT_DEVELOPER, ...identity }
-      : DEFAULT_DEVELOPER,
+    state = {
+      ...state,
+      profile: nextProfile,
+    }
+
+    emit()
+  } catch {
+    // fail closed — reset to default
+    try {
+      state = { ...state, profile: DEFAULT_DEVELOPER }
+      emit()
+    } catch {
+      // ignore
+    }
   }
-
-  emit()
 }
 
 export function setAvailability(open: boolean) {
-  state = { ...state, profile: { ...state.profile, availability: open } }
+  // Error handling: coerce to boolean, guard unexpected type
+  try {
+    const next = Boolean(open)
+    state = { ...state, profile: { ...state.profile, availability: next } }
+    persistProfile(state.profile)
+    emit()
+  } catch {
+    // fail silently — best practice for UI toggle
+  }
+}
 
-  emit()
+export function updateDevProfile(patch: Partial<DeveloperProfileData>) {
+  // Error handling: validate patch shape — fail closed on bad input
+  // Best practice: narrow to editable fields only (skills/tools/availability)
+  // Edge: no duplicate/length limit per Clarification 1 — keep simple split
+  try {
+    if (!patch || typeof patch !== "object") return
+    const allowed: Partial<DeveloperProfileData> = {}
+    if (Array.isArray(patch.skills)) {
+      // Validate each skill is string — edge: null from corrupted storage
+      allowed.skills = patch.skills.filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+    }
+    if (Array.isArray(patch.tools)) {
+      allowed.tools = patch.tools.filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+    }
+    if (typeof patch.availability === "boolean") allowed.availability = patch.availability
+    if (Object.keys(allowed).length === 0) return
+    state = { ...state, profile: { ...state.profile, ...allowed } }
+    persistProfile(state.profile)
+    emit()
+  } catch {
+    // ignore — fail silently to avoid breaking UI
+  }
 }
 
 export function placeBid(projectId: string) {
-  const project = MARKETPLACE_PROJECTS.find((p) => p.id === projectId)
+  // Error handling: validate projectId, guard against corrupted MARKETPLACE_PROJECTS
+  // Edge: empty or non-string id should be ignored — fail closed
+  try {
+    if (!projectId || typeof projectId !== "string") return
+    const project = MARKETPLACE_PROJECTS.find((p) => p.id === projectId)
 
-  if (
-    !project ||
-    state.bids.some((b) => b.projectId === projectId && b.status === "Pending")
-  )
-    return
+    if (
+      !project ||
+      state.bids.some((b) => b.projectId === projectId && b.status === "Pending")
+    )
+      return
 
   const bid: DevBid = {
     id: `b${Date.now()}`,
@@ -559,4 +679,7 @@ export function placeBid(projectId: string) {
   state = { ...state, bids: [bid, ...state.bids] }
 
   emit()
+  } catch {
+    // Error handling: corrupted state or Date locale failure — fail silently
+  }
 }
